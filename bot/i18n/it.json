@@ -1,0 +1,34 @@
+{
+  "i18n.lang_code":        "it-IT",
+  "i18n.country_name":     "Italy",
+  "i18n.en_lang_name":     "Italian",
+  "i18n.native_lang_name": "Italiano",
+  "i18n.lang_maintainer":  "Matteo Collica (@Matypist)",
+  "i18n.flag":             "\uD83C\uDDEE\uD83C\uDDF9",
+  "i18n.en_flag":          "\uD83C\uDDEC\uD83C\uDDE7",
+  "i18n.string_not_found": "Stringa '[key]' non trovata",
+
+  "main_menu.text":                    "Cosa vuoi fare adesso?",
+  "main_menu.explore_groups_btn":      "\uD83D\uDC65 Esplora i gruppi",
+  "main_menu.adding_groups_guide_btn": "\uD83D\uDCA0 Aggiungi un gruppo",
+  "main_menu.about_message_btn":       "ℹ️ Riguardo il bot",
+
+  "about_menu.text": [
+    "ℹ️ Progetto Open Source di un bot Telegram per l'indicizzazione di gruppi gestiti da studenti e studentesse dell'ateneo\n\n",
+    "\uD83D\uDCA0 Attualmente gestito e coordinato da Matteo Collica (@Matypist) e Damiano Gualandri (@dag7d)\n\n",
+    "\uD83E\uDDD1\u200D\uD83D\uDCBB Programmato in Python <a href=\"github.com/sapienzastudentsnetwork/sapienzastudentsbot\">[GitHub]</a>\n\n",
+    "\uD83D\uDCC4 Originariamente ideato e programmato in GO <a href=\"https://gitlab.com/sapienzastudents/antispam-telegram-bot\">[GitLab]</a>"
+  ],
+  "about_menu.contact_us": "\uD83D\uDCAC Contattaci",
+  "about_menu.back_btn":   "◀️ Torna al menù",
+
+  "explore_groups.choose_category":                  "<i>Scegli una categoria per visualizzarne i gruppi</i>",
+  "explore_groups.choose_category.back_btn":         "◀️ Torna al menù",
+  "explore_groups.join_href_text":                   "[ENTRA]",
+  "explore_groups.category.back_btn":                "◀️ Categorie",
+  "explore_groups.category.no_category_groups_line": "\nGenerali (senza sotto-categoria):\n",
+  "explore_groups.category.sub_categories_line":     "\nSotto-categorie:",
+  "explore_groups.sub_category.back_btn":            "◀️ Sotto-categorie",
+
+  "wip": "Funzionalità in fase di sviluppo, per favore riprova tra qualche giorno"
+}

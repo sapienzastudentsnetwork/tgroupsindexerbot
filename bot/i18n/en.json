@@ -1,0 +1,34 @@
+{
+  "i18n.lang_code":        "en-UK",
+  "i18n.country_name":     "United Kingdom",
+  "i18n.en_lang_name":     "English",
+  "i18n.native_lang_name": "English",
+  "i18n.lang_maintainer":  "Matteo Collica (@Matypist)",
+  "i18n.flag":             "\uD83C\uDDEE\uD83C\uDDF9",
+  "i18n.en_flag":          "\uD83C\uDDEC\uD83C\uDDE7",
+  "i18n.string_not_found": "String '[key]' not found",
+
+  "main_menu.text":                    "What do you want to do next?",
+  "main_menu.explore_groups_btn":      "\uD83D\uDC65 Explore the groups",
+  "main_menu.adding_groups_guide_btn": "\uD83D\uDCA0 Add a group",
+  "main_menu.about_message_btn":       "ℹ️ About the bot",
+
+  "about_menu.text": [
+    "ℹ️ Open Source project of a Telegram bot for indexing groups run by students at the university\n\n",
+    "\uD83D\uDCA0 Currently managed and coordinated by Matteo Collica (@Matypist) and Damiano Gualandri (@dag7d)\n\n",
+    "\uD83E\uDDD1\u200D\uD83D\uDCBB Developed in Python <a href=\"github.com/sapienzastudentsnetwork/sapienzastudentsbot\">[GitHub]</a>\n\n",
+    "\uD83D\uDCC4 Originally designed and programmed in GO <a href=\"https://gitlab.com/sapienzastudents/antispam-telegram-bot\">[GitLab]</a>"
+  ],
+  "about_menu.contact_us": "\uD83D\uDCAC Contact Us",
+  "about_menu.back_btn":   "◀️ Back to Menu",
+
+  "explore_groups.choose_category":                  "<i>Choose a category to view its groups</i>",
+  "explore_groups.choose_category.back_btn":         "◀️ Back to Menu",
+  "explore_groups.join_href_text":                   "[JOIN]",
+  "explore_groups.category.back_btn":                "◀️ Categories",
+  "explore_groups.category.no_category_groups_line": "\nGeneral (without sub-category):\n",
+  "explore_groups.category.sub_categories_line":     "\nSub-categories:",
+  "explore_groups.sub_category.back_btn":            "◀️ Sub-categories",
+
+  "wip": "Feature under development, please try again in a few days"
+}
