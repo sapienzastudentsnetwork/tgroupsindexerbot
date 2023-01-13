@@ -22,6 +22,18 @@
   "about_menu.contact_us": "\uD83D\uDCAC Contattaci",
   "about_menu.back_btn":   "◀️ Torna al menù",
 
+    "DatabaseError": {
+      "0": "",
+      "1": ""
+    },
+
+  "database_error_menu.text": [
+    "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria a soddisfare la tua richiesta",
+    "\n\n<i>Ti preghiamo di contattarci qualora il problema dovesse persistere</i>"
+  ],
+  "database_error_menu.contact_us": "\uD83D\uDCAC Contattaci",
+  "database_error_menu.back_btn":   "◀️ Torna al menù",
+
   "explore_groups.choose_category":                  "<i>Scegli una categoria per visualizzarne i gruppi</i>",
   "explore_groups.choose_category.back_btn":         "◀️ Torna al menù",
   "explore_groups.join_href_text":                   "[ENTRA]",

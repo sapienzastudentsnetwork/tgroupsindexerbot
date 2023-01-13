@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-import logging
 import os
 
 from telegram import __version__ as tg_ver
 from telegram.constants import ParseMode
 from telegram.ext import Application, CallbackQueryHandler, Defaults, MessageHandler, filters
 
+from logs import Logger
 from bot.data.database import Database
 from bot.handlers.commands import Commands
 from bot.handlers.queries import Queries
@@ -22,14 +22,10 @@ if __version_info__ < (20, 0, 0, "alpha", 1):
         f"This code is not compatible with your current PTB version {tg_ver}. It requires a version later than v20.0."
     )
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
-
-logger = logging.getLogger(__name__)
-
 
 def main() -> None:
+    Logger.init_logger()
+
     Locale.init_locales()
 
     Database.import_data(os.path.join(os.path.dirname(__file__), "data.json"))

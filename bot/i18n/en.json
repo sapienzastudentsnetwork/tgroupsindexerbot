@@ -22,6 +22,13 @@
   "about_menu.contact_us": "\uD83D\uDCAC Contact Us",
   "about_menu.back_btn":   "◀️ Back to Menu",
 
+  "database_error_menu.text": [
+    "\uD83D\uDE14 An error occurred in the interaction with the database required to fulfil your request",
+    "\n\n<i>Please contact us if the problem persists</i>"
+  ],
+  "database_error_menu.contact_us": "\uD83D\uDCAC Contact Us",
+  "database_error_menu.back_btn":   "◀️ Back to Menu",
+
   "explore_groups.choose_category":                  "<i>Choose a category to view its groups</i>",
   "explore_groups.choose_category.back_btn":         "◀️ Back to Menu",
   "explore_groups.join_href_text":                   "[JOIN]",

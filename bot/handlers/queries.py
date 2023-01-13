@@ -57,64 +57,82 @@ class Queries:
         text     = locale.get_string("explore_groups.choose_category")
         keyboard = []
 
-        for category_name in Database.data_structure.keys():
-            category_callback_data = f"cd{Settings.queries_fd}" + category_name
+        categories_names, is_categories_names = Database.get_categories()
 
-            number_of_groups = Database.data_structure[category_name]["number_of_groups"]
+        if is_categories_names:
+            for main_category_name in categories_names:
+                category_callback_data = f"cd{Settings.queries_fd}" + main_category_name
 
-            keyboard.append([InlineKeyboardButton(text=f"{category_name} [{number_of_groups}]",
-                                                  callback_data=cls.encode_query_data(category_callback_data))])
+                number_of_groups = Database.get_number_of_groups(main_category_name)
 
-        keyboard.append([InlineKeyboardButton(text=locale.get_string("explore_groups.choose_category.back_btn"),
-                                              callback_data=cls.encode_query_data("main_menu"))])
+                keyboard.append([InlineKeyboardButton(text=f"{main_category_name} [{number_of_groups}]",
+                                                      callback_data=cls.encode_query_data(category_callback_data))])
 
-        return text, InlineKeyboardMarkup(keyboard)
+            keyboard.append([InlineKeyboardButton(text=locale.get_string("explore_groups.choose_category.back_btn"),
+                                                  callback_data=cls.encode_query_data("main_menu"))])
+
+            return text, InlineKeyboardMarkup(keyboard)
+
+        else:
+            return Menus.get_database_error_menu(locale)
 
     @classmethod
-    def get_groups(cls, locale: Locale, main_category_name: str, sub_category_name: str = None) -> (str, InlineKeyboardMarkup):
+    def explore_category(cls, locale: Locale, main_category_name: str, sub_category_name: str = None) -> (str, InlineKeyboardMarkup):
+        sub_categories_names = {}
+
         if sub_category_name:
+            groups_dict, is_groups_dict = Database.get_groups(main_category_name, sub_category_name)
+
             text = f"<b>{main_category_name} > {sub_category_name}</b>\n"
 
             back_button_text = locale.get_string("explore_groups.sub_category.back_btn")
             back_button_callback_data = f"cd{Settings.queries_fd}{main_category_name}"
 
-            groups_dict = Database.data_structure[main_category_name]["sub_categories"][sub_category_name]["groups"]
         else:
+            groups_dict, is_groups_dict = Database.get_groups(main_category_name)
+
             text = f"<b>{main_category_name}</b>\n"
 
-            if len(Database.data_structure[main_category_name]["groups"].keys()) > 0:
+            if len(groups_dict) > 0:
                 text += locale.get_string("explore_groups.category.no_category_groups_line")
 
             back_button_callback_data = f"cd"
 
             back_button_text = locale.get_string("explore_groups.category.back_btn")
-            groups_dict = Database.data_structure[main_category_name]["groups"]
 
-        keyboard = []
+        if is_groups_dict:
+            keyboard = []
 
-        if not sub_category_name:
-            for curr_sub_category_name in Database.data_structure[main_category_name]["sub_categories"].keys():
-                sub_category_callback_data = f"cd{Settings.queries_fd}{main_category_name}{Settings.queries_fd}{curr_sub_category_name}"
+            if not sub_category_name:
+                sub_categories_names, is_subcategories_names = Database.get_sub_categories(main_category_name)
 
-                number_of_groups = Database.data_structure[main_category_name]["sub_categories"][curr_sub_category_name]["number_of_groups"]
+                if is_subcategories_names:
+                    for curr_sub_category_name in sub_categories_names:
+                        sub_category_callback_data = f"cd{Settings.queries_fd}{main_category_name}{Settings.queries_fd}{curr_sub_category_name}"
 
-                keyboard.append([InlineKeyboardButton(text=f"{curr_sub_category_name} [{number_of_groups}]",
-                                                      callback_data=cls.encode_query_data(sub_category_callback_data))])
+                        number_of_groups = Database.get_number_of_groups(main_category_name, curr_sub_category_name)
 
-        keyboard.append([InlineKeyboardButton(text=back_button_text,
-                                              callback_data=cls.encode_query_data(back_button_callback_data))])
+                        keyboard.append([InlineKeyboardButton(text=f"{curr_sub_category_name} [{number_of_groups}]",
+                                                              callback_data=cls.encode_query_data(sub_category_callback_data))])
+                else:
+                    return Menus.get_database_error_menu(locale)
 
-        for group_title, group_data_dict in groups_dict.items():
-            text += f"\n• {group_title} <a href='" + group_data_dict["invite_link"] + "'>" \
-                    + locale.get_string("explore_groups.join_href_text") + "</a>"
+            keyboard.append([InlineKeyboardButton(text=back_button_text,
+                                                  callback_data=cls.encode_query_data(back_button_callback_data))])
 
-        if not sub_category_name and len(Database.data_structure[main_category_name]["sub_categories"].keys()) > 0:
-            if len(Database.data_structure[main_category_name]["groups"].keys()) > 0:
-                text += "\n"
+            for group_title, group_data_dict in groups_dict.items():
+                text += f"\n• {group_title} <a href='" + group_data_dict["invite_link"] + "'>" \
+                        + locale.get_string("explore_groups.join_href_text") + "</a>"
 
-            text += locale.get_string("explore_groups.category.sub_categories_line")
+            if not sub_category_name and len(sub_categories_names) > 0:
+                if len(groups_dict) > 0:
+                    text += "\n"
 
-        return text, InlineKeyboardMarkup(keyboard)
+                text += locale.get_string("explore_groups.category.sub_categories_line")
+
+            return text, InlineKeyboardMarkup(keyboard)
+        else:
+            return Menus.get_database_error_menu(locale)
 
     @classmethod
     def cd_queries_handler(cls, query_data: str, locale: Locale) -> (str, InlineKeyboardMarkup):
@@ -129,7 +147,7 @@ class Queries:
             if number_of_fields > 1:
                 sub_category = fields[1]
 
-            return Queries.get_groups(locale, main_category, sub_category)
+            return Queries.explore_category(locale, main_category, sub_category)
 
         return None, None
 

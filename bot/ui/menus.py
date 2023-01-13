@@ -33,3 +33,16 @@ class Menus:
         ]
 
         return text, InlineKeyboardMarkup(keyboard)
+
+    @classmethod
+    def get_database_error_menu(cls, locale: Locale) -> (str, InlineKeyboardMarkup):
+        text = locale.get_string("database_error_menu.text")
+
+        keyboard = [
+            [InlineKeyboardButton(text=locale.get_string("database_error_menu.contact_us"),
+                                  url=f'tg://resolve?domain=sapienzastudentsnetworkbot')],
+            [InlineKeyboardButton(text=locale.get_string("database_error_menu.back_btn"),
+                                  callback_data="main_menu")]
+        ]
+
+        return text, InlineKeyboardMarkup(keyboard)
