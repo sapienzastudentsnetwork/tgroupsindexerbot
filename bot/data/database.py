@@ -196,9 +196,9 @@ class Database:
 
             try:
                 if sub_category_name is None:
-                    cursor.execute("SELECT COUNT(*) FROM category WHERE main_category_name = %s", (main_category_name,))
+                    cursor.execute("SELECT COUNT(*) FROM chat WHERE main_category_name = %s", (main_category_name,))
                 else:
-                    cursor.execute("SELECT COUNT(*) FROM category "
+                    cursor.execute("SELECT COUNT(*) FROM chat "
                                    "WHERE main_category_name = %s "
                                    "AND sub_category_name = %s", (main_category_name,sub_category_name))
 
