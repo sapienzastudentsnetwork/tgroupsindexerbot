@@ -129,7 +129,9 @@ class Database:
             cursor: psycopg2._psycopg.cursor
 
             try:
-                cursor.execute("SELECT DISTINCT main_category_name FROM category")
+                cursor.execute("SELECT DISTINCT main_category_name "
+                               "FROM category "
+                               "WHERE main_category_name != ''")
 
                 records = cursor.fetchall()
 
@@ -162,7 +164,7 @@ class Database:
                 cursor.execute(
                     "SELECT sub_category_name FROM category "
                     "WHERE main_category_name = %s "
-                    "AND sub_category_name IS NOT EMPTY",
+                    "AND sub_category_name != ''",
                     (main_category_name,)
                 )
 
