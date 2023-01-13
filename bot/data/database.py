@@ -225,12 +225,16 @@ class Database:
             cursor: psycopg2._psycopg.cursor
 
             if sub_category_name is None:
-                cursor.execute("SELECT * FROM chat WHERE main_category_name = %s", (main_category_name,))
+                cursor.execute("SELECT * FROM chat "
+                               "WHERE main_category_name = %s "
+                               "AND sub_category_name = ''"
+                               "ORDER BY title ASC", (main_category_name,))
             else:
                 cursor.execute(
                     "SELECT * FROM chat "
                     "WHERE main_category_name = %s "
-                    "AND sub_category_name = %s",
+                    "AND sub_category_name = %s "
+                    "ORDER BY title ASC",
                     (main_category_name, sub_category_name)
                )
 
