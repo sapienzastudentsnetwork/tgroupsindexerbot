@@ -3,7 +3,7 @@ import hashlib
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 
-from bot.database.data import Database
+from bot.data.database import Database
 from bot.i18n.locales import Locale
 from bot.settings import Settings
 from bot.ui.menus import Menus

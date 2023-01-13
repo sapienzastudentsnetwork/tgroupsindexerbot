@@ -6,7 +6,7 @@ from telegram import __version__ as tg_ver
 from telegram.constants import ParseMode
 from telegram.ext import Application, CallbackQueryHandler, Defaults, MessageHandler, filters
 
-from bot.database.data import Database
+from bot.data.database import Database
 from bot.handlers.commands import Commands
 from bot.handlers.queries import Queries
 from bot.i18n.locales import Locale
