@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 python-telegram-bot = "v20.0"
+pytz = "*"
 
 [dev-packages]
 
