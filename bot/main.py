@@ -28,8 +28,6 @@ def main() -> None:
 
     Locale.init_locales()
 
-    Database.import_data(os.path.join(os.path.dirname(__file__), "data.json"))
-
     Queries.register_fixed_queries()
 
     defaults = Defaults(parse_mode=ParseMode.HTML, disable_web_page_preview=True)
