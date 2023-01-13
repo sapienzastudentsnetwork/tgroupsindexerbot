@@ -112,7 +112,7 @@ class Queries:
                 sub_categories_names, is_subcategories_names = Database.get_sub_categories(main_category_name)
 
                 if is_subcategories_names:
-                    sub_categories_names = sorted(sub_category_name)
+                    sub_categories_names = sorted(sub_categories_names)
 
                     for curr_sub_category_name in sub_categories_names:
                         sub_category_callback_data = f"cd{Settings.queries_fd}{main_category_name}{Settings.queries_fd}{curr_sub_category_name}"
@@ -130,9 +130,10 @@ class Queries:
                                                   callback_data=cls.encode_query_data(back_button_callback_data))])
 
             for group_chat_id, group_data_dict in groups_dict.items():
-                group_title = group_data_dict["title"]
+                group_title       = group_data_dict["title"]
+                group_invite_link = group_data_dict["invite_link"]
 
-                text += f"\n• {group_title} <a href='" + group_data_dict["invite_link"] + "'>" \
+                text += f"\n• {group_title} <a href='{group_invite_link}'>" \
                         + locale.get_string("explore_groups.join_href_text") + "</a>"
 
             if not sub_category_name and len(sub_categories_names) > 0:
