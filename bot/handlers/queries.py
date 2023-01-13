@@ -63,6 +63,8 @@ class Queries:
             for main_category_name in categories_names:
                 category_callback_data = f"cd{Settings.queries_fd}" + main_category_name
 
+                Queries.register_query(category_callback_data)
+
                 number_of_groups = Database.get_number_of_groups(main_category_name)
 
                 keyboard.append([InlineKeyboardButton(text=f"{main_category_name} [{number_of_groups}]",
@@ -109,6 +111,8 @@ class Queries:
                 if is_subcategories_names:
                     for curr_sub_category_name in sub_categories_names:
                         sub_category_callback_data = f"cd{Settings.queries_fd}{main_category_name}{Settings.queries_fd}{curr_sub_category_name}"
+
+                        Queries.register_query(sub_category_callback_data)
 
                         number_of_groups = Database.get_number_of_groups(main_category_name, curr_sub_category_name)
 
