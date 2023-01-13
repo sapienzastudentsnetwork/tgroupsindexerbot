@@ -11,6 +11,7 @@ from bot.ui.menus import Menus
 
 class Queries:
     fixed_queries = [
+        "cd",
         "main_menu",
         "about_menu",
         "wip"
