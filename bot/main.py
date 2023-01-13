@@ -2,7 +2,6 @@
 import logging
 import os
 
-import pytz
 from telegram import __version__ as tg_ver
 from telegram.constants import ParseMode
 from telegram.ext import Application, CallbackQueryHandler, Defaults, MessageHandler, filters
@@ -37,7 +36,7 @@ def main() -> None:
 
     Queries.register_fixed_queries()
 
-    defaults = Defaults(parse_mode=ParseMode.HTML, tzinfo=pytz.timezone('Europe/Rome'), disable_web_page_preview=True)
+    defaults = Defaults(parse_mode=ParseMode.HTML, disable_web_page_preview=True)
 
     application = Application.builder().token(os.getenv("TOKEN")).defaults(defaults).build()
 
