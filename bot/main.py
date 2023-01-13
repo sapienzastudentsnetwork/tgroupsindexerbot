@@ -5,6 +5,7 @@ from telegram import __version__ as tg_ver
 from telegram.constants import ParseMode
 from telegram.ext import Application, CallbackQueryHandler, Defaults, MessageHandler, filters
 
+from bot.data.database import Database
 from bot.handlers.commands import Commands
 from bot.handlers.queries import Queries
 from bot.i18n.locales import Locale
@@ -26,6 +27,8 @@ def main() -> None:
     Logger.init_logger()
 
     Locale.init_locales()
+
+    Database.init_db()
 
     Queries.register_fixed_queries()
 
