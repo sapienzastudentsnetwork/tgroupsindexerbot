@@ -149,8 +149,6 @@ class Queries:
             if query_data == "unrecognized query":
                 query_data = "main_menu"
 
-            print(f"{chat_id} : {query_data}")
-
             text, reply_markup = "", None
 
             if query_data.startswith("cd  "):
