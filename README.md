@@ -87,18 +87,22 @@ Initially Sapienza Students opted for a solution in the GO programming language 
 
 7. Create a file named `.env`, with the two following lines:
    ```
-   TOKEN=your TOKEN value
-   DATABASE_URL=your DATABASE_URL value
+   TOKEN=(your TOKEN value without parentheses)
+   DATABASE_URL=(your DATABASE_URL value without parentheses)
    ```
    
    To define the environment variable values required to run the bot
 
    _**N.B.:** replace the values with the ones you got in the ["Prerequisites" section](https://github.com/sapienzastudentsnetwork/sapienzastudentsbot#prerequisites)_
 
-### Run the bot
+### Run your bot instance
 
 1. Open a terminal window or command prompt window and go to the project root directory using the `cd` command followed by the directory path (e.g. `cd "C:\Users\matypist\Downloads\sapienzastudentsbot"`)
 
-2. Run the `pipenv shell` command to activate this project's virtual environment (previously set up in the ["Set up a local running environment" section]((https://github.com/sapienzastudentsnetwork/sapienzastudentsbot/blob/main/README.md#set-up-a-local-running-environment))) and load the environment variables
+2. Run the `pipenv shell` command to activate this project's virtual environment (previously set up in the ["Set up a local running environment" section](https://github.com/sapienzastudentsnetwork/sapienzastudentsbot/blob/main/README.md#set-up-a-local-running-environment)) and load the environment variables
 
 3. Run the `python main.py` command to finally run the bot
+
+4. Start a chat with your bot instance on Telegram finding it through the username that you had previously chosen, e.g. via https://telegram.me/(your_bot_instance_username)
+   
+   _**N.B.:** the official instance's username is exactly SapienzaStudentsBot (https://telegram.me/SapienzaStudentsBot) and you can also find it directly inside Telegram search by searching for @SapienzaStudentsBot_
