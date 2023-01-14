@@ -34,6 +34,17 @@
   "database_error_menu.contact_us": "\uD83D\uDCAC Contattaci",
   "database_error_menu.back_btn":   "◀️ Torna al menù",
 
+  "expired_session_menu.text": [
+    "La sessione precedente è scaduta, per riprendere la navigazione ",
+    "fai click sul pulsante per tornare al menù principale"
+  ],
+  "expired_session_menu.about_btn": "ℹ️ Come mai?",
+  "expired_session_menu.back_btn":  "◀️ Torna al menù",
+  "expired_session_menu.about_alert": [
+    "Le sessioni scadono automaticamente ad ogni aggiornamento (e conseguente ",
+    "riavvio) del bot e comunque almeno una volta entro 24 ore"
+  ],
+
   "explore_groups.choose_category":                  "<i>Scegli una categoria per visualizzarne i gruppi</i>",
   "explore_groups.choose_category.back_btn":         "◀️ Torna al menù",
   "explore_groups.join_href_text":                   "[ENTRA]",
@@ -42,5 +53,5 @@
   "explore_groups.category.sub_categories_line":     "\nSotto-categorie:",
   "explore_groups.sub_category.back_btn":            "◀️ Sotto-categorie",
 
-  "wip": "Funzionalità in fase di sviluppo, per favore riprova tra qualche giorno"
+  "wip_alert": "Funzionalità in fase di sviluppo, per favore riprova tra qualche giorno"
 }

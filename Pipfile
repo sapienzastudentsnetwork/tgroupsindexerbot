@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-python-telegram-bot = "v20.0"
+python-telegram-bot = {version = ">=v20.0", extras = ["job-queue"]}
 psycopg2-binary = "*"
 
 [dev-packages]

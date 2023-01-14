@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 import os
 
+import pytz
 from telegram import __version__ as tg_ver
 from telegram.constants import ParseMode
 from telegram.ext import Application, CallbackQueryHandler, Defaults, MessageHandler, filters
 
-from bot.data.database import Database
+from bot.data.database import Database, SessionTable
 from bot.handlers.commands import Commands
 from bot.handlers.queries import Queries
 from bot.i18n.locales import Locale
@@ -32,9 +33,10 @@ def main() -> None:
 
     Queries.register_fixed_queries()
 
-    defaults = Defaults(parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+    defaults = Defaults(parse_mode=ParseMode.HTML, tzinfo=pytz.timezone('Europe/Rome'), disable_web_page_preview=True)
 
     application = Application.builder().token(os.getenv("TOKEN")).defaults(defaults).build()
+    application.job_queue.run_once(callback=SessionTable.expire_old_sessions, when=0)
 
     application.add_handler(MessageHandler(filters=filters.COMMAND, callback=Commands.commands_handler))
     application.add_handler(CallbackQueryHandler(callback=Queries.callback_queries_handler))

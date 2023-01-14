@@ -2,7 +2,9 @@ from os import getenv as os_getenv
 from urllib.parse import urlparse as urllib_parse_urlparse
 
 import psycopg2
+from telegram.ext import ContextTypes
 
+from bot.ui.menus import Menus
 from logs import Logger
 
 
@@ -101,9 +103,37 @@ class Database:
                         sub_category_name VARCHAR(60) NULL,
                         created_at TIMESTAMP DEFAULT now(),
                         updated_at TIMESTAMP DEFAULT now(),
-                        FOREIGN KEY (main_category_name, sub_category_name) REFERENCES category(main_category_name, sub_category_name)
+                        FOREIGN KEY (main_category_name, sub_category_name) 
+                        REFERENCES category(main_category_name, sub_category_name)
                     );
                     """
+                )
+
+                # account
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS account (
+                        chat_id BIGINT PRIMARY KEY,
+                        created_at TIMESTAMP DEFAULT now(),
+                        pref_lang_code VARCHAR(4),
+                        is_admin BOOLEAN DEFAULT false,
+                        can_view_groups BOOLEAN DEFAULT true,
+                        can_add_groups BOOLEAN DEFAULT true,
+                        can_modify_groups BOOLEAN DEFAULT true
+                    );
+                    """
+                )
+
+                # session
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS session (
+                        chat_id BIGINT PRIMARY KEY,
+                        created_at TIMESTAMP DEFAULT now(),
+                        menu_message_id BIGINT
+                    );
+                    """
+
                 )
 
                 connection.commit()
@@ -111,14 +141,79 @@ class Database:
                 Logger.log("exception", "Database.create_tables",
                            f"An exception occurred while trying to create a table: \n{ex}")
 
-                return_value = 2
         else:
             Logger.log("error", "Database.create_tables", f"Couldn't get cursor required to create tables")
 
-            return_value = 1
 
-        return return_value
+class AccountTable:
+    cached_accounts = {}
 
+    @classmethod
+    def create_account_record(cls, chat_id: int) -> bool:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            try:
+                cursor.execute(
+                    "INSERT INTO account (chat_id, created_at) "
+                    "VALUES (%s, now() AT TIME ZONE 'Europe/Rome')",
+                    (chat_id,)
+                )
+
+                return True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "Database.create_user_record",
+                           f"An exception occurred while trying to create account record for '{chat_id}': \n{ex}")
+
+                return False
+
+        else:
+            Logger.log("error", "Database.create_user_record", f"Couldn't get cursor required to create account record")
+
+            return False
+
+    @classmethod
+    def get_account_record(cls, chat_id: int) -> (dict, bool):
+        if chat_id not in cls.cached_accounts:
+            cursor, iscursor = Database.get_cursor()
+
+            if iscursor:
+                cursor: psycopg2._psycopg.cursor
+
+                try:
+                    cursor.execute("SELECT * FROM account WHERE chat_id = %s", (chat_id,))
+
+                    row = cursor.fetchone()
+
+                    if row:
+                        columns = [desc[0] for desc in cursor.description]
+                        user_data = dict(zip(columns, row))
+
+                        cls.cached_accounts[chat_id] = user_data
+
+                        return user_data, True
+                    else:
+                        if AccountTable.create_account_record(chat_id):
+                            return AccountTable.get_account_record(chat_id)
+                        else:
+                            return {}, False
+
+                except (Exception, psycopg2.DatabaseError) as ex:
+                    Logger.log("exception", "Database.get_user",
+                               f"An exception occurred while trying to get account record with '{chat_id}' as chat_id: \n{ex}")
+
+                    return {}, False
+
+            else:
+                Logger.log("error", "Database.get_user", f"Couldn't get cursor required to get user")
+
+                return {}, False
+        else:
+            return cls.cached_accounts[chat_id], True
+
+
+class CategoriesTable:
     @classmethod
     def get_categories(cls) -> (list, bool):
         categories = []
@@ -187,6 +282,8 @@ class Database:
 
             return [], False
 
+
+class ChatTable:
     @classmethod
     def get_number_of_groups(cls, main_category_name: str, sub_category_name: str = None) -> int:
         cursor, iscursor = Database.get_cursor()
@@ -260,3 +357,98 @@ class Database:
             Logger.log("error", "Database.get_groups", f"Couldn't get cursor required to get groups")
 
             return {}, False
+
+
+class SessionTable:
+    active_chat_sessions = {}
+
+    @classmethod
+    def add_session(cls, chat_id: int, latest_menu_message_id: int) -> None:
+        cls.active_chat_sessions[chat_id] = latest_menu_message_id
+
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                connection = Database.connection
+                connection: psycopg2._psycopg.connection
+
+                cursor.execute("INSERT INTO session (chat_id, menu_message_id) VALUES (%s, %s)",
+                               (chat_id, latest_menu_message_id))
+                connection.commit()
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("critical", "Database.add_session",
+                           f"An exception occurred while trying to insert '{latest_menu_message_id}' "
+                           f"latest_menu_message_id in 'session' table for '{chat_id}': \n{ex}")
+
+        else:
+            Logger.log("error", "Database.add_session", f"Couldn't get cursor required to insert session data")
+
+    @classmethod
+    def update_session(cls, chat_id: int, new_latest_menu_message_id: int) -> None:
+        cls.active_chat_sessions[chat_id] = new_latest_menu_message_id
+
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                connection = Database.connection
+                connection: psycopg2._psycopg.connection
+
+                cursor.execute("UPDATE session SET menu_message_id = %s WHERE chat_id = %s",
+                               (new_latest_menu_message_id, chat_id))
+
+                connection.commit()
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("critical", "Database.update_session",
+                           f"An exception occurred while trying to update latest_menu_message_id for "
+                           f"'{chat_id}' to `{new_latest_menu_message_id}': \n{ex}")
+
+        else:
+            Logger.log("error", "Database.update_session", f"Couldn't get cursor required to update session data")
+
+    @classmethod
+    async def expire_old_sessions(cls, context: ContextTypes.DEFAULT_TYPE) -> None:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                connection = Database.connection
+                connection: psycopg2._psycopg.connection
+
+                cursor.execute("SELECT chat_id, menu_message_id FROM session")
+
+                records = cursor.fetchall()
+
+                for record in records:
+                    chat_id, menu_message_id = record
+
+                    text, reply_markup = Menus.get_expired_session_menu()
+
+                    from bot.handlers.queries import Queries
+                    reply_markup = Queries.encode_queries(reply_markup)
+
+                    try:
+                        await context.bot.edit_message_text(chat_id=chat_id, message_id=menu_message_id,
+                                                            text=text, reply_markup=reply_markup)
+                    except Exception:
+                        pass
+
+                cursor.execute("DELETE FROM session")
+
+                connection.commit()
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("critical", "Database.expire_old_sessions",
+                           f"An exception occurred while trying to expire old sessions: \n{ex}")
+
+        else:
+            Logger.log("error", "Database.expire_old_sessions", f"Couldn't get cursor required to expire old sessions")

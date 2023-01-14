@@ -14,22 +14,25 @@ class Commands:
         query_message = update.message
 
         if query_message.chat.type == "private":
-            locale = Locale(update.effective_user.language_code)
-
-            text, reply_markup = "", None
-
             command = query_message.text.split()[0][1:]
 
-            if command == "start":
-                text, reply_markup = Menus.get_main_menu(locale)
+            if Queries.user_can_perform_action(chat_id, "/" + command):
+                locale = Locale(update.effective_user.language_code)
 
-            elif command == "groups":
-                text, reply_markup = Queries.get_categories(locale)
+                text, reply_markup = "", None
 
-            if text or reply_markup:
-                await bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
+                if command == "start":
+                    text, reply_markup = Menus.get_main_menu(locale)
 
-                try:
-                    await bot.delete_message(chat_id=chat_id, message_id=query_message.message_id)
-                except:
-                    pass
+                elif command == "groups":
+                    text, reply_markup = Queries.get_categories(locale)
+
+                if text or reply_markup:
+                    reply_markup = Queries.encode_queries(reply_markup)
+
+                    await bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
+
+                    try:
+                        await bot.delete_message(chat_id=chat_id, message_id=query_message.message_id)
+                    except:
+                        pass
