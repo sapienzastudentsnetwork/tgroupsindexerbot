@@ -1,6 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
+from bot.data.database import SessionTable
 from bot.handlers.queries import Queries
 from bot.i18n.locales import Locale
 from bot.ui.menus import Menus
@@ -30,9 +31,18 @@ class Commands:
                 if text or reply_markup:
                     reply_markup = Queries.encode_queries(reply_markup)
 
-                    await bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
+                    new_message = await bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
 
                     try:
                         await bot.delete_message(chat_id=chat_id, message_id=query_message.message_id)
                     except:
                         pass
+
+                    old_latest_menu_message_id = SessionTable.get_active_session_menu_message_id(chat_id)
+
+                    try:
+                        await bot.delete_message(chat_id=chat_id, message_id=old_latest_menu_message_id)
+                    except:
+                        pass
+
+                    SessionTable.update_session(chat_id, new_message.message_id)

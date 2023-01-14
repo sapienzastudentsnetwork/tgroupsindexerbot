@@ -363,6 +363,13 @@ class SessionTable:
     active_chat_sessions = {}
 
     @classmethod
+    def get_active_session_menu_message_id(cls, chat_id: int) -> int:
+        if chat_id in cls.active_chat_sessions:
+            return cls.active_chat_sessions[chat_id]
+        else:
+            return -1
+
+    @classmethod
     def add_session(cls, chat_id: int, latest_menu_message_id: int) -> None:
         cls.active_chat_sessions[chat_id] = latest_menu_message_id
 
