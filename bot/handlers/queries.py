@@ -63,12 +63,15 @@ class Queries:
 
             for button in row:
                 if isinstance(button, InlineKeyboardButton):
-                    encoded_inline_keyboard_row.append(
-                        InlineKeyboardButton(
-                            text=button.text,
-                            callback_data=cls.encode_query_data(button.callback_data)
+                    if button.callback_data:
+                        encoded_inline_keyboard_row.append(
+                            InlineKeyboardButton(
+                                text=button.text,
+                                callback_data=cls.encode_query_data(button.callback_data)
+                            )
                         )
-                    )
+                    else:
+                        encoded_inline_keyboard_row.append(button)
 
             if encoded_inline_keyboard_row:
                 encoded_inline_keyboard.append(encoded_inline_keyboard_row)
