@@ -77,13 +77,13 @@ Initially Sapienza Students opted for a solution in the GO programming language 
    
    b. Downloading it as ZIP [[Mirror]](https://github.com/sapienzastudentsnetwork/sapienzastudentsbot/archive/refs/heads/main.zip) and extracting it in a directory
 
-3. Verify that python3 and python3-pip are installed by running the `python3 -V` and `pip3 -V` commands respectively
+3. Verify that python3 and python3-pip are correctly installed and functioning by running the `python3 -V` and `pip3 -V` commands respectively
 
 4. Open a terminal window or command prompt window and go to the local project directory using the `cd` command followed by the directory path (e.g. `cd "C:\Users\matypist\Downloads\sapienzastudentsbot"`)
 
 5. Run the `pip install pipenv` command to install pipenv, a tool required to create and manage a virtual environment containing this project's dependencies and environment variables 
 
-6. Run the `pipenv install` command to install all the dependencies specified in the project's Pipfile
+6. Run the `pipenv install` command to install all the dependencies required for this project (which, should you be interested, are specified in this project's Pipfile)
 
 7. Create a file named `.env`, with the two following lines:
    ```
@@ -93,12 +93,12 @@ Initially Sapienza Students opted for a solution in the GO programming language 
    
    To define the environment variable values required to run the bot
 
-   _**N.B.:** replace the values with the ones you got in the [prerequisites](https://github.com/sapienzastudentsnetwork/sapienzastudentsbot#prerequisites) section_
+   _**N.B.:** replace the values with the ones you got in the ["Prerequisites" section](https://github.com/sapienzastudentsnetwork/sapienzastudentsbot#prerequisites)_
 
 ### Run the bot
 
 1. Open a terminal window or command prompt window and go to the project root directory using the `cd` command followed by the directory path (e.g. `cd "C:\Users\matypist\Downloads\sapienzastudentsbot"`)
 
-2. Run the `pipenv shell` command to activate the project's virtual environment and load the environment variables
+2. Run the `pipenv shell` command to activate this project's virtual environment (previously set up in the ["Set up a local running environment" section]((https://github.com/sapienzastudentsnetwork/sapienzastudentsbot/blob/main/README.md#set-up-a-local-running-environment))) and load the environment variables
 
 3. Run the `python main.py` command to finally run the bot
