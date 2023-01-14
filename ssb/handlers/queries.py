@@ -3,10 +3,10 @@ import hashlib
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 
-from bot.data.database import CategoriesTable, AccountTable, ChatTable, SessionTable
-from bot.i18n.locales import Locale
-from bot.settings import Settings
-from bot.ui.menus import Menus
+from ssb.data.database import CategoriesTable, AccountTable, ChatTable, SessionTable
+from ssb.i18n.locales import Locale
+from ssb.settings import Settings
+from ssb.ui.menus import Menus
 
 
 class Queries:

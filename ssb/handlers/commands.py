@@ -1,10 +1,10 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from bot.data.database import SessionTable
-from bot.handlers.queries import Queries
-from bot.i18n.locales import Locale
-from bot.ui.menus import Menus
+from ssb.data.database import SessionTable
+from ssb.handlers.queries import Queries
+from ssb.i18n.locales import Locale
+from ssb.ui.menus import Menus
 
 
 class Commands:

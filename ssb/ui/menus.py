@@ -1,6 +1,6 @@
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
-from bot.i18n.locales import Locale
+from ssb.i18n.locales import Locale
 
 
 class Menus:

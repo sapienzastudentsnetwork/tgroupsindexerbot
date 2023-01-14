@@ -4,8 +4,8 @@ from urllib.parse import urlparse as urllib_parse_urlparse
 import psycopg2
 from telegram.ext import ContextTypes
 
-from bot.ui.menus import Menus
-from logs import Logger
+from ssb.ui.menus import Menus
+from ssb.logs import Logger
 
 
 class Database:
@@ -440,7 +440,7 @@ class SessionTable:
 
                     text, reply_markup = Menus.get_expired_session_menu()
 
-                    from bot.handlers.queries import Queries
+                    from ssb.handlers.queries import Queries
                     reply_markup = Queries.encode_queries(reply_markup)
 
                     try:
