@@ -40,9 +40,12 @@ class Commands:
 
                     old_latest_menu_message_id = SessionTable.get_active_session_menu_message_id(chat_id)
 
-                    try:
-                        await bot.delete_message(chat_id=chat_id, message_id=old_latest_menu_message_id)
-                    except:
-                        pass
+                    if old_latest_menu_message_id != -1:
+                        try:
+                            await bot.delete_message(chat_id=chat_id, message_id=old_latest_menu_message_id)
+                        except:
+                            pass
 
-                    SessionTable.update_session(chat_id, new_message.message_id)
+                        SessionTable.update_session(chat_id, new_message.message_id)
+                    else:
+                        SessionTable.add_session(chat_id, new_message.message_id)
