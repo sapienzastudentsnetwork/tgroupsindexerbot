@@ -24,7 +24,7 @@ Initially Sapienza Students opted for a solution in the GO programming language 
 
     3. Follow the prompts to choose a name and username for your bot instance
 
-    4. Once you are done following the instructions, you should receive a token in the final confirmation message
+    4. Once you are done following the instructions, you should receive a token in the final confirmation message, that will be your TOKEN value
 
 2. Create your PostgreSQL instance
 
@@ -46,9 +46,11 @@ Initially Sapienza Students opted for a solution in the GO programming language 
 
       8. Once created, go to the Instance Panel (https://customer.elephantsql.com/instance/) and access the instance
 
-      9. In the instance details page, copy the postgres:// URL with the copy icon
+      9. In the instance details page, copy the postgres:// URL with the copy icon, that will be your DATABASE_URL value
+      
+### Set up a local running environment
 
-5. Install python3 and python3-pip on your operating system
+1. Install python3 and python3-pip on your operating system
 
    - Windows (not tested)
 
@@ -66,4 +68,37 @@ Initially Sapienza Students opted for a solution in the GO programming language 
      - Open the terminal and run the command `sudo pacman -Syu` to update the package lists
      - Run the command `sudo pacman -S python python-pip` to install Python3 and python3-pip
 
-6. Verify that python3 and python3-pip are installed by running the command `python3 -V` and `pip3 -V` respectively
+2. Clone this repository on your filesystem
+
+   a. Using `git`:
+    ```
+    git clone https://github.com/sapienzastudentsnetwork/sapienzastudentsbot/
+    ```
+   
+   b. Downloading it as ZIP [[Mirror]](https://github.com/sapienzastudentsnetwork/sapienzastudentsbot/archive/refs/heads/main.zip) and extracting it in a directory
+
+3. Verify that python3 and python3-pip are installed by running the `python3 -V` and `pip3 -V` commands respectively
+
+4. Open a terminal window or command prompt window and go to the local project directory using the `cd` command followed by the directory path (e.g. `cd "C:\Users\matypist\Downloads\sapienzastudentsbot"`)
+
+5. Run the `pip install pipenv` command to install pipenv, a tool required to create and manage a virtual environment containing this project's dependencies and environment variables 
+
+6. Run the `pipenv install` command to install all the dependencies specified in the project's Pipfile
+
+7. Create a file named `.env`, with the two following lines:
+   ```
+   TOKEN=your TOKEN value
+   DATABASE_URL=your DATABASE_URL value
+   ```
+   
+   To define the environment variable values required to run the bot
+
+   _**N.B.:** replace the values with the ones you got in the [prerequisites](https://github.com/sapienzastudentsnetwork/sapienzastudentsbot#prerequisites) section_
+
+### Run the bot
+
+1. Open a terminal window or command prompt window and go to the project root directory using the `cd` command followed by the directory path (e.g. `cd "C:\Users\matypist\Downloads\sapienzastudentsbot"`)
+
+2. Run the `pipenv shell` command to activate the project's virtual environment and load the environment variables
+
+3. Run the `python main.py` command to finally run the bot
