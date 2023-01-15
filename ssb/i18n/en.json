@@ -41,9 +41,8 @@
   ],
 
   "explore_groups.choose_category":                  "<i>Choose a category to view its groups</i>",
-  "explore_groups.choose_category.back_btn":         "◀️ Back to Menu",
   "explore_groups.join_href_text":                   "[JOIN]",
-  "explore_groups.category.back_btn":                "◀️ Categories",
+  "explore_groups.category.back_btn":                "◀️ Back to Menu",
   "explore_groups.category.no_category_groups_line": "\nGeneral (without sub-category):\n",
   "explore_groups.category.sub_categories_line":     "\nSub-categories:",
   "explore_groups.sub_category.back_btn":            "◀️ Sub-categories",

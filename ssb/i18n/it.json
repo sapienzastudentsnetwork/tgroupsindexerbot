@@ -46,12 +46,11 @@
   ],
 
   "explore_groups.choose_category":                  "<i>Scegli una categoria per visualizzarne i gruppi</i>",
-  "explore_groups.choose_category.back_btn":         "◀️ Torna al menù",
   "explore_groups.join_href_text":                   "[ENTRA]",
-  "explore_groups.category.back_btn":                "◀️ Categorie",
+  "explore_groups.category.back_btn":                "◀️ Torna al menù",
   "explore_groups.category.no_category_groups_line": "\nGenerali (senza sotto-categoria):\n",
   "explore_groups.category.sub_categories_line":     "\nSotto-categorie:",
-  "explore_groups.sub_category.back_btn":            "◀️ Sotto-categorie",
+  "explore_groups.sub_category.back_btn":            "◀️ Indietro",
 
   "wip_alert": "Funzionalità in fase di sviluppo, per favore riprova tra qualche giorno"
 }

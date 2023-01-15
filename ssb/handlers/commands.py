@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from ssb.data.database import SessionTable
+from ssb.data.database import SessionTable, DirectoryTable
 from ssb.handlers.queries import Queries
 from ssb.i18n.locales import Locale
 from ssb.ui.menus import Menus
@@ -26,7 +26,7 @@ class Commands:
                     text, reply_markup = Menus.get_main_menu(locale)
 
                 elif command == "groups":
-                    text, reply_markup = Queries.get_categories(locale)
+                    text, reply_markup = Queries.explore_category(locale, DirectoryTable.CATEGORIES_ROOT_DIR_ID)
 
                 if text or reply_markup:
                     reply_markup = Queries.encode_queries(reply_markup)

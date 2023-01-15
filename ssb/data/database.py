@@ -80,13 +80,15 @@ class Database:
             connection: psycopg2._psycopg.connection
 
             try:
-                # category
+                # directory
                 cursor.execute(
                     """
-                    CREATE TABLE IF NOT EXISTS category (
-                        main_category_name VARCHAR(60),
-                        sub_category_name VARCHAR(60) DEFAULT '',
-                        PRIMARY KEY (main_category_name, sub_category_name)
+                    CREATE TABLE IF NOT EXISTS directory (
+                        id SERIAL PRIMARY KEY,
+                        i18n_it_name VARCHAR(255) NOT NULL,
+                        i18n_en_name VARCHAR(255),
+                        parent_id INT,
+                        FOREIGN KEY (parent_id) REFERENCES directory(id)
                     );
                     """
                 )
@@ -99,12 +101,10 @@ class Database:
                         title VARCHAR(128),
                         invite_link VARCHAR(38),
                         chat_admins BIGINT[],
-                        main_category_name VARCHAR(60),
-                        sub_category_name VARCHAR(60) NULL,
+                        directory_id INT,
                         created_at TIMESTAMP DEFAULT now(),
                         updated_at TIMESTAMP DEFAULT now(),
-                        FOREIGN KEY (main_category_name, sub_category_name) 
-                        REFERENCES category(main_category_name, sub_category_name)
+                        FOREIGN KEY (directory_id) REFERENCES directory(id)
                     );
                     """
                 )
@@ -146,7 +146,7 @@ class Database:
 
 
 class AccountTable:
-    cached_accounts = {}
+    cached_account_records = {}
 
     @classmethod
     def create_account_record(cls, chat_id: int) -> bool:
@@ -175,7 +175,7 @@ class AccountTable:
 
     @classmethod
     def get_account_record(cls, chat_id: int) -> (dict, bool):
-        if chat_id not in cls.cached_accounts:
+        if chat_id not in cls.cached_account_records:
             cursor, iscursor = Database.get_cursor()
 
             if iscursor:
@@ -184,13 +184,13 @@ class AccountTable:
                 try:
                     cursor.execute("SELECT * FROM account WHERE chat_id = %s", (chat_id,))
 
-                    row = cursor.fetchone()
+                    account_record = cursor.fetchone()
 
-                    if row:
+                    if account_record is not None:
                         columns = [desc[0] for desc in cursor.description]
-                        user_data = dict(zip(columns, row))
+                        user_data = dict(zip(columns, account_record))
 
-                        cls.cached_accounts[chat_id] = user_data
+                        cls.cached_account_records[chat_id] = user_data
 
                         return user_data, True
                     else:
@@ -210,77 +210,91 @@ class AccountTable:
 
                 return {}, False
         else:
-            return cls.cached_accounts[chat_id], True
+            return cls.cached_account_records[chat_id], True
 
 
-class CategoriesTable:
-    @classmethod
-    def get_categories(cls) -> (list, bool):
-        categories = []
+class DirectoryTable:
+    CATEGORIES_ROOT_DIR_ID = 1
 
-        cursor, iscursor = Database.get_cursor()
+    cached_directory_records = {}
 
-        if iscursor:
-            cursor: psycopg2._psycopg.cursor
-
-            try:
-                cursor.execute("SELECT DISTINCT main_category_name "
-                               "FROM category "
-                               "WHERE main_category_name != ''")
-
-                records = cursor.fetchall()
-
-                for record in records:
-                    categories.append(record[0])
-
-                return categories, True
-
-            except (Exception, psycopg2.DatabaseError) as ex:
-                Logger.log("exception", "Database.get_categories",
-                           f"An exception occurred while trying to get categories: \n{ex}")
-
-                return [], False
-
-        else:
-            Logger.log("error", "Database.get_categories", f"Couldn't get cursor required to get categories")
-
-            return [], False
+    cached_sub_directories = {}
 
     @classmethod
-    def get_sub_categories(cls, main_category_name: str) -> (list, bool):
-        sub_categories = []
+    def get_directory_data(cls, directory_id: int):
+        if directory_id not in cls.cached_directory_records:
+            cursor, iscursor = Database.get_cursor()
 
-        cursor, iscursor = Database.get_cursor()
+            if iscursor:
+                cursor: psycopg2._psycopg.cursor
 
-        if iscursor:
-            cursor: psycopg2._psycopg.cursor
+                try:
+                    cursor.execute("SELECT * FROM directory WHERE id = %s", (directory_id,))
 
-            try:
-                cursor.execute(
-                    "SELECT sub_category_name FROM category "
-                    "WHERE main_category_name = %s "
-                    "AND sub_category_name != ''",
-                    (main_category_name,)
-                )
+                    directory_record = cursor.fetchone()
 
-                records = cursor.fetchall()
+                    if directory_record is not None:
+                        columns = [desc[0] for desc in cursor.description]
 
-                for record in records:
-                    sub_categories.append(record[0])
+                        directory_data = dict(zip(columns, directory_record))
 
-                return sub_categories, True
+                        cls.cached_directory_records[directory_id] = directory_data
 
-            except (Exception, psycopg2.DatabaseError) as ex:
-                Logger.log("exception", "Database.get_sub_categories",
-                           f"An exception occurred while trying to get "
-                           f"sub categories of '{main_category_name}': \n{ex}")
+                        return directory_data, True
+                    else:
+                        return {}, False
 
-                return [], False
+                except (Exception, psycopg2.DatabaseError) as ex:
+                    Logger.log("exception", "Database.get_directory_data",
+                               f"An exception occurred while trying to get directory name for directory "
+                               f"having id equal to '{directory_id}': \n{ex}")
 
+                    return {}, False
+
+            else:
+                Logger.log("error", "Database.get_directory_data", f"Couldn't get cursor required to get directory name")
+
+                return {}, False
         else:
-            Logger.log("error", "Database.get_sub_categories", f"Couldn't get cursor required to get sub-categories")
+            return cls.cached_directory_records[directory_id], True
 
-            return [], False
+    @classmethod
+    def get_sub_directories(cls, parent_id: int) -> (dir, bool):
+        if parent_id not in cls.cached_sub_directories:
+            cursor, iscursor = Database.get_cursor()
+
+            if iscursor:
+                cursor: psycopg2._psycopg.cursor
+
+                try:
+                    cursor.execute("SELECT * FROM directory WHERE parent_id = %s", (parent_id,))
+
+                    directories_records = cursor.fetchall()
+
+                    if directories_records is not None:
+                        columns = [desc[0] for desc in cursor.description if desc[0] != "id"]
+
+                        sub_directories = {directory_record[0]: dict(zip(columns, directory_record[1:])) for directory_record in directories_records}
+
+                        cls.cached_sub_directories[parent_id] = sub_directories
+
+                        return sub_directories, True
+                    else:
+                        return {}, True
+
+                except (Exception, psycopg2.DatabaseError) as ex:
+                    Logger.log("exception", "Database.get_sub_directories",
+                               f"An exception occurred while trying to get sub-directories of "
+                               f"directory with parent_id equal to '{parent_id}': \n{ex}")
+
+                    return {}, False
+
+            else:
+                Logger.log("error", "Database.get_sub_directories", f"Couldn't get cursor required to get sub-directories")
+
+                return {}, False
+        else:
+            return cls.cached_sub_directories[parent_id], True
 
 
 class ChatTable:
@@ -302,7 +316,7 @@ class ChatTable:
                 return cursor.fetchone()[0]
 
             except (Exception, psycopg2.DatabaseError) as ex:
-                Logger.log("exception", "Database.get_sub_categories",
+                Logger.log("exception", "Database.get_number_of_groups",
                            f"An exception occurred while trying to get the number of groups in "
                            f"'{main_category_name} > {sub_category_name}': \n{ex}")
 
@@ -315,25 +329,15 @@ class ChatTable:
             return -1
 
     @classmethod
-    def get_groups(cls, main_category_name: str, sub_category_name: str = None) -> (dict, bool):
+    def get_groups(cls, directory_id: int) -> (dict, bool):
         cursor, iscursor = Database.get_cursor()
 
         if iscursor:
             cursor: psycopg2._psycopg.cursor
 
-            if sub_category_name is None:
-                cursor.execute("SELECT * FROM chat "
-                               "WHERE main_category_name = %s "
-                               "AND sub_category_name = ''"
-                               "ORDER BY title ASC", (main_category_name,))
-            else:
-                cursor.execute(
-                    "SELECT * FROM chat "
-                    "WHERE main_category_name = %s "
-                    "AND sub_category_name = %s "
-                    "ORDER BY title ASC",
-                    (main_category_name, sub_category_name)
-               )
+            cursor.execute("SELECT * FROM chat "
+                           "WHERE directory_id = %s "
+                           "ORDER BY title ASC", (directory_id,))
 
             column_names = [desc[0] for desc in cursor.description]
             records = cursor.fetchall()

@@ -3,7 +3,7 @@ import hashlib
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 
-from ssb.data.database import CategoriesTable, AccountTable, ChatTable, SessionTable
+from ssb.data.database import DirectoryTable, AccountTable, ChatTable, SessionTable
 from ssb.i18n.locales import Locale
 from ssb.settings import Settings
 from ssb.ui.menus import Menus
@@ -11,7 +11,7 @@ from ssb.ui.menus import Menus
 
 class Queries:
     fixed_queries = [
-        "cd",
+        "explore_categories",
         "main_menu",
         "about_menu",
         "wip_alert",
@@ -82,117 +82,121 @@ class Queries:
     def user_can_perform_action(cls, chat_id: int, action: str):
         user_data = AccountTable.get_account_record(chat_id)
 
+        # TODO: if it is a group visualisation action then check
+        #       whether the user has the can_view_groups permission
+
+        # TODO: when the functionality to add and/or modify groups will be
+        #       implemented also add a check if the user has respectively
+        #       the can_add_groups and can_modify_groups permissions
+
         return True
 
     @classmethod
-    def get_categories(cls, locale: Locale) -> (str, InlineKeyboardMarkup):
-        text     = locale.get_string("explore_groups.choose_category")
-        keyboard = []
+    def explore_category(cls, locale: Locale, directory_id: int) -> (str, InlineKeyboardMarkup):
+        directory_data, is_directory_data = DirectoryTable.get_directory_data(directory_id)
 
-        categories_names, is_categories_names = CategoriesTable.get_categories()
+        if is_directory_data:
+            lang_code = locale.lang_code
 
-        if is_categories_names:
-            categories_names = sorted(categories_names)
+            if f"i18n_{lang_code}_name" in directory_data and bool(directory_data[f"i18n_{lang_code}_name"]):
+                directory_name = directory_data[f"i18n_{lang_code}_name"]
+            else:
+                directory_name = directory_data[f"i18n_{Locale.def_lang_code}_name"]
 
-            for main_category_name in categories_names:
-                category_callback_data = f"cd{Settings.queries_fd}" + main_category_name
+            parent_directory_id = -1
 
-                Queries.register_query(category_callback_data)
+            if "parent_id" in directory_data and bool(directory_data["parent_id"]):
+                parent_directory_id = directory_data["parent_id"]
+                parent_directory_data, _ = DirectoryTable.get_directory_data(parent_directory_id)
 
-                number_of_groups = ChatTable.get_number_of_groups(main_category_name)
+                if f"i18n_{lang_code}_name" in parent_directory_data and bool(parent_directory_data[f"i18n_{lang_code}_name"]):
+                    parent_directory_name = parent_directory_data[f"i18n_{lang_code}_name"]
+                else:
+                    parent_directory_name = parent_directory_data[f"i18n_{Locale.def_lang_code}_name"]
 
-                keyboard.append([InlineKeyboardButton(text=f"{main_category_name} [{number_of_groups}]",
-                                                      callback_data=category_callback_data)])
+            groups_dict, is_groups_dict = ChatTable.get_groups(directory_id)
 
-            keyboard.append([InlineKeyboardButton(text=locale.get_string("explore_groups.choose_category.back_btn"),
-                                                  callback_data="main_menu")])
+            if is_groups_dict:
+                keyboard = []
 
-            return text, InlineKeyboardMarkup(keyboard)
+                sub_directories_data, is_sub_directories_data = DirectoryTable.get_sub_directories(directory_id)
 
-        else:
-            return Menus.get_database_error_menu(locale)
+                if is_sub_directories_data:
+                    # FIXME: change to support i18n_en_name (-> 'i18n_{lang_code}_name' instead of 'i18n_{Locale.def_lang_code}_name')
+                    #        (requires translating all categories names to english and mark i18n_en_name as NOT NULL column before,
+                    #         that's a matter of the official instance's database content which will be solved in a next update)
+                    #        then also switch cls.def_lang_code in i18n/locales.py#Locale back to 'en' (instead of 'it')
 
-    @classmethod
-    def explore_category(cls, locale: Locale, main_category_name: str, sub_category_name: str = None) -> (str, InlineKeyboardMarkup):
-        sub_categories_names = {}
+                    sort_key = f"i18n_{Locale.def_lang_code}_name"
+                    sorted_ids_and_values = [(curr_sub_directory_id, curr_sub_directory[sort_key]) for curr_sub_directory_id, curr_sub_directory in sub_directories_data.items()]
+                    sorted_ids_and_values.sort(key=lambda x: x[1])
+                    sorted_ids = [x[0] for x in sorted_ids_and_values]
 
-        if sub_category_name:
-            groups_dict, is_groups_dict = ChatTable.get_groups(main_category_name, sub_category_name)
+                    for curr_sub_directory_id in sorted_ids:
+                        curr_sub_directory_data, is_curr_sub_directory_data = DirectoryTable.get_directory_data(curr_sub_directory_id)
 
-            text = f"<b>{main_category_name} > {sub_category_name}</b>\n"
+                        if is_curr_sub_directory_data:
+                            if f"i18n_{lang_code}_name" in curr_sub_directory_data and bool(curr_sub_directory_data[f"i18n_{lang_code}_name"]):
+                                curr_sub_directory_name = curr_sub_directory_data[f"i18n_{lang_code}_name"]
+                            else:
+                                curr_sub_directory_name = curr_sub_directory_data[f"i18n_{Locale.def_lang_code}_name"]
 
-            back_button_text = locale.get_string("explore_groups.sub_category.back_btn")
-            back_button_callback_data = f"cd{Settings.queries_fd}{main_category_name}"
+                            sub_directory_callback_data = f"cd{Settings.queries_fd}{curr_sub_directory_id}"
+                            Queries.register_query(sub_directory_callback_data)
 
-        else:
-            groups_dict, is_groups_dict = ChatTable.get_groups(main_category_name)
+                            # number_of_groups = ChatTable.get_number_of_groups(main_category_name, curr_sub_category_name)
 
-            text = f"<b>{main_category_name}</b>\n"
-
-            if len(groups_dict) > 0:
-                text += locale.get_string("explore_groups.category.no_category_groups_line")
-
-            back_button_callback_data = f"cd"
-
-            back_button_text = locale.get_string("explore_groups.category.back_btn")
-
-        if is_groups_dict:
-            keyboard = []
-
-            if not sub_category_name:
-                sub_categories_names, is_subcategories_names = CategoriesTable.get_sub_categories(main_category_name)
-
-                if is_subcategories_names:
-                    sub_categories_names = sorted(sub_categories_names)
-
-                    for curr_sub_category_name in sub_categories_names:
-                        sub_category_callback_data = f"cd{Settings.queries_fd}{main_category_name}{Settings.queries_fd}{curr_sub_category_name}"
-
-                        Queries.register_query(sub_category_callback_data)
-
-                        number_of_groups = ChatTable.get_number_of_groups(main_category_name, curr_sub_category_name)
-
-                        keyboard.append([InlineKeyboardButton(text=f"{curr_sub_category_name} [{number_of_groups}]",
-                                                              callback_data=sub_category_callback_data)])
+                            # keyboard.append([InlineKeyboardButton(text=f"{curr_sub_directory_name} {number_of_groups}",
+                            keyboard.append([InlineKeyboardButton(text=f"{curr_sub_directory_name}",
+                                                                  callback_data=sub_directory_callback_data)])
                 else:
                     return Menus.get_database_error_menu(locale)
 
-            keyboard.append([InlineKeyboardButton(text=back_button_text,
-                                                  callback_data=back_button_callback_data)])
+                if parent_directory_id != -1:
+                    text = f"<b>" + parent_directory_name + " > " + directory_name + "</b>\n"
 
-            for group_chat_id, group_data_dict in groups_dict.items():
-                group_title       = group_data_dict["title"]
-                group_invite_link = group_data_dict["invite_link"]
+                    back_button_text = locale.get_string("explore_groups.sub_category.back_btn")
+                    back_button_callback_data = f"cd{Settings.queries_fd}{parent_directory_id}"
 
-                text += f"\n• {group_title} <a href='{group_invite_link}'>" \
-                        + locale.get_string("explore_groups.join_href_text") + "</a>"
+                else:
+                    text = f"<b>" + directory_data["i18n_it_name"] + "</b>\n"
 
-            if not sub_category_name and len(sub_categories_names) > 0:
-                if len(groups_dict) > 0:
-                    text += "\n"
+                    if directory_id == DirectoryTable.CATEGORIES_ROOT_DIR_ID:
+                        text += "\n" + locale.get_string("explore_groups.choose_category") + "\n"
 
-                text += locale.get_string("explore_groups.category.sub_categories_line")
+                    back_button_callback_data = f"main_menu"
 
-            return text, InlineKeyboardMarkup(keyboard)
-        else:
-            return Menus.get_database_error_menu(locale)
+                    back_button_text = locale.get_string("explore_groups.category.back_btn")
+
+                Queries.register_query(back_button_callback_data)
+
+                keyboard.append([InlineKeyboardButton(text=back_button_text,
+                                                      callback_data=back_button_callback_data)])
+
+                if len(sub_directories_data) > 0 and len(groups_dict) > 0:
+                    text += locale.get_string("explore_groups.category.no_category_groups_line")
+
+                for group_chat_id, group_data_dict in groups_dict.items():
+                    group_title       = group_data_dict["title"]
+                    group_invite_link = group_data_dict["invite_link"]
+
+                    text += f"\n• {group_title} <a href='{group_invite_link}'>" \
+                            + locale.get_string("explore_groups.join_href_text") + "</a>"
+
+                if len(sub_directories_data) > 0:
+                    if len(groups_dict) > 0:
+                        text += "\n"
+
+                    if directory_id not in (DirectoryTable.CATEGORIES_ROOT_DIR_ID,):
+                        text += locale.get_string("explore_groups.category.sub_categories_line")
+
+                return text, InlineKeyboardMarkup(keyboard)
+
+        return Menus.get_database_error_menu(locale)
 
     @classmethod
-    def cd_queries_handler(cls, query_data: str, locale: Locale) -> (str, InlineKeyboardMarkup):
-        fields = query_data.split("  ")
-
-        number_of_fields = len(fields)
-
-        if number_of_fields > 0:
-            main_category = fields[0]
-
-            sub_category = None
-            if number_of_fields > 1:
-                sub_category = fields[1]
-
-            return Queries.explore_category(locale, main_category, sub_category)
-
-        return None, None
+    def cd_queries_handler(cls, directory_id: int, locale: Locale) -> (str, InlineKeyboardMarkup):
+        return Queries.explore_category(locale, directory_id)
 
     @classmethod
     async def callback_queries_handler(cls, update: Update, context: CallbackContext):
@@ -205,7 +209,7 @@ class Queries:
 
         if query_message.chat.type == "private":
             hashed_query_data = query.data
-            query_data        = cls.decode_query_data(hashed_query_data)
+            query_data = cls.decode_query_data(hashed_query_data)
 
             text, reply_markup = "", None
 
@@ -213,11 +217,19 @@ class Queries:
                 if query_data == "unrecognized query":
                     query_data = "main_menu"
 
-                if query_data.startswith("cd  "):
-                    text, reply_markup = cls.cd_queries_handler(query_data[len("cd  "):], locale)
+                if query_data == "explore_categories":
+                    text, reply_markup = cls.cd_queries_handler(DirectoryTable.CATEGORIES_ROOT_DIR_ID, locale)
 
-                elif query_data == "cd":
-                    text, reply_markup = Queries.get_categories(locale)
+                elif query_data.startswith("cd  "):
+                    directory_id = -1
+
+                    try:
+                        directory_id = int(query_data[len("cd  "):])
+                    except:
+                        pass
+
+                    if directory_id != -1:
+                        text, reply_markup = cls.cd_queries_handler(directory_id, locale)
 
                 elif query_data == "main_menu":
                     text, reply_markup = Menus.get_main_menu(locale)
