@@ -117,6 +117,8 @@ class Queries:
             groups_dict, is_groups_dict = ChatTable.get_groups(directory_id)
 
             if is_groups_dict:
+                groups_dict: dict
+
                 keyboard = []
 
                 sub_directories_data, is_sub_directories_data = DirectoryTable.get_sub_directories(directory_id)
@@ -177,11 +179,20 @@ class Queries:
                     text += locale.get_string("explore_groups.category.no_category_groups_line")
 
                 for group_chat_id, group_data_dict in groups_dict.items():
-                    group_title       = group_data_dict["title"]
-                    group_invite_link = group_data_dict["invite_link"]
+                    group_title = group_data_dict["title"]
 
-                    text += f"\n• {group_title} <a href='{group_invite_link}'>" \
-                            + locale.get_string("explore_groups.join_href_text") + "</a>"
+                    group_join_url = ""
+
+                    if "custom_link" in group_data_dict and bool(group_data_dict["custom_link"]):
+                        group_join_url = group_data_dict["custom_link"]
+                    elif "invite_link" in group_data_dict and bool(group_data_dict["invite_link"]):
+                        group_join_url = group_data_dict["invite_link"]
+
+                    if group_join_url:
+                        text += f"\n• {group_title} <a href='{group_join_url}'>" \
+                                + locale.get_string("explore_groups.join_href_text") + "</a>"
+                    else:
+                        groups_dict.pop(group_chat_id)
 
                 if len(sub_directories_data) > 0:
                     if len(groups_dict) > 0:

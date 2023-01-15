@@ -100,6 +100,7 @@ class Database:
                         chat_id BIGINT PRIMARY KEY,
                         title VARCHAR(128),
                         invite_link VARCHAR(38),
+                        custom_link VARCHAR(60),
                         chat_admins BIGINT[],
                         directory_id INT,
                         created_at TIMESTAMP DEFAULT now(),
