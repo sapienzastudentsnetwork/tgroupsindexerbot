@@ -33,24 +33,29 @@ class GitHubMonitor:
         await cls.ssb_bot_instance.send_message(
             chat_id=cls.ssb_telegram_git_channel_chat_id,
             text=f"<b><u>New Commit</u></b> <a href='{cls.ssb_repo_url}/commit/{id}'>[🌐]</a>"
-                 f"\n\n👤 {author} • {update_date}"
+                 f"\n\n👤 {author} • <code>{update_date}</code>"
                  f"\n\n{summary}"
         )
 
     @classmethod
     async def notify_updates_since(cls, update_date: str, atom_feed: feedparser.FeedParserDict):
         if "entries" in atom_feed:
-            entries_dict = atom_feed["entries"]
+            entries = atom_feed["entries"]
+            update_entries = []
 
-            for entry_dict in entries_dict:
-                entry_update_date = entry_dict["updated"]
-
-                if entry_update_date <= update_date:
+            for entry_dict in entries:
+                if entry_dict["updated"] <= update_date:
                     break
+
+                update_entries.append(entry_dict)
+
+            for entry_dict in reversed(update_entries):
+                entry_update_date = entry_dict["updated"]
 
                 id = entry_dict["id"].split("/")[1]
 
-                author = "<a href='" + entry_dict["author"]["uri"] + "'>" + entry_dict["author"]["name"] + "</a>"
+                author_details = entry_dict["author_detail"]
+                author = "<a href='" + author_details["href"] + "'>" + author_details["name"] + "</a>"
 
                 summary = re.sub("<pre[^>]*>|</pre>", "", entry_dict["summary"])
 
@@ -76,14 +81,14 @@ class GitHubMonitor:
             previous_atom_feed_update_date = cls.atom_feed_update_date
 
             if current_atom_feed_update_date and current_atom_feed_update_date != previous_atom_feed_update_date:
+                await cls.notify_updates_since(previous_atom_feed_update_date, atom_feed)
+
                 PersistentVarsTable.update_value_by_key(
                     cls.previous_atom_feed_update_date_key_name,
                     current_atom_feed_update_date
                 )
 
                 cls.atom_feed_update_date = current_atom_feed_update_date
-
-                await cls.notify_updates_since(previous_atom_feed_update_date, atom_feed)
 
         except Exception as ex:
             Logger.log("exception", "GitHubMonitor", str(ex))
