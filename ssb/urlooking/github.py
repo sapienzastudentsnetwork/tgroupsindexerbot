@@ -95,7 +95,7 @@ class GitHubMonitor:
 
             try:
                 await cls.ssb_bot_instance.send_message(
-                    chat_id=os_getenv("MATYPIST_CHAT_ID"),
+                    chat_id=os_getenv("DEVELOPER_CHAT_ID"),
                     text=f"<b>EXCEPTION</b>\n\n{ex}"
                 )
 

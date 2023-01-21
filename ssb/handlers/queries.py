@@ -11,6 +11,7 @@ from ssb.ui.menus import Menus
 
 class Queries:
     fixed_queries = [
+        "refresh_session",
         "explore_categories",
         "main_menu",
         "about_menu",
@@ -225,7 +226,7 @@ class Queries:
             text, reply_markup = "", None
 
             if Queries.user_can_perform_action(chat_id, query_data):
-                if query_data == "unrecognized query":
+                if query_data in ("refresh_session", "unrecognized query"):
                     query_data = "main_menu"
 
                 if query_data == "explore_categories":
