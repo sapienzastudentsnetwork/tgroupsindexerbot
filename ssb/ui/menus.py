@@ -24,8 +24,23 @@ class Menus:
         text = locale.get_string("about_menu.text")
 
         keyboard = [
-            [InlineKeyboardButton(text=locale.get_string("about_menu.contact_us"),
-                                  url=f'tg://resolve?domain=sapienzastudentsnetworkbot')],
+            [
+             InlineKeyboardButton(text=locale.get_string("about_menu.github_repo"),
+                                  url=f'https://github.com/sapienzastudentsnetwork/sapienzastudentsbot'),
+             InlineKeyboardButton(text=locale.get_string("about_menu.git_channel"),
+                                  url=f'tg://resolve?domain=sapienzastudentsbotgit')],
+            [
+             InlineKeyboardButton(text=locale.get_string("about_menu.contact_us"),
+                                  url=f'tg://resolve?domain=sapienzastudentsnetworkbot'),
+             InlineKeyboardButton(text=locale.get_string("about_menu.report_issue"),
+                                  url=f'https://github.com/sapienzastudentsnetwork/sapienzastudentsbot/issues/new?'
+                                      f'title=[ISSUE]%20Please%20choose%20a%20title%20for%20this%20issue'
+                                      f'&body=Please%20describe%20the%20issue%20in%20detail%20here.%20Thanks%20in%20advance%20:)')
+            ],
+            [InlineKeyboardButton(text=locale.get_string("about_menu.feature_request"),
+                                  url=f'https://github.com/sapienzastudentsnetwork/sapienzastudentsbot/issues/new?'
+                                      f'title=[FEATURE REQUEST]%20Please%20choose%20a%20title%20for%20this%20feature%20request'
+                                      f'&body=Please%20describe%20the%20request%20in%20detail%20here.%20Thanks%20in%20advance%20:)')],
             [InlineKeyboardButton(text=locale.get_string("about_menu.back_btn"),
                                   callback_data="main_menu")]
         ]
