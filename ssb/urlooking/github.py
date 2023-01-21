@@ -35,6 +35,7 @@ class GitHubMonitor:
 
         return None
 
+    @classmethod
     async def look_for_updates(cls, context: ContextTypes.DEFAULT_TYPE) -> None:
         Logger.log("info", "GitHubMonitor", "Checking the GitHub repository for updates")
 
