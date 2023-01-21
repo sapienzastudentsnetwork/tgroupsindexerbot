@@ -14,7 +14,7 @@ class GitHubMonitor:
 
     previous_atom_feed_update_date_key_name = "ssb_repo_atom_feed_latest_update_date"
 
-    previous_atom_feed_update_date = None
+    atom_feed_update_date = None
 
     ssb_repo_url = "https://github.com/sapienzastudentsnetwork/sapienzastudentsbot"
 
@@ -29,7 +29,7 @@ class GitHubMonitor:
         return feedparser.parse(atom_feed_url)
 
     @classmethod
-    def notify_update(cls, id: str, author: str, update_date: str, summary: str):
+    async def notify_update(cls, id: str, author: str, update_date: str, summary: str):
         await cls.ssb_bot_instance.send_message(
             chat_id=cls.ssb_telegram_git_channel_chat_id,
             text=f"<b><u>New Commit</u></b> <a href='{cls.ssb_repo_url}/commit/{id}'>[🌐]</a>"
@@ -38,7 +38,7 @@ class GitHubMonitor:
         )
 
     @classmethod
-    def notify_updates_since(cls, update_date: str, atom_feed: feedparser.FeedParserDict):
+    async def notify_updates_since(cls, update_date: str, atom_feed: feedparser.FeedParserDict):
         if "entries" in atom_feed:
             entries_dict = atom_feed["entries"]
 
@@ -54,7 +54,7 @@ class GitHubMonitor:
 
                 summary = re.sub("<pre[^>]*>|</pre>", "", entry_dict["summary"])
 
-                cls.notify_update(id=id, author=author, update_date=entry_update_date, summary=summary)
+                await cls.notify_update(id=id, author=author, update_date=entry_update_date, summary=summary)
 
     @classmethod
     def get_atom_feed_latest_update_date(cls, atom_feed: feedparser.FeedParserDict):
@@ -73,15 +73,17 @@ class GitHubMonitor:
 
             current_atom_feed_update_date = cls.get_atom_feed_latest_update_date(atom_feed)
 
-            if current_atom_feed_update_date and current_atom_feed_update_date != cls.previous_atom_feed_update_date:
+            previous_atom_feed_update_date = cls.atom_feed_update_date
+
+            if current_atom_feed_update_date and current_atom_feed_update_date != previous_atom_feed_update_date:
                 PersistentVarsTable.update_value_by_key(
                     cls.previous_atom_feed_update_date_key_name,
                     current_atom_feed_update_date
                 )
 
-                cls.notify_updates_since(cls.previous_atom_feed_update_date, atom_feed)
+                cls.atom_feed_update_date = current_atom_feed_update_date
 
-                cls.previous_atom_feed_update_date = current_atom_feed_update_date
+                await cls.notify_updates_since(previous_atom_feed_update_date, atom_feed)
 
         except Exception as ex:
             Logger.log("exception", "GitHubMonitor", str(ex))
@@ -108,8 +110,8 @@ class GitHubMonitor:
 
             previous_atom_feed_update_date = cls.get_atom_feed_latest_update_date(atom_feed)
 
-            cls.previous_atom_feed_update_date = previous_atom_feed_update_date
+            cls.atom_feed_update_date = previous_atom_feed_update_date
 
             PersistentVarsTable.add_new_var(cls.previous_atom_feed_update_date_key_name, previous_atom_feed_update_date)
         else:
-            cls.previous_atom_feed_update_date = previous_atom_feed_update_date
+            cls.atom_feed_update_date = previous_atom_feed_update_date
