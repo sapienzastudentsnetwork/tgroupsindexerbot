@@ -134,7 +134,18 @@ class Database:
                         menu_message_id BIGINT
                     );
                     """
+                )
 
+                # persistent_vars
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS persistent_vars (
+                        key TEXT PRIMARY KEY,
+                        value TEXT NOT NULL DEFAULT '',
+                        created_at TIMESTAMP DEFAULT now(),
+                        updated_at TIMESTAMP DEFAULT now()
+                    );
+                    """
                 )
 
                 connection.commit()
@@ -464,3 +475,85 @@ class SessionTable:
 
         else:
             Logger.log("error", "Database.expire_old_sessions", f"Couldn't get cursor required to expire old sessions")
+
+
+class PersistentVarsTable:
+    @classmethod
+    def add_new_var(cls, key: str, value: str):
+        cursor, iscursor = Database.get_cursor()
+
+        updated = False
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            connection = Database.connection
+            connection: psycopg2._psycopg.connection
+
+            try:
+                cursor.execute(
+                    "INSERT INTO persistent_vars (key, value, created_at, updated_at) "
+                    "VALUES (%s, %s, NOW() AT TIME ZONE 'Europe/Rome', NOW() AT TIME ZONE 'Europe/Rome')",
+                    (key, value)
+                )
+
+                connection.commit()
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("critical", "PersistentVarsTable.add_new_var",
+                           f"An exception occurred while trying to add '{key}' with value '{value}': \n{ex}")
+        else:
+            Logger.log("error", "PersistentVarsTable.add_new_var",
+                       f"Couldn't get cursor required to add '{key}' with value '{value}'")
+
+        return updated
+
+    @classmethod
+    def update_value_by_key(cls, key: str, new_value: str):
+        cursor, iscursor = Database.get_cursor()
+
+        updated = False
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            connection = Database.connection
+            connection: psycopg2._psycopg.connection
+
+            try:
+                cursor.execute(
+                    "UPDATE persistent_vars "
+                    "SET value = %s, updated_at = now() AT TIME ZONE 'Europe/Rome' "
+                    "WHERE key = %s", (new_value, key)
+                )
+
+                connection.commit()
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("critical", "PersistentVarsTable.update_value_by_key",
+                           f"An exception occurred while trying to update '{key}' value to '{new_value}': \n{ex}")
+        else:
+            Logger.log("error", "PersistentVarsTable.update_value_by_key",
+                       f"Couldn't get cursor required to update '{key}' value to '{new_value}'")
+
+        return updated
+
+    @classmethod
+    def get_value_by_key(cls, key: str) -> (str | None):
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            try:
+                cursor.execute("SELECT value FROM persistent_vars WHERE key = %s", (key,))
+
+                result = cursor.fetchone()
+
+                if result:
+                    return result[0]
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("critical", "PersistentVarsTable.get_value_by_key",
+                           f"An exception occurred while trying to get '{key}' value: \n{ex}")
+        else:
+            Logger.log("error", "PersistentVarsTable.get_value_by_key",
+                       f"Couldn't get cursor required to get '{key}' value")

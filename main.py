@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os
+from os import getenv as os_getenv
 
 import pytz
 from telegram import __version__ as tg_ver
@@ -11,6 +11,7 @@ from ssb.handlers.commands import Commands
 from ssb.handlers.queries import Queries
 from ssb.i18n.locales import Locale
 from ssb.logs import Logger
+from ssb.urlooking.github import GitHubMonitor
 
 try:
     from telegram import __version_info__
@@ -35,11 +36,21 @@ def main() -> None:
 
     defaults = Defaults(parse_mode=ParseMode.HTML, tzinfo=pytz.timezone('Europe/Rome'), disable_web_page_preview=True)
 
-    application = Application.builder().token(os.getenv("TOKEN")).defaults(defaults).build()
+    application = Application.builder().token(os_getenv("TOKEN")).defaults(defaults).build()
+    application: Application
+
     application.job_queue.run_once(callback=SessionTable.expire_old_sessions, when=0)
 
     application.add_handler(MessageHandler(filters=filters.COMMAND, callback=Commands.commands_handler))
     application.add_handler(CallbackQueryHandler(callback=Queries.callback_queries_handler))
+
+    GitHubMonitor.init(application.bot)
+
+    application.job_queue.run_repeating(
+        callback=GitHubMonitor.look_for_updates,
+        interval=GitHubMonitor.interval,
+        first=1
+    )
 
     application.run_polling()
 
