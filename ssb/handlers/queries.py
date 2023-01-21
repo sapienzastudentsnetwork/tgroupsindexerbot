@@ -1,5 +1,7 @@
 import hashlib
+from datetime import datetime
 
+import pytz
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 
@@ -158,23 +160,35 @@ class Queries:
                 if parent_directory_id != -1:
                     text = f"<b>" + parent_directory_name + " > " + directory_name + "</b>\n"
 
-                    back_button_text = locale.get_string("explore_groups.sub_category.back_btn")
+                    back_button_text = locale.get_string("explore_directories.sub_directory.back_btn")
                     back_button_callback_data = f"cd{GlobalVariables.queries_fd}{parent_directory_id}"
 
                 else:
                     text = f"<b>" + directory_data["i18n_it_name"] + "</b>\n"
 
                     if directory_id == DirectoryTable.CATEGORIES_ROOT_DIR_ID:
-                        text += "\n" + locale.get_string("explore_groups.choose_category") + "\n"
+                        text += "\n" + locale.get_string("explore_groups.choose_category")
 
                     back_button_callback_data = f"main_menu"
 
-                    back_button_text = locale.get_string("explore_groups.category.back_btn")
+                    back_button_text = locale.get_string("explore_directories.back_to_menu_btn")
 
                 Queries.register_query(back_button_callback_data)
 
                 keyboard.append([InlineKeyboardButton(text=back_button_text,
                                                       callback_data=back_button_callback_data)])
+
+                if len(groups_dict) > 0:
+                    datetime_now = datetime.now(pytz.timezone('Europe/Rome'))
+
+                    date_str   = datetime_now.strftime("%d/%m/%Y")
+                    time_str   = datetime_now.strftime("%H:%M")
+                    offset_str = datetime_now.strftime("%z")
+
+                    text += "\n" + locale.get_string("explore_groups.category.generation_date_line")\
+                        .replace("[date]",   date_str)\
+                        .replace("[time]",   time_str)\
+                        .replace("[offset]", offset_str[1:3]) + "\n"
 
                 if len(sub_directories_data) > 0 and len(groups_dict) > 0:
                     text += locale.get_string("explore_groups.category.no_category_groups_line")

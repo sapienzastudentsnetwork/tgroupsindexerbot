@@ -45,12 +45,14 @@
     "riavvio) del bot e comunque almeno una volta entro 24 ore"
   ],
 
+  "explore_directories.sub_directory.back_btn":      "◀️ Indietro",
+  "explore_directories.back_to_menu_btn":            "◀️ Torna al menù",
+
   "explore_groups.choose_category":                  "<i>Scegli una categoria per visualizzarne i gruppi</i>",
   "explore_groups.join_href_text":                   "[ENTRA]",
-  "explore_groups.category.back_btn":                "◀️ Torna al menù",
+  "explore_groups.category.generation_date_line":    "<i>Lista di gruppi generata il [date] alle ore [time] (UTC+[offset]), controllare periodicamente per aggiornamenti</i>",
   "explore_groups.category.no_category_groups_line": "\nGenerali (senza sotto-categoria):\n",
-  "explore_groups.category.sub_categories_line":     "\nSotto-categorie:",
-  "explore_groups.sub_category.back_btn":            "◀️ Indietro",
+  "explore_groups.category.sub_categories_line":     "\nSotto-categorie (pulsanti):",
 
-  "wip_alert": "Funzionalità in fase di sviluppo, per favore riprova tra qualche giorno"
+  "wip_alert": "Funzionalità in fase di sviluppo, provvisoriamente resa possibile contattando @Matypist su Telegram"
 }
