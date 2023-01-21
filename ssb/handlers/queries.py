@@ -5,7 +5,7 @@ from telegram.ext import CallbackContext
 
 from ssb.data.database import DirectoryTable, AccountTable, ChatTable, SessionTable
 from ssb.i18n.locales import Locale
-from ssb.settings import Settings
+from ssb.global_vars import GlobalVariables
 from ssb.ui.menus import Menus
 
 
@@ -144,7 +144,7 @@ class Queries:
                             else:
                                 curr_sub_directory_name = curr_sub_directory_data[f"i18n_{Locale.def_lang_code}_name"]
 
-                            sub_directory_callback_data = f"cd{Settings.queries_fd}{curr_sub_directory_id}"
+                            sub_directory_callback_data = f"cd{GlobalVariables.queries_fd}{curr_sub_directory_id}"
                             Queries.register_query(sub_directory_callback_data)
 
                             # number_of_groups = ChatTable.get_number_of_groups(main_category_name, curr_sub_category_name)
@@ -159,7 +159,7 @@ class Queries:
                     text = f"<b>" + parent_directory_name + " > " + directory_name + "</b>\n"
 
                     back_button_text = locale.get_string("explore_groups.sub_category.back_btn")
-                    back_button_callback_data = f"cd{Settings.queries_fd}{parent_directory_id}"
+                    back_button_callback_data = f"cd{GlobalVariables.queries_fd}{parent_directory_id}"
 
                 else:
                     text = f"<b>" + directory_data["i18n_it_name"] + "</b>\n"

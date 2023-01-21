@@ -6,7 +6,8 @@ from telegram import __version__ as tg_ver
 from telegram.constants import ParseMode
 from telegram.ext import Application, CallbackQueryHandler, Defaults, MessageHandler, filters
 
-from ssb.data.database import Database, SessionTable
+from ssb.data.database import Database, SessionTable, AccountTable
+from ssb.global_vars import GlobalVariables
 from ssb.handlers.commands import Commands
 from ssb.handlers.queries import Queries
 from ssb.i18n.locales import Locale
@@ -45,6 +46,8 @@ def main() -> None:
     application.add_handler(CallbackQueryHandler(callback=Queries.callback_queries_handler))
 
     GitHubMonitor.init(application.bot)
+
+    GlobalVariables.set_accounts_count(AccountTable.get_account_records_count())
 
     application.job_queue.run_repeating(
         callback=GitHubMonitor.look_for_updates,

@@ -4,6 +4,7 @@ from urllib.parse import urlparse as urllib_parse_urlparse
 import psycopg2
 from telegram.ext import ContextTypes
 
+from ssb.global_vars import GlobalVariables
 from ssb.ui.menus import Menus
 from ssb.logs import Logger
 
@@ -161,6 +162,30 @@ class AccountTable:
     cached_account_records = {}
 
     @classmethod
+    def get_account_records_count(cls) -> int:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute("SELECT COUNT(*) FROM account")
+
+                return cursor.fetchone()[0]
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "AccountTable.get_account_records_count",
+                           f"An exception occurred while trying to get the number of account records: \n{ex}")
+
+                return -1
+
+        else:
+            Logger.log("error", "AccountTable.get_account_records_count",
+                       f"Couldn't get cursor required to get the number of groups")
+
+            return -1
+
+    @classmethod
     def create_account_record(cls, chat_id: int) -> bool:
         cursor, iscursor = Database.get_cursor()
 
@@ -171,6 +196,8 @@ class AccountTable:
                     "VALUES (%s, now() AT TIME ZONE 'Europe/Rome')",
                     (chat_id,)
                 )
+
+                GlobalVariables.increment_accounts_count()
 
                 return True
 

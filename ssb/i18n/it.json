@@ -14,16 +14,17 @@
   "main_menu.about_message_btn":       "ℹ️ Riguardo il bot",
 
   "about_menu.text": [
-    "ℹ️ Progetto Open Source di un bot Telegram per l'indicizzazione di gruppi gestiti da studenti e studentesse dell'ateneo\n\n",
-    "\uD83D\uDCA0 Attualmente gestito e coordinato da Matteo Collica (@Matypist) e Damiano Gualandri (@dag7d)\n\n",
-    "\uD83E\uDDD1\u200D\uD83D\uDCBB Programmato in Python <a href=\"github.com/sapienzastudentsnetwork/sapienzastudentsbot\">[GitHub]</a>\n\n",
-    "\uD83D\uDCC4 Originariamente ideato e programmato in GO <a href=\"https://gitlab.com/sapienzastudents/antispam-telegram-bot\">[GitLab]</a>"
+    "ℹ️ Progetto Open Source di un bot Telegram per l'indicizzazione di gruppi gestiti da studenti e studentesse dell'ateneo",
+    "\n\n📊 [accounts_count] utenti diversi hanno usufruito almeno una volta del bot a partire dal 14/01/2023",
+    "\n\n\uD83D\uDCA0 Progetto attualmente gestito e coordinato da Matteo Collica (@Matypist) e Damiano Gualandri (@dag7d)",
+    "\n\n\uD83E\uDDD1\u200D\uD83D\uDCBB Bot programmato in Python <a href=\"github.com/sapienzastudentsnetwork/sapienzastudentsbot\">[GitHub]</a>",
+    "\n\n\uD83D\uDCC4 Originariamente ideato e programmato in GO <a href=\"https://gitlab.com/sapienzastudents/antispam-telegram-bot\">[GitLab]</a>"
   ],
-  "about_menu.github_repo": "\uD83C\uDF10 Repository GitHub",
-  "about_menu.git_channel": "\uD83D\uDD04 Canale Git",
-  "about_menu.report_issue": "\uD83D\uDD8D Segnala un problema",
-  "about_menu.feature_request": "\uD83D\uDCE4 Suggerisci nuove funzionalità",
-  "about_menu.contact_us": "\uD83D\uDCAC Contattaci",
+  "about_menu.github_repo_btn": "\uD83C\uDF10 Repository GitHub",
+  "about_menu.git_channel_btn": "\uD83D\uDD04 Canale Git",
+  "about_menu.report_issue_btn": "\uD83D\uDD8D Segnala un problema",
+  "about_menu.feature_request_btn": "\uD83D\uDCE4 Suggerisci nuove funzionalità",
+  "about_menu.contact_us_btn": "\uD83D\uDCAC Contattaci",
   "about_menu.back_btn":   "◀️ Torna al menù",
 
   "database_error_menu.text": [
