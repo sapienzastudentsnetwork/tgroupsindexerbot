@@ -117,7 +117,7 @@ class Queries:
                 else:
                     parent_directory_name = parent_directory_data[f"i18n_{Locale.def_lang_code}_name"]
 
-            groups_dict, is_groups_dict = ChatTable.get_groups(directory_id)
+            groups_dict, is_groups_dict = ChatTable.get_chats(directory_id)
 
             if is_groups_dict:
                 groups_dict: dict
@@ -146,14 +146,17 @@ class Queries:
                             else:
                                 curr_sub_directory_name = curr_sub_directory_data[f"i18n_{Locale.def_lang_code}_name"]
 
-                            sub_directory_callback_data = f"cd{GlobalVariables.queries_fd}{curr_sub_directory_id}"
-                            Queries.register_query(sub_directory_callback_data)
+                            curr_sub_directory_callback_data = f"cd{GlobalVariables.queries_fd}{curr_sub_directory_id}"
+                            Queries.register_query(curr_sub_directory_callback_data)
 
-                            # number_of_groups = ChatTable.get_number_of_groups(main_category_name, curr_sub_category_name)
+                            curr_sub_directory_btn_text = curr_sub_directory_name
 
-                            # keyboard.append([InlineKeyboardButton(text=f"{curr_sub_directory_name} {number_of_groups}",
-                            keyboard.append([InlineKeyboardButton(text=f"{curr_sub_directory_name}",
-                                                                  callback_data=sub_directory_callback_data)])
+                            number_of_groups, is_number_of_groups = ChatTable.get_chat_count(curr_sub_directory_id)
+                            if is_number_of_groups:
+                                curr_sub_directory_btn_text += f" [{number_of_groups}]"
+
+                            keyboard.append([InlineKeyboardButton(text=curr_sub_directory_btn_text,
+                                                                  callback_data=curr_sub_directory_callback_data)])
                 else:
                     return Menus.get_database_error_menu(locale)
 

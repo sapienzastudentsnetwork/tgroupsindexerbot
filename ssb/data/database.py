@@ -306,7 +306,8 @@ class DirectoryTable:
                 cursor: psycopg2._psycopg.cursor
 
                 try:
-                    cursor.execute("SELECT * FROM directory WHERE parent_id = %s", (parent_id,))
+                    cursor.execute("SELECT * FROM directory "
+                                   "WHERE parent_id = %s AND (i18n_it_name != '' OR i18n_en_name != '')", (parent_id,))
 
                     directories_records = cursor.fetchall()
 
@@ -337,38 +338,61 @@ class DirectoryTable:
 
 
 class ChatTable:
+    cached_chat_counts = {}
+
     @classmethod
-    def get_number_of_groups(cls, main_category_name: str, sub_category_name: str = None) -> int:
-        cursor, iscursor = Database.get_cursor()
+    def get_chat_count(cls, directory_id: int) -> (int, bool):
+        if directory_id not in cls.cached_chat_counts:
+            cursor, iscursor = Database.get_cursor()
 
-        if iscursor:
-            cursor: psycopg2._psycopg.cursor
+            if iscursor:
+                cursor: psycopg2._psycopg.cursor
 
-            try:
-                if sub_category_name is None:
-                    cursor.execute("SELECT COUNT(*) FROM chat WHERE main_category_name = %s", (main_category_name,))
-                else:
-                    cursor.execute("SELECT COUNT(*) FROM chat "
-                                   "WHERE main_category_name = %s "
-                                   "AND sub_category_name = %s", (main_category_name,sub_category_name))
+                try:
+                    cursor.execute(
+                        """
+                        WITH RECURSIVE subdirectories AS (
+                            SELECT id FROM directory WHERE id = %s
+                            UNION
+                            SELECT directory.id FROM directory
+                            JOIN subdirectories ON directory.parent_id = subdirectories.id
+                        )
+                        SELECT id, COUNT(chat.chat_id) as total_chats
+                        FROM subdirectories
+                        LEFT JOIN chat ON subdirectories.id = chat.directory_id
+                        GROUP BY subdirectories.id;
+                        """, (directory_id,)
+                    )
 
-                return cursor.fetchone()[0]
+                    result = cursor.fetchall()
 
-            except (Exception, psycopg2.DatabaseError) as ex:
-                Logger.log("exception", "Database.get_number_of_groups",
-                           f"An exception occurred while trying to get the number of groups in "
-                           f"'{main_category_name} > {sub_category_name}': \n{ex}")
+                    chat_count = 0
 
-                return -1
+                    for sub_directory_id, sub_directory_chat_count in result:
+                        chat_count += sub_directory_chat_count
 
+                    cls.cached_chat_counts[directory_id] = chat_count
+
+                    return chat_count, True
+
+                except (Exception, psycopg2.DatabaseError) as ex:
+                    Logger.log("exception", "Database.get_chat_count",
+                               f"An exception occurred while trying to get the number of chats "
+                               f"with a parent directory having id '{directory_id}': \n{ex}")
+
+                    return -1, False
+
+            else:
+                Logger.log("error", "Database.get_chat_count",
+                           f"Couldn't get cursor required to get the number of chats "
+                           f"with a parent directory having id '{directory_id}'")
+
+                return -1, False
         else:
-            Logger.log("error", "Database.get_number_of_groups",
-                       f"Couldn't get cursor required to get the number of groups")
-
-            return -1
+            return cls.cached_chat_counts[directory_id], True
 
     @classmethod
-    def get_groups(cls, directory_id: int) -> (dict, bool):
+    def get_chats(cls, directory_id: int) -> (dict, bool):
         cursor, iscursor = Database.get_cursor()
 
         if iscursor:
@@ -381,20 +405,20 @@ class ChatTable:
             column_names = [desc[0] for desc in cursor.description]
             records = cursor.fetchall()
 
-            groups = {}
+            chats = {}
 
             for record in records:
                 chat_id = record[0]
 
-                group_data = {}
+                chat_data = {}
                 for i, column_name in enumerate(column_names):
                     if i == 0:
                         continue
-                    group_data[column_name] = record[i]
+                    chat_data[column_name] = record[i]
 
-                groups[chat_id] = group_data
+                chats[chat_id] = chat_data
 
-            return groups, True
+            return chats, True
 
         else:
             Logger.log("error", "Database.get_groups", f"Couldn't get cursor required to get groups")
