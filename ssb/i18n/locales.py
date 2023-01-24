@@ -5,7 +5,7 @@ from os.path  import isfile as file_exists
 
 class Locale:
     lang_codes    = ["it", "en"]
-    def_lang_code = "it"
+    def_lang_code = "en"
     locales       = {}
 
     def __init__(self, lang_code):

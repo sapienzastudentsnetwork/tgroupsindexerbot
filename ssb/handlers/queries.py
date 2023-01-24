@@ -127,12 +127,7 @@ class Queries:
                 sub_directories_data, is_sub_directories_data = DirectoryTable.get_sub_directories(directory_id)
 
                 if is_sub_directories_data:
-                    # FIXME: change to support i18n_en_name (-> 'i18n_{lang_code}_name' instead of 'i18n_{Locale.def_lang_code}_name')
-                    #        (requires translating all categories names to english and mark i18n_en_name as NOT NULL column before,
-                    #         that's a matter of the official instance's database content which will be solved in a next update)
-                    #        then also switch cls.def_lang_code in i18n/locales.py#Locale back to 'en' (instead of 'it')
-
-                    sort_key = f"i18n_{Locale.def_lang_code}_name"
+                    sort_key = f"i18n_{lang_code}_name"
                     sorted_ids_and_values = [(curr_sub_directory_id, curr_sub_directory[sort_key]) for curr_sub_directory_id, curr_sub_directory in sub_directories_data.items()]
                     sorted_ids_and_values.sort(key=lambda x: x[1])
                     sorted_ids = [x[0] for x in sorted_ids_and_values]

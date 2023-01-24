@@ -366,14 +366,14 @@ class ChatTable:
 
                     result = cursor.fetchall()
 
-                    chat_count = 0
+                    chats_count = 0
 
-                    for sub_directory_id, sub_directory_chat_count in result:
-                        chat_count += sub_directory_chat_count
+                    for sub_directory_id, sub_directory_chats_count in result:
+                        chats_count += sub_directory_chats_count
 
-                    cls.cached_chat_counts[directory_id] = chat_count
+                    cls.cached_chat_counts[directory_id] = chats_count
 
-                    return chat_count, True
+                    return chats_count, True
 
                 except (Exception, psycopg2.DatabaseError) as ex:
                     Logger.log("exception", "Database.get_chat_count",
