@@ -48,7 +48,6 @@
   "explore_directories.sub_directory.back_btn":      "◀️ Indietro",
   "explore_directories.back_to_menu_btn":            "◀️ Torna al menù",
 
-  "explore_groups.choose_category":                  "<i>Scegli una categoria per visualizzarne i gruppi</i>",
   "explore_groups.join_href_text":                   "[ENTRA]",
   "explore_groups.category.generation_date_line":    "<i>Lista di gruppi generata il [date] alle ore [time] (UTC+[offset]), controllare periodicamente per aggiornamenti</i>",
   "explore_groups.category.no_category_groups_line": "\nGenerali (senza sotto-categoria):\n",

@@ -183,12 +183,8 @@ class Queries:
                 else:
                     text = f"<b>" + directory_data["i18n_it_name"] + "</b>\n"
 
-                    if directory_id == DirectoryTable.CATEGORIES_ROOT_DIR_ID:
-                        text += "\n" + locale.get_string("explore_groups.choose_category")
-
-                    back_button_callback_data = f"main_menu"
-
                     back_button_text = locale.get_string("explore_directories.back_to_menu_btn")
+                    back_button_callback_data = f"main_menu"
 
                 Queries.register_query(back_button_callback_data)
 
@@ -230,8 +226,7 @@ class Queries:
                     if len(groups_dict) > 0:
                         text += "\n"
 
-                    if directory_id not in (DirectoryTable.CATEGORIES_ROOT_DIR_ID,):
-                        text += locale.get_string("explore_groups.category.sub_categories_line")
+                    text += locale.get_string("explore_groups.category.sub_categories_line")
 
                 return text, InlineKeyboardMarkup(keyboard)
 
