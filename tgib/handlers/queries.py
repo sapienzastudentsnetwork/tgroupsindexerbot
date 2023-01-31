@@ -216,8 +216,13 @@ class Queries:
                     elif "invite_link" in group_data_dict and bool(group_data_dict["invite_link"]):
                         group_join_url = group_data_dict["invite_link"]
 
+                    if "hidden_by" in group_data_dict and bool(group_data_dict["hidden_by"]):
+                        bullet_char = "👁"
+                    else:
+                        bullet_char = "•"
+
                     if group_join_url:
-                        text += f"\n• {group_title} <a href='{group_join_url}'>" \
+                        text += f"\n{bullet_char} {group_title} <a href='{group_join_url}'>" \
                                 + locale.get_string("explore_groups.join_href_text") + "</a>"
                     else:
                         groups_dict.pop(group_chat_id)
