@@ -24,10 +24,10 @@ import pytz
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackContext
 
-from ssb.data.database import DirectoryTable, AccountTable, ChatTable, SessionTable
-from ssb.i18n.locales import Locale
-from ssb.global_vars import GlobalVariables
-from ssb.ui.menus import Menus
+from tgib.data.database import DirectoryTable, AccountTable, ChatTable, SessionTable
+from tgib.i18n.locales import Locale
+from tgib.global_vars import GlobalVariables
+from tgib.ui.menus import Menus
 
 
 class Queries:

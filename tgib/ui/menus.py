@@ -19,8 +19,8 @@
 
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
-from ssb.global_vars import GlobalVariables
-from ssb.i18n.locales import Locale
+from tgib.global_vars import GlobalVariables
+from tgib.i18n.locales import Locale
 
 
 class Menus:

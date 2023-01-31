@@ -23,9 +23,9 @@ from urllib.parse import urlparse as urllib_parse_urlparse
 import psycopg2
 from telegram.ext import ContextTypes
 
-from ssb.global_vars import GlobalVariables
-from ssb.ui.menus import Menus
-from ssb.logs import Logger
+from tgib.global_vars import GlobalVariables
+from tgib.ui.menus import Menus
+from tgib.logs import Logger
 
 
 class Database:
@@ -526,7 +526,7 @@ class SessionTable:
 
                     text, reply_markup = Menus.get_expired_session_menu()
 
-                    from ssb.handlers.queries import Queries
+                    from tgib.handlers.queries import Queries
                     reply_markup = Queries.encode_queries(reply_markup)
 
                     try:

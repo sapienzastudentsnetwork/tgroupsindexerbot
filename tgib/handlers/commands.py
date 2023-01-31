@@ -20,10 +20,10 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from ssb.data.database import SessionTable, DirectoryTable
-from ssb.handlers.queries import Queries
-from ssb.i18n.locales import Locale
-from ssb.ui.menus import Menus
+from tgib.data.database import SessionTable, DirectoryTable
+from tgib.handlers.queries import Queries
+from tgib.i18n.locales import Locale
+from tgib.ui.menus import Menus
 
 
 class Commands:

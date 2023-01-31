@@ -26,13 +26,13 @@ from telegram import __version__ as tg_ver
 from telegram.constants import ParseMode
 from telegram.ext import Application, CallbackQueryHandler, Defaults, MessageHandler, filters
 
-from ssb.data.database import Database, SessionTable, AccountTable
-from ssb.global_vars import GlobalVariables
-from ssb.handlers.commands import Commands
-from ssb.handlers.queries import Queries
-from ssb.i18n.locales import Locale
-from ssb.logs import Logger
-from ssb.urlooking.github import GitHubMonitor
+from tgib.data.database import Database, SessionTable, AccountTable
+from tgib.global_vars import GlobalVariables
+from tgib.handlers.commands import Commands
+from tgib.handlers.queries import Queries
+from tgib.i18n.locales import Locale
+from tgib.logs import Logger
+from tgib.urlooking.github import GitHubMonitor
 
 try:
     from telegram import __version_info__
