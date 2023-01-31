@@ -36,37 +36,40 @@ class Commands:
         if query_message.chat.type == "private":
             command = query_message.text.split()[0][1:]
 
-            user_data = AccountTable.get_account_record(chat_id)
+            locale = Locale(update.effective_user.language_code)
 
-            if Queries.user_can_perform_action(chat_id, user_data, "/" + command):
-                locale = Locale(update.effective_user.language_code)
+            text, reply_markup = "", None
 
-                text, reply_markup = "", None
+            user_data, is_user_data = AccountTable.get_account_record(chat_id)
 
-                if command == "start":
-                    text, reply_markup = Menus.get_main_menu(locale)
+            if is_user_data:
+                if Queries.user_can_perform_action(chat_id, user_data, "/" + command):
+                    if command == "start":
+                        text, reply_markup = Menus.get_main_menu(locale)
 
-                elif command == "groups":
-                    text, reply_markup = Queries.explore_category(locale, DirectoryTable.CATEGORIES_ROOT_DIR_ID, user_data["is_admin"])
+                    elif command == "groups":
+                        text, reply_markup = Queries.explore_category(locale, DirectoryTable.CATEGORIES_ROOT_DIR_ID, user_data["is_admin"])
+            else:
+                text, reply_markup = Menus.get_database_error_menu(locale)
 
-                if text or reply_markup:
-                    reply_markup = Queries.encode_queries(reply_markup)
+            if text or reply_markup:
+                reply_markup = Queries.encode_queries(reply_markup)
 
-                    new_message = await bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
+                new_message = await bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
 
+                try:
+                    await bot.delete_message(chat_id=chat_id, message_id=query_message.message_id)
+                except:
+                    pass
+
+                old_latest_menu_message_id = SessionTable.get_active_session_menu_message_id(chat_id)
+
+                if old_latest_menu_message_id != -1:
                     try:
-                        await bot.delete_message(chat_id=chat_id, message_id=query_message.message_id)
+                        await bot.delete_message(chat_id=chat_id, message_id=old_latest_menu_message_id)
                     except:
                         pass
 
-                    old_latest_menu_message_id = SessionTable.get_active_session_menu_message_id(chat_id)
-
-                    if old_latest_menu_message_id != -1:
-                        try:
-                            await bot.delete_message(chat_id=chat_id, message_id=old_latest_menu_message_id)
-                        except:
-                            pass
-
-                        SessionTable.update_session(chat_id, new_message.message_id)
-                    else:
-                        SessionTable.add_session(chat_id, new_message.message_id)
+                    SessionTable.update_session(chat_id, new_message.message_id)
+                else:
+                    SessionTable.add_session(chat_id, new_message.message_id)

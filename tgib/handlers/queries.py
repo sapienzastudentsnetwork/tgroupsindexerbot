@@ -254,38 +254,42 @@ class Queries:
 
             text, reply_markup = "", None
 
-            user_data = AccountTable.get_account_record(chat_id)
-            user_is_admin = user_data["is_admin"]
+            user_data, is_user_data = AccountTable.get_account_record(chat_id)
 
-            if Queries.user_can_perform_action(chat_id, user_data, query_data):
-                if query_data in ("refresh_session", "unrecognized query"):
-                    query_data = "main_menu"
+            if is_user_data:
+                user_is_admin = user_data["is_admin"]
 
-                if query_data == "explore_categories":
-                    text, reply_markup = cls.cd_queries_handler(DirectoryTable.CATEGORIES_ROOT_DIR_ID, locale, user_is_admin)
+                if Queries.user_can_perform_action(chat_id, user_data, query_data):
+                    if query_data in ("refresh_session", "unrecognized query"):
+                        query_data = "main_menu"
 
-                elif query_data.startswith("cd  "):
-                    directory_id = -1
+                    if query_data == "explore_categories":
+                        text, reply_markup = cls.cd_queries_handler(DirectoryTable.CATEGORIES_ROOT_DIR_ID, locale, user_is_admin)
 
-                    try:
-                        directory_id = int(query_data[len("cd  "):])
-                    except:
-                        pass
+                    elif query_data.startswith("cd  "):
+                        directory_id = -1
 
-                    if directory_id != -1:
-                        text, reply_markup = cls.cd_queries_handler(directory_id, locale, user_is_admin)
+                        try:
+                            directory_id = int(query_data[len("cd  "):])
+                        except:
+                            pass
 
-                elif query_data == "main_menu":
-                    text, reply_markup = Menus.get_main_menu(locale)
+                        if directory_id != -1:
+                            text, reply_markup = cls.cd_queries_handler(directory_id, locale, user_is_admin)
 
-                elif query_data == "about_menu":
-                    text, reply_markup = Menus.get_about_menu(locale)
+                    elif query_data == "main_menu":
+                        text, reply_markup = Menus.get_main_menu(locale)
 
-                elif query_data == "wip_alert":
-                    await query.answer(text=locale.get_string("wip_alert"), show_alert=True)
+                    elif query_data == "about_menu":
+                        text, reply_markup = Menus.get_about_menu(locale)
 
-                elif query_data == "expired_session_about_alert":
-                    await query.answer(text=locale.get_string("expired_session_menu.about_alert"), show_alert=True)
+                    elif query_data == "wip_alert":
+                        await query.answer(text=locale.get_string("wip_alert"), show_alert=True)
+
+                    elif query_data == "expired_session_about_alert":
+                        await query.answer(text=locale.get_string("expired_session_menu.about_alert"), show_alert=True)
+            else:
+                text, reply_markup = Menus.get_database_error_menu(locale)
 
             if text or reply_markup:
                 reply_markup = Queries.encode_queries(reply_markup)

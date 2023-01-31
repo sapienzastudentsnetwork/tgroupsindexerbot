@@ -248,7 +248,7 @@ class AccountTable:
 
                     if account_record is not None:
                         columns = [desc[0] for desc in cursor.description]
-                        user_data = dict(zip(columns, account_record))
+                        user_data, is_user_data = dict(zip(columns, account_record))
 
                         cls.cached_account_records[chat_id] = user_data
 
