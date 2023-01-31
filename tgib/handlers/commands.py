@@ -20,7 +20,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from tgib.data.database import SessionTable, DirectoryTable
+from tgib.data.database import SessionTable, DirectoryTable, AccountTable
 from tgib.handlers.queries import Queries
 from tgib.i18n.locales import Locale
 from tgib.ui.menus import Menus
@@ -36,7 +36,9 @@ class Commands:
         if query_message.chat.type == "private":
             command = query_message.text.split()[0][1:]
 
-            if Queries.user_can_perform_action(chat_id, "/" + command):
+            user_data = AccountTable.get_account_record(chat_id)
+
+            if Queries.user_can_perform_action(chat_id, user_data, "/" + command):
                 locale = Locale(update.effective_user.language_code)
 
                 text, reply_markup = "", None
@@ -45,7 +47,7 @@ class Commands:
                     text, reply_markup = Menus.get_main_menu(locale)
 
                 elif command == "groups":
-                    text, reply_markup = Queries.explore_category(locale, DirectoryTable.CATEGORIES_ROOT_DIR_ID)
+                    text, reply_markup = Queries.explore_category(locale, DirectoryTable.CATEGORIES_ROOT_DIR_ID, user_data["is_admin"])
 
                 if text or reply_markup:
                     reply_markup = Queries.encode_queries(reply_markup)

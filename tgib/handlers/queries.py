@@ -101,9 +101,7 @@ class Queries:
         return InlineKeyboardMarkup(encoded_inline_keyboard)
 
     @classmethod
-    def user_can_perform_action(cls, chat_id: int, action: str):
-        user_data = AccountTable.get_account_record(chat_id)
-
+    def user_can_perform_action(cls, chat_id: int, user_data: dict, action: str):
         # TODO: if it is a group visualisation action then check
         #       whether the user has the can_view_groups permission
 
@@ -114,7 +112,7 @@ class Queries:
         return True
 
     @classmethod
-    def explore_category(cls, locale: Locale, directory_id: int) -> (str, InlineKeyboardMarkup):
+    def explore_category(cls, locale: Locale, directory_id: int, user_is_admin: bool = False) -> (str, InlineKeyboardMarkup):
         directory_data, is_directory_data = DirectoryTable.get_directory_data(directory_id)
 
         if is_directory_data:
@@ -136,7 +134,7 @@ class Queries:
                 else:
                     parent_directory_name = parent_directory_data[f"i18n_{Locale.def_lang_code}_name"]
 
-            groups_dict, is_groups_dict = ChatTable.get_chats(directory_id)
+            groups_dict, is_groups_dict = ChatTable.get_chats(directory_id, skip_hidden_chats=not user_is_admin)
 
             if is_groups_dict:
                 groups_dict: dict
@@ -216,8 +214,13 @@ class Queries:
                     elif "invite_link" in group_data_dict and bool(group_data_dict["invite_link"]):
                         group_join_url = group_data_dict["invite_link"]
 
+                    if "hidden_by" in group_data_dict and bool(group_data_dict["hidden_by"]):
+                        bullet_char = "👁"
+                    else:
+                        bullet_char = "•"
+
                     if group_join_url:
-                        text += f"\n• {group_title} <a href='{group_join_url}'>" \
+                        text += f"\n{bullet_char} {group_title} <a href='{group_join_url}'>" \
                                 + locale.get_string("explore_groups.join_href_text") + "</a>"
                     else:
                         groups_dict.pop(group_chat_id)
@@ -233,8 +236,8 @@ class Queries:
         return Menus.get_database_error_menu(locale)
 
     @classmethod
-    def cd_queries_handler(cls, directory_id: int, locale: Locale) -> (str, InlineKeyboardMarkup):
-        return Queries.explore_category(locale, directory_id)
+    def cd_queries_handler(cls, directory_id: int, locale: Locale, user_is_admin: bool = False) -> (str, InlineKeyboardMarkup):
+        return Queries.explore_category(locale, directory_id, user_is_admin)
 
     @classmethod
     async def callback_queries_handler(cls, update: Update, context: CallbackContext):
@@ -251,12 +254,15 @@ class Queries:
 
             text, reply_markup = "", None
 
-            if Queries.user_can_perform_action(chat_id, query_data):
+            user_data = AccountTable.get_account_record(chat_id)
+            user_is_admin = user_data["is_admin"]
+
+            if Queries.user_can_perform_action(chat_id, user_data, query_data):
                 if query_data in ("refresh_session", "unrecognized query"):
                     query_data = "main_menu"
 
                 if query_data == "explore_categories":
-                    text, reply_markup = cls.cd_queries_handler(DirectoryTable.CATEGORIES_ROOT_DIR_ID, locale)
+                    text, reply_markup = cls.cd_queries_handler(DirectoryTable.CATEGORIES_ROOT_DIR_ID, locale, user_is_admin)
 
                 elif query_data.startswith("cd  "):
                     directory_id = -1
@@ -267,7 +273,7 @@ class Queries:
                         pass
 
                     if directory_id != -1:
-                        text, reply_markup = cls.cd_queries_handler(directory_id, locale)
+                        text, reply_markup = cls.cd_queries_handler(directory_id, locale, user_is_admin)
 
                 elif query_data == "main_menu":
                     text, reply_markup = Menus.get_main_menu(locale)

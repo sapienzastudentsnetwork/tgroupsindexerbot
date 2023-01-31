@@ -123,9 +123,11 @@ class Database:
                         custom_link VARCHAR(60),
                         chat_admins BIGINT[],
                         directory_id INT,
+                        hidden_by BIGINT,
                         created_at TIMESTAMP DEFAULT now(),
                         updated_at TIMESTAMP DEFAULT now(),
-                        FOREIGN KEY (directory_id) REFERENCES directory(id)
+                        FOREIGN KEY (directory_id) REFERENCES directory(id),
+                        FOREIGN KEY (hidden_by) REFERENCES account(chat_id)
                     );
                     """
                 )
@@ -411,14 +413,19 @@ class ChatTable:
             return cls.cached_chat_counts[directory_id], True
 
     @classmethod
-    def get_chats(cls, directory_id: int) -> (dict, bool):
+    def get_chats(cls, directory_id: int, skip_hidden_chats: bool = True) -> (dict, bool):
         cursor, iscursor = Database.get_cursor()
 
         if iscursor:
             cursor: psycopg2._psycopg.cursor
 
+            where_string = "WHERE directory_id = %s"
+
+            if skip_hidden_chats:
+                where_string += " AND hidden_by IS NULL"
+
             cursor.execute("SELECT * FROM chat "
-                           "WHERE directory_id = %s "
+                           f"{where_string} "
                            "ORDER BY title ASC", (directory_id,))
 
             column_names = [desc[0] for desc in cursor.description]
@@ -440,7 +447,7 @@ class ChatTable:
             return chats, True
 
         else:
-            Logger.log("error", "Database.get_groups", f"Couldn't get cursor required to get groups")
+            Logger.log("error", "Database.get_chats", f"Couldn't get cursor required to get chats")
 
             return {}, False
 
