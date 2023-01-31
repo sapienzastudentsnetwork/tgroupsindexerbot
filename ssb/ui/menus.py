@@ -48,7 +48,7 @@ class Menus:
              InlineKeyboardButton(text=locale.get_string("about_menu.github_repo_btn"),
                                   url=f'https://github.com/sapienzastudentsnetwork/tgroupsindexerbot'),
              InlineKeyboardButton(text=locale.get_string("about_menu.git_channel_btn"),
-                                  url=f'tg://resolve?domain=sapienzastudentsbotgit')],
+                                  url=f'tg://resolve?domain=tgroupsindexerbotgit')],
             [
              InlineKeyboardButton(text=locale.get_string("about_menu.contact_us_btn"),
                                   url=f'tg://resolve?domain=sapienzastudentsnetworkbot'),
