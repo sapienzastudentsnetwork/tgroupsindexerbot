@@ -27,19 +27,19 @@ class Menus:
         keyboard = [
             [
              InlineKeyboardButton(text=locale.get_string("about_menu.github_repo_btn"),
-                                  url=f'https://github.com/sapienzastudentsnetwork/sapienzastudentsbot'),
+                                  url=f'https://github.com/sapienzastudentsnetwork/tgroupsindexerbot'),
              InlineKeyboardButton(text=locale.get_string("about_menu.git_channel_btn"),
                                   url=f'tg://resolve?domain=sapienzastudentsbotgit')],
             [
              InlineKeyboardButton(text=locale.get_string("about_menu.contact_us_btn"),
                                   url=f'tg://resolve?domain=sapienzastudentsnetworkbot'),
              InlineKeyboardButton(text=locale.get_string("about_menu.report_issue_btn"),
-                                  url=f'https://github.com/sapienzastudentsnetwork/sapienzastudentsbot/issues/new?'
+                                  url=f'https://github.com/sapienzastudentsnetwork/tgroupsindexerbot/issues/new?'
                                       f'title=[ISSUE]%20Please%20choose%20a%20title%20for%20this%20issue'
                                       f'&body=Please%20describe%20the%20issue%20in%20detail%20here.%20Thanks%20in%20advance%20:)')
             ],
             [InlineKeyboardButton(text=locale.get_string("about_menu.feature_request_btn"),
-                                  url=f'https://github.com/sapienzastudentsnetwork/sapienzastudentsbot/issues/new?'
+                                  url=f'https://github.com/sapienzastudentsnetwork/tgroupsindexerbot/issues/new?'
                                       f'title=[FEATURE REQUEST]%20Please%20choose%20a%20title%20for%20this%20feature%20request'
                                       f'&body=Please%20describe%20the%20request%20in%20detail%20here.%20Thanks%20in%20advance%20:)')],
             [InlineKeyboardButton(text=locale.get_string("about_menu.back_btn"),

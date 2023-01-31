@@ -16,11 +16,11 @@ class GitHubMonitor:
 
     atom_feed_update_date = None
 
-    ssb_repo_url = "https://github.com/sapienzastudentsnetwork/sapienzastudentsbot"
+    ssb_repo_url = "https://github.com/sapienzastudentsnetwork/tgroupsindexerbot"
 
-    ssb_repo_atom_feed_url = "https://github.com/sapienzastudentsnetwork/sapienzastudentsbot/commits.atom"
+    ssb_repo_atom_feed_url = "https://github.com/sapienzastudentsnetwork/tgroupsindexerbot/commits.atom"
 
-    ssb_telegram_git_channel_chat_id = "@SapienzaStudentsBotGit"
+    ssb_telegram_git_channel_chat_id = "@TGroupsIndexerBotGit"
 
     interval = 150
 

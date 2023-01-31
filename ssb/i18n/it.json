@@ -14,10 +14,10 @@
   "main_menu.about_message_btn":       "ℹ️ Riguardo il bot",
 
   "about_menu.text": [
-    "ℹ️ Progetto Open Source di un bot Telegram per l'indicizzazione di gruppi gestiti da studenti e studentesse dell'ateneo",
+    "ℹ️ Bot Telegram per l'indicizzazione di gruppi gestiti da studenti e studentesse dell'ateneo",
     "\n\n📊 [accounts_count] utenti diversi hanno usufruito almeno una volta del bot a partire dal 14/01/2023",
-    "\n\n\uD83D\uDCA0 Progetto attualmente gestito e coordinato da Matteo Collica (@Matypist) e Damiano Gualandri (@dag7d)",
-    "\n\n\uD83E\uDDD1\u200D\uD83D\uDCBB Bot programmato in Python <a href=\"github.com/sapienzastudentsnetwork/sapienzastudentsbot\">[GitHub]</a>",
+    "\n\n\uD83D\uDCA0 Istanza attualmente gestita da <a href=\"https://telegram.me/SapienzaStudentsNetwork\">Sapienza Students Network</a>, coordinato da @Matypist",
+    "\n\n\uD83E\uDDD1\u200D\uD83D\uDCBB Creato a partire da TGroupsIndexerBot <a href=\"https://github.com/sapienzastudentsnetwork/tgroupsindexerbot\">[GitHub]</a> di @Matypist",
     "\n\n\uD83D\uDCC4 Originariamente ideato e programmato in GO <a href=\"https://gitlab.com/sapienzastudents/antispam-telegram-bot\">[GitLab]</a>"
   ],
   "about_menu.github_repo_btn": "\uD83C\uDF10 Repository GitHub",

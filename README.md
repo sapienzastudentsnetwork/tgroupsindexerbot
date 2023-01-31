@@ -1,18 +1,18 @@
-# Sapienza Students Bot
+# Telegram Groups Indexer Bot
 
 ## About the project
 
-[Sapienza Students Bot](https://t.me/SapienzaStudentsBot) was born out of the need, in its time by Sapienza Students, and today by Sapienza Students Network, to promote and make the Telegram groups of students of different courses and their different subjects more easily discoverable from other prospective students
+The "Telegram Groups Indexer Bot" ([TGroupsIndexerBot](https://github.com/sapienzastudentsnetwork/tgroupsindexerbot)) project was born out of the need, in its time by the "Sapienza Students" organization, and today by the "Sapienza Students Network" organization, to promote and make the Telegram groups of students of different courses and their different subjects more easily discoverable from other prospective students
 
 ### Current project status
 
-The goal of this first version was to make all the groups previously available in the GO instance available again, but there is still a long way to go, since the main functionality, which consists of the bot's users being able to add the bot to a group and make it indexed by choosing a category (e.g. a degree course) and a sub-category, is still to be implemented. The anti-spam features offered by the previous solution in GO are not a priority at the moment (given also the existence for this purpose of much more established bots such as https://t.me/MissRose_bot and https://t.me/GroupHelpBot), while we would also like to re-introduce the system of assigning a new admin for groups in which the creator has deleted his Telegram account; as well as some useful commands and shortcuts for administrators and users to use within groups.
+This first version lays the foundations for indexing in particular with regard to the listing of indexed groups to bot users, but there is still a long way to go, since the main functionality, which consists of the bot's users being able to add the bot to a group and autonomously make the group indexed by choosing a category (e.g. a degree course) and a sub-category, is still to be implemented.
 
-🔔 Keep up to date with updates to this GitHub repository by joining https://t.me/SapienzaStudentsBotGit
+🔔 Keep up to date with updates to this GitHub repository by joining https://t.me/TGroupsIndexerBotGit
 
 ### The reason behind the choice of Python as programming language
 
-Initially Sapienza Students opted for a solution in the GO programming language (whose code is still available on [GitLab](https://gitlab.com/sapienzastudents/antispam-telegram-bot)), recently, with the management of the bot entrusted to [Matypist](https://github.com/matypist) and [Sapienza Students Network](https://github.com/sapienzastudentsnetwork), it was decided to rewrite the bot from scratch in Python. The reason behind this choice is that Python is a mandatory subject in the Computer Science course at Sapienza, mainly through the teaching of "Fondamenti di Programmazione" in the first  semester of the first year of the course, as well as in other Computer Science-related courses available at Sapienza and also most other Italian universities, whereas GO is actually usually only found in teachings at the student's choice. The new aim was therefore the choice of a programming language within the reach of most of the students who will then actually use the bot, so as to facilitate any voluntary collaboration in its development.
+Initially the "Sapienza Students" organization opted for a solution in the GO programming language (whose code is still available on [GitLab](https://gitlab.com/sapienzastudents/antispam-telegram-bot)), recently, with the management of [@SapienzaStudentsBot](https://telegram.me/SapienzaStudentsBot) entrusted to [Matypist](https://github.com/matypist) and [Sapienza Students Network](https://github.com/sapienzastudentsnetwork), it was decided to rewrite the bot from scratch in Python. The reason behind this choice is that Python is a mandatory subject in the Computer Science course at Sapienza, mainly through the teaching of "Fondamenti di Programmazione" in the first  semester of the first year of the course, as well as in other Computer Science-related courses available at Sapienza and also most other Italian universities, whereas GO is actually usually only found in teachings at the student's choice. The new aim was therefore the choice of a programming language within the reach of most of the students who will then actually use the bot, so as to facilitate any voluntary collaboration in its development.
 
 ## Deploy your own instance
 
@@ -74,14 +74,14 @@ Initially Sapienza Students opted for a solution in the GO programming language 
 
    a. Using `git`:
     ```
-    git clone https://github.com/sapienzastudentsnetwork/sapienzastudentsbot/
+    git clone https://github.com/sapienzastudentsnetwork/tgroupsindexerbot/
     ```
    
-   b. Downloading it as ZIP [[Mirror]](https://github.com/sapienzastudentsnetwork/sapienzastudentsbot/archive/refs/heads/main.zip) and extracting it in a directory
+   b. Downloading it as ZIP [[Mirror]](https://github.com/sapienzastudentsnetwork/tgroupsindexerbot/archive/refs/heads/main.zip) and extracting it in a directory
 
 3. Verify that python3 and python3-pip are correctly installed and functioning by running the `python3 -V` and `pip3 -V` commands respectively
 
-4. Open a terminal window or command prompt window and go to the local project root directory using the `cd` command followed by the directory path (e.g. `cd "C:\Users\matypist\Downloads\sapienzastudentsbot"`)
+4. Open a terminal window or command prompt window and go to the local project root directory using the `cd` command followed by the directory path (e.g. `cd "C:\Users\matypist\Downloads\tgroupsindexerbot"`)
 
 5. Run the `pip install pipenv` command to install pipenv, a tool required to create and manage a virtual environment containing this project's dependencies and environment variables 
 
@@ -95,16 +95,16 @@ Initially Sapienza Students opted for a solution in the GO programming language 
    
    To define the environment variable values required for the bot functioning
 
-   _**N.B.:** replace the values with the ones you got in the ["Prerequisites" section](https://github.com/sapienzastudentsnetwork/sapienzastudentsbot#prerequisites)_
+   _**N.B.:** replace the values with the ones you got in the ["Prerequisites" section](https://github.com/sapienzastudentsnetwork/tgroupsindexerbot#prerequisites)_
 
 ### Run
 
-1. Open a terminal window or command prompt window and go to the project root directory using the `cd` command followed by the directory path (e.g. `cd "C:\Users\matypist\Downloads\sapienzastudentsbot"`)
+1. Open a terminal window or command prompt window and go to the project root directory using the `cd` command followed by the directory path (e.g. `cd "C:\Users\matypist\Downloads\tgroupsindexerbot"`)
 
-2. Run the `pipenv shell` command to activate this project's virtual environment (previously set up in the ["Set up a local running environment" section](https://github.com/sapienzastudentsnetwork/sapienzastudentsbot/blob/main/README.md#set-up-a-local-running-environment)) and load the environment variables
+2. Run the `pipenv shell` command to activate this project's virtual environment (previously set up in the ["Set up a local running environment" section](https://github.com/sapienzastudentsnetwork/tgroupsindexerbot/blob/main/README.md#set-up-a-local-running-environment)) and load the environment variables
 
 3. Run the `python main.py` command to finally run your bot instance
 
 4. Start a chat with your bot instance on Telegram finding it through the username that you had previously chosen, e.g. via https://telegram.me/(your_bot_instance_username)
    
-   _**N.B.:** the official instance's username is exactly SapienzaStudentsBot (https://telegram.me/SapienzaStudentsBot) and you can also find it directly inside Telegram search by searching for @SapienzaStudentsBot_
+   _**N.B.:** for example the original instance's username is SapienzaStudentsBot (https://telegram.me/SapienzaStudentsBot) and you can also find it directly inside Telegram search by searching for @SapienzaStudentsBot_

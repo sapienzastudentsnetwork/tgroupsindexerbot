@@ -14,10 +14,10 @@
   "main_menu.about_message_btn":       "ℹ️ About the bot",
 
   "about_menu.text": [
-    "ℹ️ Open Source project of a Telegram bot for indexing groups run by students at the university",
+    "ℹ️ Telegram bot for indexing groups run by students at the university",
     "\n\n📊 [accounts_count] different users have used the bot at least once since 14/01/2023",
-    "\n\n\uD83D\uDCA0 Project currently managed and coordinated by Matteo Collica (@Matypist) and Damiano Gualandri (@dag7d)",
-    "\n\n\uD83E\uDDD1\u200D\uD83D\uDCBB Bot developed in Python <a href=\"github.com/sapienzastudentsnetwork/sapienzastudentsbot\">[GitHub]</a>",
+    "\n\n\uD83D\uDCA0 Instance currently managed by <a href=\"https://telegram.me/SapienzaStudentsNetwork\">Sapienza Students Network</a>, coordinated by @Matypist",
+    "\n\n\uD83E\uDDD1\u200D\uD83D\uDCBB Powered by TGroupsIndexerBot <a href=\"https://github.com/sapienzastudentsnetwork/tgroupsindexerbot\">[GitHub]</a> by @Matypist",
     "\n\n\uD83D\uDCC4 Originally designed and programmed in GO <a href=\"https://gitlab.com/sapienzastudents/antispam-telegram-bot\">[GitLab]</a>"
   ],
   "about_menu.github_repo_btn": "\uD83C\uDF10 GitHub Repository",
