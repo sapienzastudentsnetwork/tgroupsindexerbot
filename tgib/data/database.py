@@ -17,10 +17,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with TGroupsIndexerBot. If not, see <http://www.gnu.org/licenses/>.
 
+import time
 from os import getenv as os_getenv
 from urllib.parse import urlparse as urllib_parse_urlparse
 
 import psycopg2
+import telegram
 from telegram.ext import ContextTypes
 
 from tgib.global_vars import GlobalVariables
@@ -413,6 +415,23 @@ class ChatTable:
             return cls.cached_chat_counts[directory_id], True
 
     @classmethod
+    def chat_records_to_dict(cls, column_names: list, records: list) -> dict:
+        chats = {}
+
+        for record in records:
+            chat_id = record[0]
+
+            chat_data = {}
+            for i, column_name in enumerate(column_names):
+                if i == 0:
+                    continue
+                chat_data[column_name] = record[i]
+
+            chats[chat_id] = chat_data
+
+        return chats
+
+    @classmethod
     def get_chats(cls, directory_id: int, skip_hidden_chats: bool = True) -> (dict, bool):
         cursor, iscursor = Database.get_cursor()
 
@@ -431,18 +450,7 @@ class ChatTable:
             column_names = [desc[0] for desc in cursor.description]
             records = cursor.fetchall()
 
-            chats = {}
-
-            for record in records:
-                chat_id = record[0]
-
-                chat_data = {}
-                for i, column_name in enumerate(column_names):
-                    if i == 0:
-                        continue
-                    chat_data[column_name] = record[i]
-
-                chats[chat_id] = chat_data
+            chats = cls.chat_records_to_dict(column_names, records)
 
             return chats, True
 
@@ -450,6 +458,100 @@ class ChatTable:
             Logger.log("error", "Database.get_chats", f"Couldn't get cursor required to get chats")
 
             return {}, False
+
+    @classmethod
+    async def fetch_chats(cls, context: ContextTypes.DEFAULT_TYPE) -> None:
+        bot_instance = context.job.data
+        bot_instance: telegram.Bot
+
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            cursor.execute("SELECT * FROM chat")
+
+            column_names = [desc[0] for desc in cursor.description]
+            records = cursor.fetchall()
+
+            chats = cls.chat_records_to_dict(column_names, records)
+
+            for chat_id, chat_data in chats.items():
+                saved_title = chat_data["title"]
+
+                saved_invite_link = chat_data["invite_link"]
+
+                try:
+                    chat = await bot_instance.getChat(chat_id)
+
+                except telegram.error.RetryAfter as ex:
+                    Logger.log("exception", "Database.fetch_chats", str(ex))
+
+                    time.sleep(ex.retry_after)
+
+                    chat = await bot_instance.getChat(chat_id)
+
+                chat: telegram.Chat
+
+                current_title = chat.title
+
+                current_invite_link = chat.invite_link
+
+                #
+
+                saved_chat_admins = chat_data["chat_admins"]
+
+                current_chat_admins = []
+
+                try:
+                    chat_admins = await bot_instance.get_chat_administrators(chat_id)
+
+                except telegram.error.RetryAfter as ex:
+                    Logger.log("exception", "Database.fetch_chats", str(ex))
+
+                    time.sleep(ex.retry_after)
+
+                    chat_admins = await bot_instance.get_chat_administrators(chat_id)
+
+                for admin in chat_admins:
+                    admin: telegram.ChatMember
+
+                    current_chat_admins.append(admin.user.id)
+
+                #
+
+                if [current_chat_admins] != saved_chat_admins or current_title != saved_title or current_invite_link != saved_invite_link:
+                    query = """
+                        UPDATE chat
+                        SET 
+                            title = %s,
+                            invite_link = %s,
+                            chat_admins = %s
+                        WHERE chat_id = %s;
+                    """
+
+                    saved_values = (saved_title, saved_invite_link, saved_chat_admins, chat_id)
+
+                    Logger.log("debug", "Database.fetch_chats", f"Old (saved) values: {saved_values}")
+
+                    query_vars = (current_title, current_invite_link, current_chat_admins, chat_id)
+
+                    Logger.log("debug", "Database.fetch_chats", f"New (current) values: {query_vars}")
+
+                    try:
+                        cursor.execute(query, query_vars)
+
+                        Database.connection.commit()
+
+                        Logger.log("debug", "Database.fetch_chats", f"Succesfully updated chat '{chat_id}' info")
+
+                    except (Exception, psycopg2.DatabaseError) as ex:
+                        Logger.log("exception", "Database.fetch_chats", f"Couldn't update chat '{chat_id}': \n{ex}")
+
+                time.sleep(1)
+
+        else:
+            Logger.log("error", "Database.fetch_chats", f"Couldn't get cursor required to fetch chats")
 
 
 class SessionTable:
