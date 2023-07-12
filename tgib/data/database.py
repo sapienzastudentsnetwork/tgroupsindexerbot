@@ -283,6 +283,52 @@ class DirectoryTable:
     cached_sub_directories = {}
 
     @classmethod
+    def create_directory(cls, i18n_en_name: str, i18n_it_name: str = None, directory_id: int = None, parent_directory_id: int = None) -> (int, bool):
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute(
+                    """
+                    INSERT INTO directory (i18n_en_name, i18n_it_name, id, parent_id)
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING id;
+                    """,
+                    (i18n_en_name, i18n_it_name, directory_id, parent_directory_id)
+                )
+
+                inserted_id = cursor.fetchone()[0]
+
+                Database.connection.commit()
+
+                Logger.log(
+                    "info",
+                    "Database.create_directory",
+                    f"Created a new directory"
+                        f"\n-           ID: '{inserted_id}'"
+                        f"\n-    Parent ID: '{parent_directory_id}'"
+                        f"\n- i18n_en_name: '{i18n_en_name}'"
+                        f"\n- i18n_it_name: '{i18n_it_name}'"
+                )
+
+                return inserted_id, True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "Database.create_directory",
+                           f"An exception occurred while trying to create a new directory: \n{ex}")
+
+                return {}, False
+
+        else:
+            Logger.log("error", "Database.create_directory", f"Couldn't get cursor required to create a new directory")
+
+            return -1, False
+
+        return cursor.fetchone()[0];
+
+    @classmethod
     def get_directory_data(cls, directory_id: int):
         if directory_id not in cls.cached_directory_records:
             cursor, iscursor = Database.get_cursor()

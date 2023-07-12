@@ -115,6 +115,12 @@ class Queries:
     def explore_category(cls, locale: Locale, directory_id: int, user_is_admin: bool = False) -> (str, InlineKeyboardMarkup):
         directory_data, is_directory_data = DirectoryTable.get_directory_data(directory_id)
 
+        if not is_directory_data and directory_id == DirectoryTable.CATEGORIES_ROOT_DIR_ID:
+            inserted_id, is_inserted_id = DirectoryTable.create_directory("Groups", "Gruppi", DirectoryTable.CATEGORIES_ROOT_DIR_ID, None)
+
+            if is_inserted_id:
+                directory_data, is_directory_data = {}, True
+
         if is_directory_data:
             lang_code = locale.lang_code
 
