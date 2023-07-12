@@ -119,7 +119,7 @@ class Queries:
             inserted_id, is_inserted_id = DirectoryTable.create_directory("Groups", "Gruppi", DirectoryTable.CATEGORIES_ROOT_DIR_ID, None)
 
             if is_inserted_id:
-                directory_data, is_directory_data = {}, True
+                directory_data, is_directory_data = DirectoryTable.get_directory_data(inserted_id)
 
         if is_directory_data:
             lang_code = locale.lang_code
@@ -165,8 +165,10 @@ class Queries:
                         if is_curr_sub_directory_data:
                             if f"i18n_{lang_code}_name" in curr_sub_directory_data and bool(curr_sub_directory_data[f"i18n_{lang_code}_name"]):
                                 curr_sub_directory_name = curr_sub_directory_data[f"i18n_{lang_code}_name"]
-                            else:
+                            elif f"i18n_{Locale.def_lang_code}_name" in curr_sub_directory_data and bool(curr_sub_directory_data[f"i18n_{Locale.def_lang_code}_name"]):
                                 curr_sub_directory_name = curr_sub_directory_data[f"i18n_{Locale.def_lang_code}_name"]
+                            else:
+                                curr_sub_directory_name = curr_sub_directory_id
 
                             curr_sub_directory_callback_data = f"cd{GlobalVariables.queries_fd}{curr_sub_directory_id}"
                             Queries.register_query(curr_sub_directory_callback_data)
@@ -198,6 +200,14 @@ class Queries:
 
                 keyboard.append([InlineKeyboardButton(text=back_button_text,
                                                       callback_data=back_button_callback_data)])
+
+                if user_is_admin:
+                    text += f"\n🆔 {directory_id}"
+
+                    if parent_directory_id != -1:
+                        text += f" [{parent_directory_id}]"
+
+                    text += "\n"
 
                 if len(groups_dict) > 0:
                     datetime_now = datetime.now(pytz.timezone('Europe/Rome'))
@@ -232,6 +242,9 @@ class Queries:
                     if group_join_url:
                         text += f"\n{bullet_char} {group_title} <a href='{group_join_url}'>" \
                                 + locale.get_string("explore_groups.join_href_text") + "</a>"
+
+                        if user_is_admin:
+                            text += " {" + str(group_chat_id) + "}"
                     else:
                         groups_dict.pop(group_chat_id)
 

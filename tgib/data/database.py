@@ -304,13 +304,13 @@ class DirectoryTable:
                 Database.connection.commit()
 
                 Logger.log(
-                    "info",
+                    "debug",
                     "Database.create_directory",
                     f"Created a new directory"
-                        f"\n-           ID: '{inserted_id}'"
-                        f"\n-    Parent ID: '{parent_directory_id}'"
-                        f"\n- i18n_en_name: '{i18n_en_name}'"
-                        f"\n- i18n_it_name: '{i18n_it_name}'"
+                        f"\n-           ID: {inserted_id}"
+                        f"\n-    Parent ID: {parent_directory_id}"
+                        f"\n- i18n_en_name: \"{i18n_en_name}\""
+                        f"\n- i18n_it_name: \"{i18n_it_name}\""
                 )
 
                 return inserted_id, True
