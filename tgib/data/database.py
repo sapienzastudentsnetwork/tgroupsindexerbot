@@ -115,6 +115,21 @@ class Database:
                     """
                 )
 
+                # account
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS account (
+                        chat_id BIGINT PRIMARY KEY,
+                        created_at TIMESTAMP DEFAULT now(),
+                        pref_lang_code VARCHAR(4),
+                        is_admin BOOLEAN DEFAULT false,
+                        can_view_groups BOOLEAN DEFAULT true,
+                        can_add_groups BOOLEAN DEFAULT true,
+                        can_modify_groups BOOLEAN DEFAULT true
+                    );
+                    """
+                )
+
                 # chat
                 cursor.execute(
                     """
@@ -130,21 +145,6 @@ class Database:
                         updated_at TIMESTAMP DEFAULT now(),
                         FOREIGN KEY (directory_id) REFERENCES directory(id),
                         FOREIGN KEY (hidden_by) REFERENCES account(chat_id)
-                    );
-                    """
-                )
-
-                # account
-                cursor.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS account (
-                        chat_id BIGINT PRIMARY KEY,
-                        created_at TIMESTAMP DEFAULT now(),
-                        pref_lang_code VARCHAR(4),
-                        is_admin BOOLEAN DEFAULT false,
-                        can_view_groups BOOLEAN DEFAULT true,
-                        can_add_groups BOOLEAN DEFAULT true,
-                        can_modify_groups BOOLEAN DEFAULT true
                     );
                     """
                 )
@@ -485,7 +485,7 @@ class ChatTable:
                     chat = await bot_instance.getChat(chat_id)
 
                 except telegram.error.RetryAfter as ex:
-                    Logger.log("exception", "Database.fetch_chats", str(ex))
+                    Logger.log("exception", "ChatTable.fetch_chats", str(ex))
 
                     time.sleep(ex.retry_after)
 
@@ -507,7 +507,7 @@ class ChatTable:
                     chat_admins = await bot_instance.get_chat_administrators(chat_id)
 
                 except telegram.error.RetryAfter as ex:
-                    Logger.log("exception", "Database.fetch_chats", str(ex))
+                    Logger.log("exception", "ChatTable.fetch_chats", str(ex))
 
                     time.sleep(ex.retry_after)
 
@@ -532,26 +532,26 @@ class ChatTable:
 
                     saved_values = (saved_title, saved_invite_link, saved_chat_admins, chat_id)
 
-                    Logger.log("debug", "Database.fetch_chats", f"Old (saved) values: {saved_values}")
+                    Logger.log("debug", "ChatTable.fetch_chats", f"Old (saved) values: {saved_values}")
 
                     query_vars = (current_title, current_invite_link, current_chat_admins, chat_id)
 
-                    Logger.log("debug", "Database.fetch_chats", f"New (current) values: {query_vars}")
+                    Logger.log("debug", "ChatTable.fetch_chats", f"New (current) values: {query_vars}")
 
                     try:
                         cursor.execute(query, query_vars)
 
                         Database.connection.commit()
 
-                        Logger.log("debug", "Database.fetch_chats", f"Succesfully updated chat '{chat_id}' info")
+                        Logger.log("debug", "ChatTable.fetch_chats", f"Succesfully updated chat '{chat_id}' info")
 
                     except (Exception, psycopg2.DatabaseError) as ex:
-                        Logger.log("exception", "Database.fetch_chats", f"Couldn't update chat '{chat_id}': \n{ex}")
+                        Logger.log("exception", "ChatTable.fetch_chats", f"Couldn't update chat '{chat_id}': \n{ex}")
 
                 time.sleep(1)
 
         else:
-            Logger.log("error", "Database.fetch_chats", f"Couldn't get cursor required to fetch chats")
+            Logger.log("error", "ChatTable.fetch_chats", f"Couldn't get cursor required to fetch chats")
 
 
 class SessionTable:
