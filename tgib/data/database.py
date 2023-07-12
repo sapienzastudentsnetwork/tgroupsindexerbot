@@ -107,8 +107,8 @@ class Database:
                     """
                     CREATE TABLE IF NOT EXISTS directory (
                         id SERIAL PRIMARY KEY,
-                        i18n_it_name VARCHAR(255) NOT NULL,
                         i18n_en_name VARCHAR(255),
+                        i18n_it_name VARCHAR(255),
                         parent_id INT,
                         FOREIGN KEY (parent_id) REFERENCES directory(id)
                     );
@@ -375,8 +375,7 @@ class DirectoryTable:
                 cursor: psycopg2._psycopg.cursor
 
                 try:
-                    cursor.execute("SELECT * FROM directory "
-                                   "WHERE parent_id = %s AND (i18n_it_name != '' OR i18n_en_name != '')", (parent_id,))
+                    cursor.execute("SELECT * FROM directory WHERE parent_id = %s", (parent_id,))
 
                     directories_records = cursor.fetchall()
 

@@ -126,8 +126,10 @@ class Queries:
 
             if f"i18n_{lang_code}_name" in directory_data and bool(directory_data[f"i18n_{lang_code}_name"]):
                 directory_name = directory_data[f"i18n_{lang_code}_name"]
-            else:
+            elif f"i18n_{Locale.def_lang_code}_name" in directory_data and bool(directory_data[f"i18n_{Locale.def_lang_code}_name"]):
                 directory_name = directory_data[f"i18n_{Locale.def_lang_code}_name"]
+            else:
+                directory_name = str(directory_id)
 
             parent_directory_id = -1
 
@@ -137,8 +139,10 @@ class Queries:
 
                 if f"i18n_{lang_code}_name" in parent_directory_data and bool(parent_directory_data[f"i18n_{lang_code}_name"]):
                     parent_directory_name = parent_directory_data[f"i18n_{lang_code}_name"]
-                else:
+                elif f"i18n_{Locale.def_lang_code}_name" in parent_directory_data and bool(parent_directory_data[f"i18n_{Locale.def_lang_code}_name"]):
                     parent_directory_name = parent_directory_data[f"i18n_{Locale.def_lang_code}_name"]
+                else:
+                    parent_directory_name = str(parent_directory_id)
 
             groups_dict, is_groups_dict = ChatTable.get_chats(directory_id, skip_hidden_chats=not user_is_admin)
 
@@ -185,7 +189,7 @@ class Queries:
                     back_button_callback_data = f"cd{GlobalVariables.queries_fd}{parent_directory_id}"
 
                 else:
-                    text = f"<b>" + directory_data["i18n_it_name"] + "</b>\n"
+                    text = f"<b>" + directory_name + "</b>\n"
 
                     back_button_text = locale.get_string("explore_directories.back_to_menu_btn")
                     back_button_callback_data = f"main_menu"
