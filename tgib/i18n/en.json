@@ -53,5 +53,10 @@
   "explore_groups.category.no_category_groups_line": "\nGeneral (without sub-category):\n",
   "explore_groups.category.sub_categories_line":     "\nSub-categories (buttons):",
 
-  "wip_alert": "Feature under development, provisionally made possible by contacting @Matypist on Telegram"
+  "wip_alert": "Feature under development, provisionally made possible by contacting @Matypist on Telegram",
+
+  "commands.groups.goto_bot_btn": "↘️ Go to the bot",
+  "commands.groups.errors.badrequest.chat_not_found": "Hi [user], in order to run the [command] command for you I would need you to contact me directly instead of through the group \uD83D\uDE42",
+  "commands.groups.errors.forbidden.blocked_by_user": "Hi [user], in order to run the [command] command first make sure you haven't blocked me in the past and then try again \uD83D\uDE41",
+  "commands.groups.error": "Hi [user], I am having some problems running the [command] command for you, could you try again by contacting me directly instead of through the group? \uD83D\uDE4F"
 }

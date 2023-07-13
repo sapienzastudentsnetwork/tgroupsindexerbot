@@ -77,6 +77,8 @@ def main() -> None:
         first=1
     )
 
+    GlobalVariables.job_queue = application.job_queue
+
     application.run_polling()
 
 

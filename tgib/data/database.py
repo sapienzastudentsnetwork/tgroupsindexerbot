@@ -236,7 +236,7 @@ class AccountTable:
             return False
 
     @classmethod
-    def get_account_record(cls, chat_id: int) -> (dict, bool):
+    def get_account_record(cls, chat_id: int, create_if_not_existing: bool = True) -> (dict, bool):
         if chat_id not in cls.cached_account_records:
             cursor, iscursor = Database.get_cursor()
 
@@ -256,8 +256,8 @@ class AccountTable:
 
                         return user_data, True
                     else:
-                        if AccountTable.create_account_record(chat_id):
-                            return AccountTable.get_account_record(chat_id)
+                        if create_if_not_existing and AccountTable.create_account_record(chat_id):
+                            return AccountTable.get_account_record(chat_id, False)
                         else:
                             return {}, False
 

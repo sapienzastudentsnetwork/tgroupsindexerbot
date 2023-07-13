@@ -202,10 +202,10 @@ class Queries:
                                                       callback_data=back_button_callback_data)])
 
                 if user_is_admin:
-                    text += f"\n🆔 {directory_id}"
+                    text += f"\n🆔 <code>{directory_id}</code>"
 
                     if parent_directory_id != -1:
-                        text += f" [{parent_directory_id}]"
+                        text += f" [<code>{parent_directory_id}</code>]"
 
                     text += "\n"
 
@@ -244,7 +244,7 @@ class Queries:
                                 + locale.get_string("explore_groups.join_href_text") + "</a>"
 
                         if user_is_admin:
-                            text += " {" + str(group_chat_id) + "}"
+                            text += " {<code>" + str(group_chat_id) + "</code>}"
                     else:
                         groups_dict.pop(group_chat_id)
 

@@ -18,6 +18,8 @@
 # along with TGroupsIndexerBot. If not, see <http://www.gnu.org/licenses/>.
 
 class GlobalVariables:
+    job_queue = None
+
     queries_fd = "  "
 
     stats_accounts_count = -1
