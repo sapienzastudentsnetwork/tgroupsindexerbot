@@ -58,6 +58,11 @@
   "commands.groups.goto_bot_btn": "↘️ Go to the bot",
   "commands.groups.errors.badrequest.chat_not_found": "Hi [user], in order to run the [command] command for you I would need you to contact me directly instead of through the group \uD83D\uDE42",
   "commands.groups.errors.forbidden.blocked_by_user": "Hi [user], in order to run the [command] command first make sure you haven't blocked me in the past and then try again \uD83D\uDE41",
+  "commands.groups.errors.forbidden.not_enough_rights": [
+    "\uD83D\uDE14 I'm sorry, unfortunately I don't have sufficient permissions to send messages in the group you tried to",
+    " run the [command] command, you might want to try reporting this problem to the administrators of the group (or,",
+    " should you yourself be a group administrator and still have no idea why, to the bot administrators)"
+  ],
   "commands.groups.error": "Hi [user], I am having some problems running the [command] command for you, could you try again by contacting me directly instead of through the group? \uD83D\uDE4F",
   "commands.groups.group_specific_command": "✋ The <code>[command]</code> command is designed to be used in a group that the bot is part of, not in direct chat with the bot!",
   "commands.groups.admin_specific_command": "⛔️ Sorry [user], the <code>[command]</code> command can only be executed by a group administrator",

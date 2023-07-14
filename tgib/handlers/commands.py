@@ -105,9 +105,6 @@ class Commands:
                 text, reply_markup = Menus.get_database_error_menu(locale)
             else:
                 if (is_user_data and Queries.user_can_perform_action(user_id, user_data, "/" + command)) or (not is_user_data):
-                    if command == "start" and query_message.chat.type != "private":
-                        return
-
                     invalid_request = False
 
                     if command == "start" or command == "start@" + bot_username_lower:
@@ -244,6 +241,8 @@ class Commands:
             else:
                 message_chat_id = chat_id
 
+                new_message = None
+
                 if cooldown or not reply_to_message:
                     if cooldown:
                         try:
@@ -251,15 +250,50 @@ class Commands:
 
                             message_chat_id = user_id
                         except:
-                            new_message = await bot.send_message(chat_id=chat_id, text=text)
+                            try:
+                                new_message = await bot.send_message(chat_id=chat_id, text=text)
+                            except:
+                                pass
                     else:
-                        new_message = await bot.send_message(chat_id=chat_id, text=text)
+                        try:
+                            new_message = await bot.send_message(chat_id=chat_id, text=text)
+                        except telegram.error.BadRequest as ex:
+                            if "Not enough rights to send text messages to the chat" in ex.message:
+                                try:
+                                    error_message = locale.get_string("commands.groups.errors.forbidden.not_enough_rights") \
+                                        .replace("[command]",
+                                                 f'<code>/' + command.replace("@" + bot_username_lower, "") + "</code>")
+
+                                    await bot.send_message(
+                                        chat_id=user_id,
+                                        text=error_message
+                                    )
+                                except:
+                                    pass
+                        except:
+                            pass
                 else:
                     reply_to_message: telegram.Message
 
-                    new_message = await reply_to_message.reply_text(text=text)
+                    try:
+                        new_message = await reply_to_message.reply_text(text=text)
+                    except telegram.error.BadRequest as ex:
+                        if "Not enough rights to send text messages to the chat" in ex.message:
+                            try:
+                                error_message = locale.get_string("commands.groups.errors.forbidden.not_enough_rights") \
+                                    .replace("[command]",
+                                             f'<code>/' + command.replace("@" + bot_username_lower, "") + "</code>")
 
-                if cooldown or command not in ("dont",):
+                                await bot.send_message(
+                                    chat_id=user_id,
+                                    text=error_message
+                                )
+                            except:
+                                pass
+                    except:
+                        pass
+
+                if new_message and (cooldown or command not in ("dont",)):
                     async def delete_message(context: ContextTypes.DEFAULT_TYPE) -> None:
                         try:
                             await bot.delete_message(chat_id=message_chat_id, message_id=new_message.message_id)
