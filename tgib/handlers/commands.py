@@ -117,7 +117,7 @@ class Commands:
                         text, reply_markup = Queries.explore_category(
                             locale,
                             DirectoryTable.CATEGORIES_ROOT_DIR_ID,
-                            user_data["can_add_groups"], user_data["is_admin"]
+                            user_data["is_admin"]
                         )
 
                     else:
