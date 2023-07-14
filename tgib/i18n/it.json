@@ -58,5 +58,11 @@
   "commands.groups.goto_bot_btn": "↘️ Vai al bot",
   "commands.groups.errors.badrequest.chat_not_found": "Ciao [user], per poter eseguire il comando [command] per te avrei bisogno che per la prima volta mi contatti direttamente anziché attraverso il gruppo \uD83D\uDE42",
   "commands.groups.errors.forbidden.blocked_by_user": "Ciao [user], per poter eseguire il comando [command] assicurati prima di non avermi bloccato in passato e poi riprova \uD83D\uDE41",
-  "commands.groups.error": "Ciao [user], sto avendo qualche problema nell'eseguire il comando [command] per te, potresti provare nuovamente contattandomi direttamente anziché attraverso il gruppo? \uD83D\uDE4F"
+  "commands.groups.error": "Ciao [user], sto avendo qualche problema nell'eseguire il comando [command] per te, potresti provare nuovamente contattandomi direttamente anziché attraverso il gruppo? \uD83D\uDE4F",
+  "commands.groups.group_specific_command": "✋ Il comando <code>[command]</code> è progettato per essere usato in un gruppo  di cui fa parte il bot, non in chat diretta con il bot!",
+  "commands.groups.admin_specific_command": "⛔️ Spiacente [user], il comando <code>[command]</code> può essere eseguito soltanto da un amministratore del gruppo",
+  "commands.groups.cooldown": "✋ Un po' di pazienza [user], devi attendere ancora [remaining_time] secondi prima di poter usare di nuovo il comando [command] nei gruppi",
+  "commands.dont": "\uD83C\uDDEE\uD83C\uDDF9 https://dontasktoask.com/it/\nPoni direttamente la tua domanda e chi può risponderà \uD83D\uDE42",
+  "commands.command_not_found.text": "❔ Nessun comando [command] trovato [user], se pensi possa trattarsi di un errore contatta un amministratore del bot",
+  "commands.command_not_found.contact_us_btn": "\uD83D\uDCAC Contattaci"
 }

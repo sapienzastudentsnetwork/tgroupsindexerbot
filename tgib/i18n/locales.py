@@ -23,7 +23,7 @@ from os.path  import isfile as file_exists
 
 
 class Locale:
-    lang_codes    = ["it", "en"]
+    lang_codes    = ["en", "it"]
     def_lang_code = "en"
     locales       = {}
 

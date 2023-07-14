@@ -58,5 +58,11 @@
   "commands.groups.goto_bot_btn": "↘️ Go to the bot",
   "commands.groups.errors.badrequest.chat_not_found": "Hi [user], in order to run the [command] command for you I would need you to contact me directly instead of through the group \uD83D\uDE42",
   "commands.groups.errors.forbidden.blocked_by_user": "Hi [user], in order to run the [command] command first make sure you haven't blocked me in the past and then try again \uD83D\uDE41",
-  "commands.groups.error": "Hi [user], I am having some problems running the [command] command for you, could you try again by contacting me directly instead of through the group? \uD83D\uDE4F"
+  "commands.groups.error": "Hi [user], I am having some problems running the [command] command for you, could you try again by contacting me directly instead of through the group? \uD83D\uDE4F",
+  "commands.groups.group_specific_command": "✋ The <code>[command]</code> command is designed to be used in a group that the bot is part of, not in direct chat with the bot!",
+  "commands.groups.admin_specific_command": "⛔️ Sorry [user], the <code>[command]</code> command can only be executed by a group administrator",
+  "commands.groups.cooldown": "✋ A bit of patience [user], you still have to wait [remaining_time] seconds before you can use the [command] command in groups again",
+  "commands.dont": "\uD83C\uDDEC\uD83C\uDDE7 https://dontasktoask.com\nAsk your question directly and those who can will answer it \uD83D\uDE42",
+  "commands.command_not_found.text": "❔ No [command] command found [user], if you think it might be an error contact a bot administrator",
+  "commands.command_not_found.contact_us_btn": "\uD83D\uDCAC Contact Us"
 }
