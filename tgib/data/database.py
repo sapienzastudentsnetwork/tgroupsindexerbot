@@ -16,13 +16,14 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with TGroupsIndexerBot. If not, see <http://www.gnu.org/licenses/>.
-
+import random
 import time
 from os import getenv as os_getenv
 from urllib.parse import urlparse as urllib_parse_urlparse
 
 import psycopg2
 import telegram
+from telegram import ChatMemberAdministrator
 from telegram.ext import ContextTypes
 
 from tgib.global_vars import GlobalVariables
@@ -143,11 +144,66 @@ class Database:
                         hidden_by BIGINT,
                         created_at TIMESTAMP DEFAULT now(),
                         updated_at TIMESTAMP DEFAULT now(),
+                        missing_permissions BOOLEAN DEFAULT TRUE,
                         FOREIGN KEY (directory_id) REFERENCES directory(id),
                         FOREIGN KEY (hidden_by) REFERENCES account(chat_id)
                     );
                     """
                 )
+
+                # Check if the 'missing_permissions' column in 'chat' table already exists
+                cursor.execute("""
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_name = 'chat' AND column_name = 'missing_permissions'
+                    )
+                """)
+                column_exists = cursor.fetchone()[0]
+
+                # Add the 'missing_permissions' column to 'chat' table if it doesn't exist
+                if not column_exists:
+                    cursor.execute("""
+                        ALTER TABLE chat
+                        ADD COLUMN missing_permissions BOOLEAN DEFAULT TRUE
+                    """)
+
+                # Check if the "update_timestamp" trigger function already exists
+                cursor.execute("""
+                    SELECT 1
+                    FROM pg_trigger
+                    WHERE tgname = 'update_chat_timestamp'
+                """)
+                trigger_exists = cursor.fetchone()
+
+                # Create "update_timestamp" trigger function if it doesn't exist
+                if not trigger_exists:
+                    cursor.execute("""
+                        CREATE OR REPLACE FUNCTION update_timestamp()
+                        RETURNS TRIGGER AS $$
+                        BEGIN
+                            NEW.updated_at = NOW();
+                            RETURN NEW;
+                        END;
+                        $$ LANGUAGE plpgsql;
+                    """)
+
+                # Check if "update_chat_timestamp" trigger exists
+                cursor.execute("""
+                    SELECT 1
+                    FROM pg_trigger
+                    WHERE tgname = 'update_chat_timestamp'
+                """)
+                trigger_exists = cursor.fetchone()
+
+                # Create "update_chat_timestamp" trigger if it doesn't exist
+                if not trigger_exists:
+                    cursor.execute("""
+                        CREATE TRIGGER update_chat_timestamp
+                        BEFORE UPDATE ON chat
+                        FOR EACH ROW
+                        EXECUTE FUNCTION update_timestamp();
+                    """)
 
                 # session
                 cursor.execute(
@@ -225,13 +281,14 @@ class AccountTable:
                 return True
 
             except (Exception, psycopg2.DatabaseError) as ex:
-                Logger.log("exception", "Database.create_user_record",
+                Logger.log("exception", "AccountTable.create_account_record",
                            f"An exception occurred while trying to create account record for '{chat_id}': \n{ex}")
 
                 return False
 
         else:
-            Logger.log("error", "Database.create_user_record", f"Couldn't get cursor required to create account record")
+            Logger.log("error", "AccountTable.create_account_record",
+                       f"Couldn't get cursor required to create account record")
 
             return False
 
@@ -262,7 +319,7 @@ class AccountTable:
                             return {}, False
 
                 except (Exception, psycopg2.DatabaseError) as ex:
-                    Logger.log("exception", "Database.get_user",
+                    Logger.log("exception", "AccountTable.get_account_record",
                                f"An exception occurred while trying to get account record with '{chat_id}' as chat_id: \n{ex}")
 
                     return {}, False
@@ -281,6 +338,8 @@ class DirectoryTable:
     cached_directory_records = {}
 
     cached_sub_directories = {}
+
+    cached_chat_counts = {}
 
     @classmethod
     def create_directory(cls, i18n_en_name: str, i18n_it_name: str = None, directory_id: int = None, parent_directory_id: int = None) -> (int, bool):
@@ -305,7 +364,7 @@ class DirectoryTable:
 
                 Logger.log(
                     "debug",
-                    "Database.create_directory",
+                    "DirectoryTable.create_directory",
                     f"Created a new directory"
                         f"\n-           ID: {inserted_id}"
                         f"\n-    Parent ID: {parent_directory_id}"
@@ -316,20 +375,19 @@ class DirectoryTable:
                 return inserted_id, True
 
             except (Exception, psycopg2.DatabaseError) as ex:
-                Logger.log("exception", "Database.create_directory",
+                Logger.log("exception", "DirectoryTable.create_directory",
                            f"An exception occurred while trying to create a new directory: \n{ex}")
 
                 return {}, False
 
         else:
-            Logger.log("error", "Database.create_directory", f"Couldn't get cursor required to create a new directory")
+            Logger.log("error", "DirectoryTable.create_directory",
+                       f"Couldn't get cursor required to create a new directory")
 
             return -1, False
 
-        return cursor.fetchone()[0];
-
     @classmethod
-    def get_directory_data(cls, directory_id: int):
+    def get_directory_data(cls, directory_id: int) -> (dict, bool):
         if directory_id not in cls.cached_directory_records:
             cursor, iscursor = Database.get_cursor()
 
@@ -353,14 +411,15 @@ class DirectoryTable:
                         return {}, False
 
                 except (Exception, psycopg2.DatabaseError) as ex:
-                    Logger.log("exception", "Database.get_directory_data",
+                    Logger.log("exception", "DirectoryTable.get_directory_data",
                                f"An exception occurred while trying to get directory name for directory "
                                f"having id equal to '{directory_id}': \n{ex}")
 
                     return {}, False
 
             else:
-                Logger.log("error", "Database.get_directory_data", f"Couldn't get cursor required to get directory name")
+                Logger.log("error", "DirectoryTable.get_directory_data",
+                           f"Couldn't get cursor required to get directory name")
 
                 return {}, False
         else:
@@ -391,25 +450,22 @@ class DirectoryTable:
                         return {}, True
 
                 except (Exception, psycopg2.DatabaseError) as ex:
-                    Logger.log("exception", "Database.get_sub_directories",
+                    Logger.log("exception", "DirectoryTable.get_sub_directories",
                                f"An exception occurred while trying to get sub-directories of "
                                f"directory with parent_id equal to '{parent_id}': \n{ex}")
 
                     return {}, False
 
             else:
-                Logger.log("error", "Database.get_sub_directories", f"Couldn't get cursor required to get sub-directories")
+                Logger.log("error", "DirectoryTable.get_sub_directories",
+                           f"Couldn't get cursor required to get sub-directories")
 
                 return {}, False
         else:
             return cls.cached_sub_directories[parent_id], True
 
-
-class ChatTable:
-    cached_chat_counts = {}
-
     @classmethod
-    def get_chat_count(cls, directory_id: int) -> (int, bool):
+    def get_chats_count(cls, directory_id: int) -> (int, bool):
         if directory_id not in cls.cached_chat_counts:
             cursor, iscursor = Database.get_cursor()
 
@@ -444,14 +500,14 @@ class ChatTable:
                     return chats_count, True
 
                 except (Exception, psycopg2.DatabaseError) as ex:
-                    Logger.log("exception", "Database.get_chat_count",
+                    Logger.log("exception", "DirectoryTable.get_chat_count",
                                f"An exception occurred while trying to get the number of chats "
                                f"with a parent directory having id '{directory_id}': \n{ex}")
 
                     return -1, False
 
             else:
-                Logger.log("error", "Database.get_chat_count",
+                Logger.log("error", "DirectoryTable.get_chat_count",
                            f"Couldn't get cursor required to get the number of chats "
                            f"with a parent directory having id '{directory_id}'")
 
@@ -459,6 +515,32 @@ class ChatTable:
         else:
             return cls.cached_chat_counts[directory_id], True
 
+    @classmethod
+    def increment_chats_count(cls, directory_id: int, increment: int = 1) -> bool:
+        directory_data, is_directory_data = cls.get_directory_data(directory_id)
+
+        if is_directory_data:
+            curr_directory_data = directory_data
+            curr_directory_data: dict
+
+            while bool(curr_directory_data["parent_id"]):
+                curr_parent_directory_id = curr_directory_data["parent_id"]
+
+                curr_directory_data, is_curr_directory_data = cls.get_directory_data(curr_parent_directory_id)
+
+                if is_curr_directory_data and curr_parent_directory_id in cls.cached_chat_counts:
+                    cls.cached_chat_counts[curr_parent_directory_id] += increment
+
+                else:
+                    return False
+
+            return True
+
+        else:
+            return False
+
+
+class ChatTable:
     @classmethod
     def chat_records_to_dict(cls, column_names: list, records: list) -> dict:
         chats = {}
@@ -477,13 +559,16 @@ class ChatTable:
         return chats
 
     @classmethod
-    def get_chats(cls, directory_id: int, skip_hidden_chats: bool = True) -> (dict, bool):
+    def get_chats(cls, directory_id: int, skip_missing_permissions_chats: bool = True, skip_hidden_chats: bool = True) -> (dict, bool):
         cursor, iscursor = Database.get_cursor()
 
         if iscursor:
             cursor: psycopg2._psycopg.cursor
 
             where_string = "WHERE directory_id = %s"
+
+            if skip_missing_permissions_chats:
+                where_string += " AND missing_permissions = FALSE"
 
             if skip_hidden_chats:
                 where_string += " AND hidden_by IS NULL"
@@ -500,9 +585,246 @@ class ChatTable:
             return chats, True
 
         else:
-            Logger.log("error", "Database.get_chats", f"Couldn't get cursor required to get chats")
+            Logger.log("error", "ChatTable.get_chats", f"Couldn't get cursor required to get chats")
 
             return {}, False
+
+    @classmethod
+    async def set_missing_permissions(cls, chat_id: int) -> bool:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            # Check if missing_permissions is already TRUE
+            try:
+                cursor.execute("""
+                    SELECT missing_permissions, directory_id
+                    FROM chat
+                    WHERE chat_id = %s
+                """, (chat_id,))
+                result = cursor.fetchone()
+
+                # Update missing_permissions and decrement chats count if missing_permissions it's not already TRUE
+                if result and not result[0]:
+                    query = """
+                        UPDATE chat
+                        SET missing_permissions = TRUE
+                        WHERE chat_id = %s
+                    """
+
+                    try:
+                        connection = Database.connection
+                        connection: psycopg2._psycopg.connection
+
+                        cursor.execute(query, (chat_id,))
+
+                        connection.commit()
+
+                        directory_id = result[1]
+                        if directory_id is not None:
+                            DirectoryTable.increment_chats_count(directory_id, -1)
+
+                        return True
+
+                    except (Exception, psycopg2.DatabaseError) as ex:
+                        Logger.log("exception", "ChatTable.set_missing_permissions",
+                                   f"Couldn't remove having chat_id '{chat_id}' from database: \n{ex}")
+
+                        return False
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "ChatTable.set_missing_permissions",
+                           f"Couldn't get data of chat having chat_id '{chat_id}' from database: \n{ex}")
+
+                return False
+
+        else:
+            Logger.log("error", "ChatTable.set_missing_permissions",
+                       f"Couldn't get cursor required to remove chat having id '{chat_id}'")
+
+            return False
+
+    @classmethod
+    async def remove_chat(cls, chat_id: int) -> bool:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            query = """
+                DELETE FROM chat
+                WHERE chat_id = %s
+            """
+
+            try:
+                connection = Database.connection
+                connection: psycopg2._psycopg.connection
+
+                cursor.execute(query, (chat_id,))
+
+                connection.commit()
+
+                return True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "ChatTable.remove_chat",
+                           f"Couldn't remove having chat_id '{chat_id}' from database: \n{ex}")
+
+                return False
+
+        else:
+            Logger.log("error", "ChatTable.remove_chat",
+                       f"Couldn't get cursor required to remove chat having id '{chat_id}'")
+
+            return False
+
+    @classmethod
+    async def fetch_chat(cls, bot_instance: telegram.Bot, chat_id: int, chat_data: dict = None, cursor: psycopg2._psycopg.cursor = None) -> (dict, bool):
+        if cursor is None:
+            cursor, iscursor = Database.get_cursor()
+
+        if not cursor:
+            Logger.log("error", "ChatTable.fetch_chat",
+                       f"Couldn't get cursor required to get saved data for chat having chat_id '{chat_id}'")
+
+        if not chat_data:
+            chat_data = {}
+
+            if cursor:
+                try:
+                    cursor.execute("SELECT * FROM chat WHERE chat_id = %s", (chat_id,))
+
+                    column_names = [desc[0] for desc in cursor.description]
+                    record = cursor.fetchone()
+
+                    if record:
+                        for i, column_name in enumerate(column_names):
+                            chat_data[column_name] = record[i]
+
+                except (Exception, psycopg2.DatabaseError) as ex:
+                    Logger.log("exception", "ChatTable.fetch_chat",
+                               f"Couldn't get data from database about chat having chat_id '{chat_id}': \n{ex}")
+
+        try:
+            chat = await bot_instance.getChat(chat_id)
+
+        except telegram.error.RetryAfter as ex:
+            Logger.log("exception", "ChatTable.fetch_chat", str(ex))
+
+            time.sleep(ex.retry_after + random.uniform(1, 2))
+
+            chat = await bot_instance.getChat(chat_id)
+
+        except:
+            return chat_data, {}, False
+
+        #
+
+        chat: telegram.Chat
+
+        current_title = chat.title
+
+        bot_member = await bot_instance.get_chat_member(chat_id, bot_instance.id)
+
+        current_missing_permissions = False
+
+        if not isinstance(bot_member, ChatMemberAdministrator):
+            current_missing_permissions = True
+
+        elif isinstance(bot_member, ChatMemberAdministrator):
+            bot_member: ChatMemberAdministrator
+
+            if not bot_member.can_invite_users:
+                current_missing_permissions = True
+
+        current_invite_link = chat.invite_link
+
+        current_chat_admins = []
+
+        chat_admins = None
+
+        try:
+            chat_admins = await bot_instance.get_chat_administrators(chat_id)
+
+        except telegram.error.RetryAfter as ex:
+            Logger.log("exception", "ChatTable.fetch_chat", str(ex))
+
+            time.sleep(ex.retry_after + random.uniform(1, 2))
+
+            chat_admins = await bot_instance.get_chat_administrators(chat_id)
+
+        if chat_admins:
+            for admin in chat_admins:
+                admin: telegram.ChatMember
+
+                current_chat_admins.append(admin.user.id)
+
+        new_chat_data = {"chat_id": chat_id, "title": current_title, "invite_link": current_invite_link,
+                         "chat_admins": current_chat_admins, "missing_permissions": current_missing_permissions}
+
+        #
+
+        if chat_data:
+            saved_title = chat_data["title"]
+
+            saved_invite_link = chat_data["invite_link"]
+
+            saved_chat_admins = chat_data["chat_admins"]
+
+            saved_missing_permissions = chat_data["missing_permissions"]
+
+        if not chat_data or ([current_chat_admins] != saved_chat_admins or current_title != saved_title or current_invite_link != saved_invite_link or current_missing_permissions != saved_missing_permissions):
+            query_vars = (current_title, current_invite_link, current_chat_admins, current_missing_permissions, chat_id)
+
+            if chat_data:
+                query = """
+                    UPDATE chat
+                    SET 
+                        title = %s,
+                        invite_link = %s,
+                        chat_admins = %s,
+                        missing_permissions = %s
+                    WHERE chat_id = %s;
+                """
+
+                saved_values = (saved_title, saved_invite_link, saved_chat_admins, saved_missing_permissions, chat_id)
+
+                Logger.log("debug", "ChatTable.fetch_chat", f"Old (saved) values: {saved_values}")
+                Logger.log("debug", "ChatTable.fetch_chat", f"New (current) values: {query_vars}")
+            else:
+                query = """
+                    INSERT INTO chat (title, invite_link, chat_admins, missing_permissions, chat_id)
+                    VALUES (%s, %s, %s, %s, %s)
+                """
+
+            try:
+                connection = Database.connection
+                connection: psycopg2._psycopg.connection
+
+                cursor.execute(query, query_vars)
+
+                connection.commit()
+
+                if chat_data:
+                    if chat_data["directory_id"] is not None and current_missing_permissions != saved_missing_permissions:
+                        directory_id = chat_data["directory_id"]
+
+                        if current_missing_permissions:
+                            DirectoryTable.increment_chats_count(directory_id, -1)
+
+                        else:
+                            DirectoryTable.increment_chats_count(directory_id, +1)
+
+                    Logger.log("debug", "ChatTable.fetch_chat", f"Succesfully updated chat '{chat_id}' info")
+                else:
+                    Logger.log("debug", "ChatTable.fetch_chat", f"Succesfully added chat '{chat_id}' info to database")
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                if chat_data:
+                    Logger.log("exception", "ChatTable.fetch_chat", f"Couldn't update chat '{chat_id}': \n{ex}")
+                else:
+                    Logger.log("exception", "ChatTable.fetch_chat", f"Couldn't add chat '{chat_id}': \n{ex}")
+
+                return chat_data, new_chat_data, False
+
+        return chat_data, new_chat_data, True
 
     @classmethod
     async def fetch_chats(cls, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -522,76 +844,7 @@ class ChatTable:
             chats = cls.chat_records_to_dict(column_names, records)
 
             for chat_id, chat_data in chats.items():
-                saved_title = chat_data["title"]
-
-                saved_invite_link = chat_data["invite_link"]
-
-                try:
-                    chat = await bot_instance.getChat(chat_id)
-
-                except telegram.error.RetryAfter as ex:
-                    Logger.log("exception", "ChatTable.fetch_chats", str(ex))
-
-                    time.sleep(ex.retry_after)
-
-                    chat = await bot_instance.getChat(chat_id)
-
-                chat: telegram.Chat
-
-                current_title = chat.title
-
-                current_invite_link = chat.invite_link
-
-                #
-
-                saved_chat_admins = chat_data["chat_admins"]
-
-                current_chat_admins = []
-
-                try:
-                    chat_admins = await bot_instance.get_chat_administrators(chat_id)
-
-                except telegram.error.RetryAfter as ex:
-                    Logger.log("exception", "ChatTable.fetch_chats", str(ex))
-
-                    time.sleep(ex.retry_after)
-
-                    chat_admins = await bot_instance.get_chat_administrators(chat_id)
-
-                for admin in chat_admins:
-                    admin: telegram.ChatMember
-
-                    current_chat_admins.append(admin.user.id)
-
-                #
-
-                if [current_chat_admins] != saved_chat_admins or current_title != saved_title or current_invite_link != saved_invite_link:
-                    query = """
-                        UPDATE chat
-                        SET 
-                            title = %s,
-                            invite_link = %s,
-                            chat_admins = %s
-                        WHERE chat_id = %s;
-                    """
-
-                    saved_values = (saved_title, saved_invite_link, saved_chat_admins, chat_id)
-
-                    Logger.log("debug", "ChatTable.fetch_chats", f"Old (saved) values: {saved_values}")
-
-                    query_vars = (current_title, current_invite_link, current_chat_admins, chat_id)
-
-                    Logger.log("debug", "ChatTable.fetch_chats", f"New (current) values: {query_vars}")
-
-                    try:
-                        cursor.execute(query, query_vars)
-
-                        Database.connection.commit()
-
-                        Logger.log("debug", "ChatTable.fetch_chats", f"Succesfully updated chat '{chat_id}' info")
-
-                    except (Exception, psycopg2.DatabaseError) as ex:
-                        Logger.log("exception", "ChatTable.fetch_chats", f"Couldn't update chat '{chat_id}': \n{ex}")
+                await cls.fetch_chat(bot_instance, chat_id, chat_data, cursor)
 
                 time.sleep(1)
 
@@ -627,12 +880,12 @@ class SessionTable:
                 connection.commit()
 
             except (Exception, psycopg2.DatabaseError) as ex:
-                Logger.log("critical", "Database.add_session",
+                Logger.log("critical", "SessionTable.add_session",
                            f"An exception occurred while trying to insert '{latest_menu_message_id}' "
                            f"latest_menu_message_id in 'session' table for '{chat_id}': \n{ex}")
 
         else:
-            Logger.log("error", "Database.add_session", f"Couldn't get cursor required to insert session data")
+            Logger.log("error", "SessionTable.add_session", f"Couldn't get cursor required to insert session data")
 
     @classmethod
     def update_session(cls, chat_id: int, new_latest_menu_message_id: int) -> None:
@@ -653,12 +906,12 @@ class SessionTable:
                 connection.commit()
 
             except (Exception, psycopg2.DatabaseError) as ex:
-                Logger.log("critical", "Database.update_session",
+                Logger.log("critical", "SessionTable.update_session",
                            f"An exception occurred while trying to update latest_menu_message_id for "
                            f"'{chat_id}' to `{new_latest_menu_message_id}': \n{ex}")
 
         else:
-            Logger.log("error", "Database.update_session", f"Couldn't get cursor required to update session data")
+            Logger.log("error", "SessionTable.update_session", f"Couldn't get cursor required to update session data")
 
     @classmethod
     async def expire_old_sessions(cls, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -694,11 +947,12 @@ class SessionTable:
                 connection.commit()
 
             except (Exception, psycopg2.DatabaseError) as ex:
-                Logger.log("critical", "Database.expire_old_sessions",
+                Logger.log("critical", "SessionTable.expire_old_sessions",
                            f"An exception occurred while trying to expire old sessions: \n{ex}")
 
         else:
-            Logger.log("error", "Database.expire_old_sessions", f"Couldn't get cursor required to expire old sessions")
+            Logger.log("error", "SessionTable.expire_old_sessions",
+                       f"Couldn't get cursor required to expire old sessions")
 
 
 class PersistentVarsTable:

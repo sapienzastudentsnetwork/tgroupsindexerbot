@@ -144,7 +144,9 @@ class Queries:
                 else:
                     parent_directory_name = str(parent_directory_id)
 
-            groups_dict, is_groups_dict = ChatTable.get_chats(directory_id, skip_hidden_chats=not user_is_admin)
+            groups_dict, is_groups_dict = ChatTable.get_chats(directory_id,
+                                                              skip_missing_permissions_chats=not user_is_admin,
+                                                              skip_hidden_chats=not user_is_admin)
 
             if is_groups_dict:
                 groups_dict: dict
@@ -175,7 +177,7 @@ class Queries:
 
                             curr_sub_directory_btn_text = curr_sub_directory_name
 
-                            number_of_groups, is_number_of_groups = ChatTable.get_chat_count(curr_sub_directory_id)
+                            number_of_groups, is_number_of_groups = DirectoryTable.get_chats_count(curr_sub_directory_id)
                             if is_number_of_groups:
                                 curr_sub_directory_btn_text += f" [{number_of_groups}]"
 
@@ -236,6 +238,8 @@ class Queries:
 
                     if "hidden_by" in group_data_dict and bool(group_data_dict["hidden_by"]):
                         bullet_char = "👁"
+                    elif "missing_permissions" in group_data_dict and bool(group_data_dict["missing_permissions"]):
+                        bullet_char = "⛔️"
                     else:
                         bullet_char = "•"
 

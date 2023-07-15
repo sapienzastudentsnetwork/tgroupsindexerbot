@@ -24,10 +24,11 @@ from os import getenv as os_getenv
 import pytz
 from telegram import __version__ as tg_ver
 from telegram.constants import ParseMode
-from telegram.ext import Application, CallbackQueryHandler, Defaults, MessageHandler, filters
+from telegram.ext import Application, CallbackQueryHandler, Defaults, MessageHandler, filters, ChatMemberHandler
 
 from tgib.data.database import Database, SessionTable, AccountTable, ChatTable
 from tgib.global_vars import GlobalVariables
+from tgib.handlers.chatmember import MemberStatusUpdates
 from tgib.handlers.commands import Commands
 from tgib.handlers.queries import Queries
 from tgib.i18n.locales import Locale
@@ -64,6 +65,8 @@ def main() -> None:
 
     application.add_handler(MessageHandler(filters=filters.COMMAND, callback=Commands.commands_handler))
     application.add_handler(CallbackQueryHandler(callback=Queries.callback_queries_handler))
+    application.add_handler(ChatMemberHandler(callback=MemberStatusUpdates.member_status_updates_handler,
+                                              chat_member_types=ChatMemberHandler.MY_CHAT_MEMBER))
 
     application.job_queue.run_once(callback=ChatTable.fetch_chats, when=0, data=application.bot)
 
