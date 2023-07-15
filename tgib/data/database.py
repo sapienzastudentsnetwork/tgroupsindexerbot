@@ -16,6 +16,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with TGroupsIndexerBot. If not, see <http://www.gnu.org/licenses/>.
+
 import random
 import time
 from os import getenv as os_getenv
@@ -779,6 +780,8 @@ class ChatTable:
             bot_member = await bot_instance.get_chat_member(chat_id, bot_instance.id)
         except telegram.error.ChatMigrated as ex:
             new_chat_id = ex.new_chat_id
+
+            bot_member = await bot_instance.get_chat_member(new_chat_id, bot_instance.id)
 
             ChatTable.migrate_chat_id(chat_id, new_chat_id)
 
