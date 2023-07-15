@@ -365,7 +365,7 @@ class DirectoryTable:
                 Logger.log(
                     "debug",
                     "DirectoryTable.create_directory",
-                    f"Created a new directory"
+                    f"A new directory has been created"
                         f"\n-           ID: {inserted_id}"
                         f"\n-    Parent ID: {parent_directory_id}"
                         f"\n- i18n_en_name: \"{i18n_en_name}\""
@@ -484,6 +484,8 @@ class DirectoryTable:
                         SELECT id, COUNT(chat.chat_id) as total_chats
                         FROM subdirectories
                         LEFT JOIN chat ON subdirectories.id = chat.directory_id
+                            AND chat.hidden_by IS NULL
+                            AND chat.missing_permissions = FALSE
                         GROUP BY subdirectories.id;
                         """, (directory_id,)
                     )
@@ -590,7 +592,51 @@ class ChatTable:
             return {}, False
 
     @classmethod
-    async def set_missing_permissions(cls, chat_id: int) -> bool:
+    def migrate_chat_id(cls, old_chat_id: int, new_chat_id: int) -> bool:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            old_chat_data, is_old_chat_data = ChatTable.get_chat_data(cursor, old_chat_id)
+
+            if is_old_chat_data:
+                try:
+                    cursor.execute(
+                        """
+                        UPDATE chat
+                        SET custom_link = %s,
+                            directory_id = %s,
+                            hidden_by = %s
+                        WHERE chat_id = %s;
+                        """,
+                        (old_chat_data["custom_link"], old_chat_data["directory_id"], old_chat_data["hidden_by"], new_chat_id)
+                    )
+
+                    removed = ChatTable.remove_chat(old_chat_id)
+
+                    if removed:
+                        Logger.log("info", "ChatTable.migrate_chat_id",
+                                   f"Successfully updated data of supergroup having chat_id = '{new_chat_id}'"
+                                   f" by migrating them from data associated to its previous chat_id ('{old_chat_id}')")
+
+                except (Exception, psycopg2.DatabaseError) as ex:
+                    Logger.log("exception", "ChatTable.migrate_chat_id",
+                               f"Couldn't update data of supergroup having '{new_chat_id}'"
+                               f" by migrating them from data associated to its previous chat_id '{old_chat_id}: \n{ex}")
+
+                    return False
+
+            return is_old_chat_data
+
+        else:
+            Logger.log("error", "ChatTable.migrate_chat_id", f"Couldn't get cursor required to update data of"
+                                                             f" supergroup having '{new_chat_id}' by migrating"
+                                                             f" them from data associated to its previous chat_id"
+                                                             f" '{new_chat_id}'")
+
+            return False
+
+    @classmethod
+    def set_missing_permissions(cls, chat_id: int) -> bool:
         cursor, iscursor = Database.get_cursor()
 
         if iscursor:
@@ -644,7 +690,7 @@ class ChatTable:
             return False
 
     @classmethod
-    async def remove_chat(cls, chat_id: int) -> bool:
+    def remove_chat(cls, chat_id: int) -> bool:
         cursor, iscursor = Database.get_cursor()
 
         if iscursor:
@@ -676,6 +722,21 @@ class ChatTable:
             return False
 
     @classmethod
+    def get_chat_data(cls, cursor:  psycopg2._psycopg.cursor, chat_id: int) -> (dict, bool):
+        cursor.execute("SELECT * FROM chat WHERE chat_id = %s", (chat_id,))
+
+        column_names = [desc[0] for desc in cursor.description]
+        record = cursor.fetchone()
+
+        chat_data = {}
+
+        if record:
+            for i, column_name in enumerate(column_names):
+                chat_data[column_name] = record[i]
+
+        return chat_data, bool(record)
+
+    @classmethod
     async def fetch_chat(cls, bot_instance: telegram.Bot, chat_id: int, chat_data: dict = None, cursor: psycopg2._psycopg.cursor = None) -> (dict, bool):
         if cursor is None:
             cursor, iscursor = Database.get_cursor()
@@ -689,14 +750,7 @@ class ChatTable:
 
             if cursor:
                 try:
-                    cursor.execute("SELECT * FROM chat WHERE chat_id = %s", (chat_id,))
-
-                    column_names = [desc[0] for desc in cursor.description]
-                    record = cursor.fetchone()
-
-                    if record:
-                        for i, column_name in enumerate(column_names):
-                            chat_data[column_name] = record[i]
+                    chat_data, _ = cls.get_chat_data(cursor, chat_id)
 
                 except (Exception, psycopg2.DatabaseError) as ex:
                     Logger.log("exception", "ChatTable.fetch_chat",
@@ -721,7 +775,23 @@ class ChatTable:
 
         current_title = chat.title
 
-        bot_member = await bot_instance.get_chat_member(chat_id, bot_instance.id)
+        try:
+            bot_member = await bot_instance.get_chat_member(chat_id, bot_instance.id)
+        except telegram.error.ChatMigrated as ex:
+            new_chat_id = ex.new_chat_id
+
+            ChatTable.migrate_chat_id(chat_id, new_chat_id)
+
+            chat_id = new_chat_id
+
+            chat_data = None
+
+            try:
+                chat_data, _ = cls.get_chat_data(cursor, chat_id)
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "ChatTable.fetch_chat",
+                           f"Couldn't get data from database about chat having chat_id '{chat_id}': \n{ex}")
 
         current_missing_permissions = False
 

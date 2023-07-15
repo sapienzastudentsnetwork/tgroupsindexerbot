@@ -24,9 +24,23 @@ from tgib.data.database import ChatTable
 from tgib.logs import Logger
 
 
-class MemberStatusUpdates:
+class StatusChanges:
     @classmethod
-    async def member_status_updates_handler(cls, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    async def migrate_handler(cls, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        message = update.message
+
+        if message.migrate_to_chat_id is not None:
+            old_chat_id = message.chat_id
+            new_chat_id = message.migrate_to_chat_id
+
+            Logger.log("info", "StatusChanges.migrate_handler",
+                       f"The group having chat_id = '{old_chat_id}'"
+                       f" migrated to a supergroup with chat_id = '{new_chat_id}'")
+
+            ChatTable.migrate_chat_id(old_chat_id, new_chat_id)
+
+    @classmethod
+    async def my_chat_member_handler(cls, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         chat = update.effective_chat
 
         bot = context.bot
@@ -54,25 +68,25 @@ class MemberStatusUpdates:
             chat_id = chat.id
 
             if not was_member and is_member:
-                Logger.log("info", "MemberStatusUpdates.member_status_updates_handler",
-                           "Il bot è stato aggiunto nel gruppo con chat_id = " + str(chat_id))
+                Logger.log("info", "StatusChanges.my_chat_member_handler",
+                           f"The bot was added to the group with chat_id = '{chat_id}'")
 
                 await ChatTable.fetch_chat(bot, chat_id)
 
             elif old_status in (ChatMember.RESTRICTED, ChatMember.MEMBER) and new_status == ChatMember.ADMINISTRATOR:
-                Logger.log("info", "MemberStatusUpdates.member_status_updates_handler",
-                           "Il bot è stato reso amministratore nel gruppo con chat_id = " + str(chat_id))
+                Logger.log("info", "StatusChanges.my_chat_member_handler",
+                           f"The bot was made administrator in the group with chat_id = '{chat_id}'")
 
                 await ChatTable.fetch_chat(bot, chat_id)
 
             elif was_member and not is_member:
-                Logger.log("info", "MemberStatusUpdates.member_status_updates_handler",
-                           "Il bot è stato rimosso dal gruppo con chat_id = " + str(chat_id))
+                Logger.log("info", "StatusChanges.my_chat_member_handler",
+                           f"The bot was kicked from the group with chat_id = '{chat_id}'")
 
-                await ChatTable.remove_chat(chat_id)
+                ChatTable.remove_chat(chat_id)
 
             elif old_status == ChatMember.ADMINISTRATOR and new_status in (ChatMember.RESTRICTED, ChatMember.MEMBER):
-                Logger.log("info", "MemberStatusUpdates.member_status_updates_handler",
-                           "Il bot è stato tolto amministratore dal gruppo con chat_id = " + str(chat_id))
+                Logger.log("info", "StatusChanges.my_chat_member_handler",
+                           f"The bot was removed administrator from the group with chat_id = '{chat_id}'")
 
-                await ChatTable.set_missing_permissions(chat_id)
+                ChatTable.set_missing_permissions(chat_id)

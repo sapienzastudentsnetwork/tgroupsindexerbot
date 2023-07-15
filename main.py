@@ -28,7 +28,7 @@ from telegram.ext import Application, CallbackQueryHandler, Defaults, MessageHan
 
 from tgib.data.database import Database, SessionTable, AccountTable, ChatTable
 from tgib.global_vars import GlobalVariables
-from tgib.handlers.chatmember import MemberStatusUpdates
+from tgib.handlers.statuschanges import StatusChanges
 from tgib.handlers.commands import Commands
 from tgib.handlers.queries import Queries
 from tgib.i18n.locales import Locale
@@ -47,6 +47,20 @@ if __version_info__ < (20, 0, 0, "alpha", 1):
     )
 
 
+def add_application_handlers(application: Application):
+    application.add_handlers([
+        MessageHandler(filters=filters.StatusUpdate.MIGRATE,
+                       callback=StatusChanges.migrate_handler),
+
+        MessageHandler(filters=filters.COMMAND, callback=Commands.commands_handler),
+
+        CallbackQueryHandler(callback=Queries.callback_queries_handler),
+
+        ChatMemberHandler(callback=StatusChanges.my_chat_member_handler,
+                          chat_member_types=ChatMemberHandler.MY_CHAT_MEMBER)
+    ])
+
+
 def main() -> None:
     Logger.init_logger()
 
@@ -63,10 +77,7 @@ def main() -> None:
 
     application.job_queue.run_once(callback=SessionTable.expire_old_sessions, when=0)
 
-    application.add_handler(MessageHandler(filters=filters.COMMAND, callback=Commands.commands_handler))
-    application.add_handler(CallbackQueryHandler(callback=Queries.callback_queries_handler))
-    application.add_handler(ChatMemberHandler(callback=MemberStatusUpdates.member_status_updates_handler,
-                                              chat_member_types=ChatMemberHandler.MY_CHAT_MEMBER))
+    add_application_handlers(application)
 
     application.job_queue.run_once(callback=ChatTable.fetch_chats, when=0, data=application.bot)
 

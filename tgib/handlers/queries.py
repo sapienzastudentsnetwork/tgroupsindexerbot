@@ -144,9 +144,9 @@ class Queries:
                 else:
                     parent_directory_name = str(parent_directory_id)
 
-            groups_dict, is_groups_dict = ChatTable.get_chats(directory_id,
-                                                              skip_missing_permissions_chats=not user_is_admin,
-                                                              skip_hidden_chats=not user_is_admin)
+            groups_dict, is_groups_dict = ChatTable.get_chats(
+                directory_id, skip_missing_permissions_chats=not user_is_admin, skip_hidden_chats=not user_is_admin
+            )
 
             if is_groups_dict:
                 groups_dict: dict
@@ -226,6 +226,8 @@ class Queries:
                 if len(sub_directories_data) > 0 and len(groups_dict) > 0:
                     text += locale.get_string("explore_groups.category.no_category_groups_line")
 
+                listed_groups = 0
+
                 for group_chat_id, group_data_dict in groups_dict.items():
                     group_title = group_data_dict["title"]
 
@@ -249,11 +251,11 @@ class Queries:
 
                         if user_is_admin:
                             text += " {<code>" + str(group_chat_id) + "</code>}"
-                    else:
-                        groups_dict.pop(group_chat_id)
+
+                        listed_groups += 1
 
                 if len(sub_directories_data) > 0:
-                    if len(groups_dict) > 0:
+                    if listed_groups > 0:
                         text += "\n"
 
                     text += locale.get_string("explore_groups.category.sub_categories_line")
