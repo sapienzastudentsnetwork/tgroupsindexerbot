@@ -20,10 +20,10 @@
 import time
 
 import telegram.error
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatMemberAdministrator
 from telegram.ext import ContextTypes
 
-from tgib.data.database import SessionTable, DirectoryTable, AccountTable
+from tgib.data.database import SessionTable, DirectoryTable, AccountTable, ChatTable
 from tgib.global_vars import GlobalVariables
 from tgib.handlers.queries import Queries
 from tgib.i18n.locales import Locale
@@ -31,9 +31,9 @@ from tgib.ui.menus import Menus
 
 
 class Commands:
-    command_cooldowns = {"dont": 15, "reload": 30, "netstatus": 60}
+    command_cooldowns = {"dont": 15, "reload": 15, "netstatus": 60}
     user_last_command_use_dates = {"dont": {}, "reload": {}, "netstatus": {}}
-    registered_commands = ["start", "groups", "dont"]
+    registered_commands = ["start", "groups", "dont", "reload", "id"]
 
     @classmethod
     async def commands_handler(cls, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -99,10 +99,14 @@ class Commands:
                 create_if_not_existing=(query_message.chat.type == "private")
             )
 
+            user_is_bot_admin = (is_user_data and user_data and user_data["is_admin"])
+
+            auto_delete_delay = 10
+
             cooldown = False
 
             if not is_user_data and query_message.chat.type == "private":
-                text, reply_markup = Menus.get_database_error_menu(locale)
+                text, reply_markup = Menus.get_error_menu(locale, source="database")
             else:
                 if (is_user_data and Queries.user_can_perform_action(user_id, user_data, "/" + command)) or (not is_user_data):
                     invalid_request = False
@@ -114,7 +118,7 @@ class Commands:
                         text, reply_markup = Queries.explore_category(
                             locale,
                             DirectoryTable.CATEGORIES_ROOT_DIR_ID,
-                            user_data["is_admin"]
+                            user_data["can_add_groups"], user_data["is_admin"]
                         )
 
                     else:
@@ -125,7 +129,7 @@ class Commands:
 
                             invalid_request = True
 
-                        elif command in ("reload",) and not ((user_data and user_data["is_admin"]) or await Queries.is_admin(bot, chat_id, user_id)):
+                        elif command in ("reload",) and not user_is_bot_admin and not Queries.is_admin(bot, chat_id, user_id):
                             text = locale.get_string("commands.groups.admin_specific_command") \
                                 .replace("[user]",
                                          f'<a href="tg://user?id={user_id}">' + update.effective_user.first_name + '</a>') \
@@ -144,7 +148,46 @@ class Commands:
                                 if query_message.reply_to_message:
                                     reply_to_message = query_message.reply_to_message
 
-                    if query_message.chat.type != "private" and not invalid_request and command in cls.command_cooldowns:
+                            elif command == "reload":
+                                old_chat_data, new_chat_data, is_new_chat_data = await ChatTable.fetch_chat(bot, chat_id)
+
+                                if is_new_chat_data:
+                                    bot_member = await bot.get_chat_member(chat_id, bot.id)
+
+                                    text = locale.get_string("commands.reload.successful")
+
+                                    if not isinstance(bot_member, ChatMemberAdministrator):
+                                        text += "\n\n" + locale.get_string("commands.reload.is_not_admin")
+
+                                        auto_delete_delay = 15
+
+                                    elif isinstance(bot_member, ChatMemberAdministrator):
+                                        bot_member: ChatMemberAdministrator
+
+                                        if not bot_member.can_invite_users:
+                                            try:
+                                                chat = await bot.get_chat(chat_id)
+
+                                                chat_permissions = chat.permissions
+
+                                                text += "\n\n"
+
+                                                if chat_permissions.can_invite_users:
+                                                    text += locale.get_string("commands.reload.cant_invite_users_via_link")
+                                                else:
+                                                    text += locale.get_string("commands.reload.cant_add_members")
+
+                                                auto_delete_delay = 15
+                                            except:
+                                                text = locale.get_string("commands.reload.unsuccessful")
+
+                                else:
+                                    text = locale.get_string("commands.reload.unsuccessful")
+
+                            elif command == "id":
+                                text = locale.get_string("commands.id").replace("[chat_id]", str(chat_id))
+
+                    if query_message.chat.type != "private" and not invalid_request and not user_is_bot_admin and command in cls.command_cooldowns:
                         current_epoch = int(time.time())
 
                         if user_id in cls.user_last_command_use_dates[command]:
@@ -300,7 +343,7 @@ class Commands:
                         except:
                             pass
 
-                    GlobalVariables.job_queue.run_once(callback=delete_message, when=10)
+                    GlobalVariables.job_queue.run_once(callback=delete_message, when=auto_delete_delay)
 
             try:
                 await bot.delete_message(chat_id=chat_id, message_id=query_message.message_id)

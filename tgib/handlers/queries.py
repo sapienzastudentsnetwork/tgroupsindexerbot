@@ -101,6 +101,24 @@ class Queries:
         return InlineKeyboardMarkup(encoded_inline_keyboard)
 
     @classmethod
+    async def is_admin(cls, bot, chat_id, user_id):
+        try:
+            chat_member = await bot.get_chat_member(chat_id, user_id)
+            return chat_member.status in (ChatMember.OWNER, ChatMember.ADMINISTRATOR)
+        except:
+            return None
+
+    @classmethod
+    def get_current_italian_datetime(cls) -> (str, str, str):
+        datetime_now = datetime.now(pytz.timezone('Europe/Rome'))
+
+        date_str = datetime_now.strftime("%d/%m/%Y")
+        time_str = datetime_now.strftime("%H:%M")
+        offset_str = datetime_now.strftime("%z")
+
+        return date_str, time_str, offset_str
+
+    @classmethod
     def user_can_perform_action(cls, chat_id: int, user_data: dict, action: str):
         # TODO: if it is a group visualisation action then check
         #       whether the user has the can_view_groups permission
@@ -184,7 +202,7 @@ class Queries:
                             keyboard.append([InlineKeyboardButton(text=curr_sub_directory_btn_text,
                                                                   callback_data=curr_sub_directory_callback_data)])
                 else:
-                    return Menus.get_database_error_menu(locale)
+                    return Menus.get_error_menu(locale)
 
                 if parent_directory_id != -1:
                     text = f"<b>" + parent_directory_name + " > " + directory_name + "</b>\n"
@@ -262,7 +280,7 @@ class Queries:
 
                 return text, InlineKeyboardMarkup(keyboard)
 
-        return Menus.get_database_error_menu(locale)
+        return Menus.get_error_menu(locale)
 
     @classmethod
     def cd_queries_handler(cls, directory_id: int, locale: Locale, user_is_admin: bool = False) -> (str, InlineKeyboardMarkup):
@@ -318,7 +336,7 @@ class Queries:
                     elif query_data == "expired_session_about_alert":
                         await query.answer(text=locale.get_string("expired_session_menu.about_alert"), show_alert=True)
             else:
-                text, reply_markup = Menus.get_database_error_menu(locale)
+                text, reply_markup = Menus.get_error_menu(locale)
 
             if text or reply_markup:
                 reply_markup = Queries.encode_queries(reply_markup)

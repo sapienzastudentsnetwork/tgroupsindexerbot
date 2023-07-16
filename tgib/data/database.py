@@ -28,6 +28,7 @@ from telegram import ChatMemberAdministrator
 from telegram.ext import ContextTypes
 
 from tgib.global_vars import GlobalVariables
+from tgib.i18n.locales import Locale
 from tgib.ui.menus import Menus
 from tgib.logs import Logger
 
@@ -519,17 +520,20 @@ class DirectoryTable:
             return cls.cached_chat_counts[directory_id], True
 
     @classmethod
-    def increment_chats_count(cls, directory_id: int, increment: int = 1) -> bool:
-        directory_data, is_directory_data = cls.get_directory_data(directory_id)
+    def increment_chats_count(cls, directory_id: int, increment: int = 1) -> None:
+        curr_directory_id = directory_id
 
-        if is_directory_data:
-            curr_directory_data = directory_data
-            curr_directory_data: dict
+        curr_directory_data, is_curr_directory_data = cls.get_directory_data(directory_id)
 
-            while bool(curr_directory_data["parent_id"]):
-                curr_parent_directory_id = curr_directory_data["parent_id"]
+        while True:
+            if is_curr_directory_data and curr_directory_data["parent_id"]:
+                cls.cached_chat_counts[curr_directory_id] = cls.cached_chat_counts[curr_directory_id] + increment
 
-                curr_directory_data, is_curr_directory_data = cls.get_directory_data(curr_parent_directory_id)
+            if not is_curr_directory_data or curr_directory_data["parent_id"] is None:
+                break
+                
+            curr_directory_id = curr_directory_data["parent_id"]
+            curr_directory_data, is_curr_directory_data = cls.get_directory_data(curr_directory_id)
 
                 if is_curr_directory_data and curr_parent_directory_id in cls.cached_chat_counts:
                     cls.cached_chat_counts[curr_parent_directory_id] += increment
@@ -723,13 +727,22 @@ class ChatTable:
             return False
 
     @classmethod
-    def get_chat_data(cls, cursor:  psycopg2._psycopg.cursor, chat_id: int) -> (dict, bool):
+    def get_chat_data(cls, chat_id: int, cursor: psycopg2._psycopg.cursor = None) -> (dict, bool):
+        chat_data = {}
+
+        if cursor is None:
+            cursor, is_cursor = Database.get_cursor()
+
+            if not is_cursor:
+                Logger.log("error", "ChatTable.get_chat_data",
+                           f"Couldn't get cursor required to get data of chat having chat_id '{chat_id}'")
+
+                return chat_data, False
+
         cursor.execute("SELECT * FROM chat WHERE chat_id = %s", (chat_id,))
 
         column_names = [desc[0] for desc in cursor.description]
         record = cursor.fetchone()
-
-        chat_data = {}
 
         if record:
             for i, column_name in enumerate(column_names):
@@ -751,7 +764,7 @@ class ChatTable:
 
             if cursor:
                 try:
-                    chat_data, _ = cls.get_chat_data(cursor, chat_id)
+                    chat_data, _ = cls.get_chat_data(chat_id, cursor)
 
                 except (Exception, psycopg2.DatabaseError) as ex:
                     Logger.log("exception", "ChatTable.fetch_chat",
@@ -787,10 +800,10 @@ class ChatTable:
 
             chat_id = new_chat_id
 
-            chat_data = None
+            chat_data = {}
 
             try:
-                chat_data, _ = cls.get_chat_data(cursor, chat_id)
+                chat_data, _ = cls.get_chat_data(chat_id, cursor)
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "ChatTable.fetch_chat",

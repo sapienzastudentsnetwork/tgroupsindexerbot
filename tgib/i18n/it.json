@@ -8,10 +8,10 @@
   "i18n.en_flag":          "\uD83C\uDDEC\uD83C\uDDE7",
   "i18n.string_not_found": "Stringa '[key]' non trovata",
 
-  "main_menu.text":                    "Cosa vuoi fare adesso?",
-  "main_menu.explore_groups_btn":      "\uD83D\uDC65 Esplora i gruppi",
-  "main_menu.adding_groups_guide_btn": "\uD83D\uDCA0 Aggiungi un gruppo",
-  "main_menu.about_message_btn":       "ℹ️ Riguardo il bot",
+  "main_menu.text":                 "Cosa vuoi fare adesso?",
+  "main_menu.explore_groups_btn":   "\uD83D\uDC65 Esplora i gruppi",
+  "main_menu.add_bot_to_group_btn": "\uD83D\uDCA0 Aggiungi un gruppo",
+  "main_menu.about_message_btn":    "ℹ️ Riguardo il bot",
 
   "about_menu.text": [
     "ℹ️ Bot Telegram per l'indicizzazione di gruppi gestiti da studenti e studentesse dell'ateneo",
@@ -25,25 +25,26 @@
   "about_menu.report_issue_btn": "\uD83D\uDD8D Segnala un problema",
   "about_menu.feature_request_btn": "\uD83D\uDCE4 Suggerisci nuove funzionalità",
   "about_menu.contact_us_btn": "\uD83D\uDCAC Contattaci",
-  "about_menu.back_btn":   "◀️ Torna al menù",
+  "about_menu.back_btn": "◀️ Torna al menù",
 
   "database_error_menu.text": [
     "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria a soddisfare la tua richiesta",
     "\n\n<i>Ti preghiamo di contattarci qualora il problema dovesse persistere</i>"
   ],
-  "database_error_menu.contact_us": "\uD83D\uDCAC Contattaci",
-  "database_error_menu.back_btn":   "◀️ Torna al menù",
+  "database_error_menu.contact_us_btn": "\uD83D\uDCAC Contattaci",
+  "database_error_menu.back_btn": "◀️ Torna al menù",
 
-  "expired_session_menu.text": [
-    "La sessione precedente è scaduta, per riprendere la navigazione ",
-    "fai click sul pulsante per tornare al menù principale"
+  "query_error_menu.text": [
+    "\uD83D\uDE14 Si è verificato un errore durante il soddisfacimento della tua richiesta",
+    "\n\n<i>Ti preghiamo di contattarci qualora il problema dovesse persistere</i>"
   ],
-  "expired_session_menu.about_btn": "ℹ️ Come mai?",
-  "expired_session_menu.back_btn":  "◀️ Torna al menù",
-  "expired_session_menu.about_alert": [
-    "Le sessioni scadono automaticamente ad ogni aggiornamento (e conseguente ",
-    "riavvio) del bot e comunque almeno una volta entro 24 ore"
-  ],
+  "query_error_menu.contact_us_btn": "\uD83D\uDCAC Contattaci",
+  "query_error_menu.back_btn": "◀️ Torna al menù",
+
+  "expired_session_menu.text": "ℹ️ La sessione precedente è scaduta, fai click sul pulsante per riprendere la navigazione",
+  "expired_session_menu.refresh_session_btn":  "Vai al menù principale ▶️",
+  "expired_session_menu.about_btn": "Come mai❔",
+  "expired_session_menu.about_alert": "Le sessioni scadono automaticamente ad ogni aggiornamento (e conseguente riavvio) del bot e comunque almeno una volta entro 24 ore",
 
   "explore_directories.sub_directory.back_btn":      "◀️ Indietro",
   "explore_directories.back_to_menu_btn":            "◀️ Torna al menù",
@@ -69,6 +70,12 @@
   "commands.groups.admin_specific_command": "⛔️ Spiacente [user], il comando <code>[command]</code> può essere eseguito soltanto da un amministratore del gruppo",
   "commands.groups.cooldown": "✋ Un po' di pazienza [user], devi attendere ancora [remaining_time] secondi prima di poter usare di nuovo il comando [command] nei gruppi",
   "commands.dont": "\uD83C\uDDEE\uD83C\uDDF9 https://dontasktoask.com/it/\nPoni direttamente la tua domanda e chi può risponderà \uD83D\uDE42",
+  "commands.id": "\uD83C\uDD94 ID di questa chat: <code>[chat_id]</code>",
+  "commands.reload.unsuccessful": "⛔️ La procedura di ricarica dati del gruppo non è andata a buon fine, contatta un amministratore del bot qualora il problema dovesse persistere",
+  "commands.reload.successful": "☑️ Informazioni del gruppo ricaricate",
+  "commands.reload.is_not_admin": "❌ Il bot non è stato impostato come amministratore del gruppo",
+  "commands.reload.cant_invite_users_via_link": "❌ Il bot non ha il permesso necessario di invitare utenti tramite link",
+  "commands.reload.cant_add_members": "❌ Il bot non ha il permesso necessario di aggiungere membri",
   "commands.command_not_found.text": "❔ Nessun comando [command] trovato [user], se pensi possa trattarsi di un errore contatta un amministratore del bot",
   "commands.command_not_found.contact_us_btn": "\uD83D\uDCAC Contattaci"
 }

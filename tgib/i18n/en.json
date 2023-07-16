@@ -8,10 +8,10 @@
   "i18n.en_flag":          "\uD83C\uDDEC\uD83C\uDDE7",
   "i18n.string_not_found": "String '[key]' not found",
 
-  "main_menu.text":                    "What do you want to do next?",
-  "main_menu.explore_groups_btn":      "\uD83D\uDC65 Explore the groups",
-  "main_menu.adding_groups_guide_btn": "\uD83D\uDCA0 Add a group",
-  "main_menu.about_message_btn":       "ℹ️ About the bot",
+  "main_menu.text":                 "What do you want to do next?",
+  "main_menu.explore_groups_btn":   "\uD83D\uDC65 Explore the groups",
+  "main_menu.add_bot_to_group_btn": "\uD83D\uDCA0 Add a group",
+  "main_menu.about_message_btn":    "ℹ️ About the bot",
 
   "about_menu.text": [
     "ℹ️ Telegram bot for indexing groups run by students at the university",
@@ -25,25 +25,26 @@
   "about_menu.report_issue_btn": "\uD83D\uDD8D Report an issue",
   "about_menu.feature_request_btn": "\uD83D\uDCE4 Suggest a new feature",
   "about_menu.contact_us_btn": "\uD83D\uDCAC Contact Us",
-  "about_menu.back_btn":   "◀️ Back to Menu",
+  "about_menu.back_btn": "◀️ Back to Menu",
 
   "database_error_menu.text": [
     "\uD83D\uDE14 An error occurred in the interaction with the database required to fulfil your request",
-    "\n\n<i>Please contact us if the problem persists</i>"
+    "\n\n<i>Please contact us should the problem persists</i>"
   ],
-  "database_error_menu.contact_us": "\uD83D\uDCAC Contact Us",
-  "database_error_menu.back_btn":   "◀️ Back to Menu",
+  "database_error_menu.contact_us_btn": "\uD83D\uDCAC Contact Us",
+  "database_error_menu.back_btn": "◀️ Back to Menu",
 
-  "expired_session_menu.text": [
-    "The previous session has expired, to resume navigation ",
-    "click on the button to go back to the main menu"
+  "query_error_menu.text": [
+    "\uD83D\uDE14 An error occurred while fulfilling your request",
+    "\n\n<i>Please contact us should the problem persists</i>"
   ],
-  "expired_session_menu.about_btn": "ℹ️ Why?",
-  "expired_session_menu.back_btn":  "◀️ Back to Menu",
-  "expired_session_menu.about_alert": [
-    "Sessions expire automatically each time the bot is updated (and ",
-    "consequently restarted) and in any case at least once within 24 hours"
-  ],
+  "query_error_menu.contact_us_btn": "\uD83D\uDCAC Contact Us",
+  "query_error_menu.back_btn": "◀️ Back to Menu",
+
+  "expired_session_menu.text": "ℹ️ The previous session has expired, click on the button to resume navigation",
+  "expired_session_menu.refresh_session_btn": "Go to the main menu ▶️",
+  "expired_session_menu.about_btn": "Why❔",
+  "expired_session_menu.about_alert": "Sessions expire automatically each time the bot is updated (and consequently restarted) and in any case at least once within 24 hours",
 
   "explore_directories.sub_directory.back_btn":      "◀️ Back",
   "explore_directories.back_to_menu_btn":            "◀️ Back to Menu",
@@ -68,6 +69,12 @@
   "commands.groups.admin_specific_command": "⛔️ Sorry [user], the <code>[command]</code> command can only be executed by a group administrator",
   "commands.groups.cooldown": "✋ A bit of patience [user], you still have to wait [remaining_time] seconds before you can use the [command] command in groups again",
   "commands.dont": "\uD83C\uDDEC\uD83C\uDDE7 https://dontasktoask.com\nAsk your question directly and those who can will answer it \uD83D\uDE42",
+  "commands.id": "\uD83C\uDD94 This chat's ID: <code>[chat_id]</code>",
+  "commands.reload.unsuccessful": "⛔️ The group data reload procedure failed, contact a bot administrator if the problem persists",
+  "commands.reload.successful": "☑️ Group info reloaded",
+  "commands.reload.is_not_admin": "❌ The bot has not been set up as a group administrator",
+  "commands.reload.cant_invite_users_via_link": "❌ The bot does not have the necessary permission to invite users via link",
+  "commands.reload.cant_add_members": "❌ The bot does not have the necessary permission to add members",
   "commands.command_not_found.text": "❔ No [command] command found [user], if you think it might be an error contact a bot administrator",
   "commands.command_not_found.contact_us_btn": "\uD83D\uDCAC Contact Us"
 }

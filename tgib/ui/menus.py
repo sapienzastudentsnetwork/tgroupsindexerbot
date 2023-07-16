@@ -31,8 +31,8 @@ class Menus:
         keyboard = [
             [InlineKeyboardButton(text=locale.get_string("main_menu.explore_groups_btn"),
                                   callback_data="explore_categories")],
-            [InlineKeyboardButton(text=locale.get_string("main_menu.adding_groups_guide_btn"),
-                                  callback_data="wip_alert")],
+            [InlineKeyboardButton(text=locale.get_string("main_menu.add_bot_to_group_btn"),
+                                  callback_data="add_group_menu")],
             [InlineKeyboardButton(text=locale.get_string("main_menu.about_message_btn"),
                                   callback_data="about_menu")]
         ]
@@ -68,13 +68,13 @@ class Menus:
         return text, InlineKeyboardMarkup(keyboard)
 
     @classmethod
-    def get_database_error_menu(cls, locale: Locale) -> (str, InlineKeyboardMarkup):
-        text = locale.get_string("database_error_menu.text")
+    def get_error_menu(cls, locale: Locale, source: str = "database") -> (str, InlineKeyboardMarkup):
+        text = locale.get_string(f"{source}_error_menu.text")
 
         keyboard = [
-            [InlineKeyboardButton(text=locale.get_string("database_error_menu.contact_us"),
+            [InlineKeyboardButton(text=locale.get_string(f"{source}_error_menu.contact_us_btn"),
                                   url=f'tg://resolve?domain=sapienzastudentsnetworkbot')],
-            [InlineKeyboardButton(text=locale.get_string("database_error_menu.back_btn"),
+            [InlineKeyboardButton(text=locale.get_string(f"{source}_error_menu.back_btn"),
                                   callback_data="main_menu")]
         ]
 
@@ -87,10 +87,10 @@ class Menus:
         text = locale.get_string("expired_session_menu.text")
 
         keyboard = [
+            [InlineKeyboardButton(text=locale.get_string("expired_session_menu.refresh_session_btn"),
+                                  callback_data="refresh_session")],
             [InlineKeyboardButton(text=locale.get_string("expired_session_menu.about_btn"),
-                                  callback_data="expired_session_about_alert")],
-            [InlineKeyboardButton(text=locale.get_string("expired_session_menu.back_btn"),
-                                  callback_data="refresh_session")]
+                                  callback_data="expired_session_about_alert")]
         ]
 
         return text, InlineKeyboardMarkup(keyboard)
