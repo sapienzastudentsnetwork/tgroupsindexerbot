@@ -21,7 +21,7 @@ import hashlib
 from datetime import datetime
 
 import pytz
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatMember
 from telegram.ext import CallbackContext
 
 from tgib.data.database import DirectoryTable, AccountTable, ChatTable, SessionTable

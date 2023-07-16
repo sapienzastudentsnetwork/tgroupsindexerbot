@@ -531,20 +531,9 @@ class DirectoryTable:
 
             if not is_curr_directory_data or curr_directory_data["parent_id"] is None:
                 break
-                
+
             curr_directory_id = curr_directory_data["parent_id"]
             curr_directory_data, is_curr_directory_data = cls.get_directory_data(curr_directory_id)
-
-                if is_curr_directory_data and curr_parent_directory_id in cls.cached_chat_counts:
-                    cls.cached_chat_counts[curr_parent_directory_id] += increment
-
-                else:
-                    return False
-
-            return True
-
-        else:
-            return False
 
 
 class ChatTable:
