@@ -973,9 +973,9 @@ class ChatTable:
             # [*] with the ChatTable.migrate_chat_id method
 
             if migrated:
-                return cls.fetch_chat(bot_instance, new_chat_id, chat_data, cursor)
+                return await cls.fetch_chat(bot_instance, new_chat_id, chat_data, cursor)
             else:
-                return cls.fetch_chat(bot_instance, new_chat_id, chat_data, cursor, migrating_from_chat_id=chat_id)
+                return await cls.fetch_chat(bot_instance, new_chat_id, chat_data, cursor, migrating_from_chat_id=chat_id)
 
         except telegram.error.Forbidden as ex:
             if "bot was kicked from the supergroup chat" in ex.message:
