@@ -268,7 +268,7 @@ class Queries:
                     )
 
                 if pages_keyboard:
-                    keyboard += pages_keyboard
+                    keyboard.append(pages_keyboard)
 
                 if len(chats_user_is_admin_of) > 0:
                     for curr_chat_id, curr_chat_data in chats_user_is_admin_of.items():
