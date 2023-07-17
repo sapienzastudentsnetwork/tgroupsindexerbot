@@ -937,6 +937,27 @@ class ChatTable:
 
             chat = await bot_instance.getChat(chat_id)
 
+        except telegram.error.ChatMigrated as ex:
+            new_chat_id = ex.new_chat_id
+
+            try:
+                chat = await bot_instance.getChat(new_chat_id)
+
+                ChatTable.migrate_chat_id(chat_id, new_chat_id)
+
+                chat_id = new_chat_id
+
+                chat_data = {}
+
+                try:
+                    chat_data, _ = cls.get_chat_data(chat_id, cursor)
+
+                except (Exception, psycopg2.DatabaseError) as ex:
+                    Logger.log("exception", "ChatTable.fetch_chat",
+                               f"Couldn't get data from database about chat having chat_id '{chat_id}'", ex)
+            except:
+                return chat_data, {}, False
+
         except:
             return chat_data, {}, False
 
@@ -946,25 +967,7 @@ class ChatTable:
 
         current_title = chat.title
 
-        try:
-            bot_member = await bot_instance.get_chat_member(chat_id, bot_instance.id)
-        except telegram.error.ChatMigrated as ex:
-            new_chat_id = ex.new_chat_id
-
-            bot_member = await bot_instance.get_chat_member(new_chat_id, bot_instance.id)
-
-            ChatTable.migrate_chat_id(chat_id, new_chat_id)
-
-            chat_id = new_chat_id
-
-            chat_data = {}
-
-            try:
-                chat_data, _ = cls.get_chat_data(chat_id, cursor)
-
-            except (Exception, psycopg2.DatabaseError) as ex:
-                Logger.log("exception", "ChatTable.fetch_chat",
-                           f"Couldn't get data from database about chat having chat_id '{chat_id}'", ex)
+        bot_member = await bot_instance.get_chat_member(chat_id, bot_instance.id)
 
         current_missing_permissions = False
 
