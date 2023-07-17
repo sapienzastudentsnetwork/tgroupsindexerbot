@@ -32,7 +32,7 @@ class Menus:
             [InlineKeyboardButton(text=locale.get_string("main_menu.explore_groups_btn"),
                                   callback_data="explore_categories")],
             [InlineKeyboardButton(text=locale.get_string("main_menu.add_bot_to_group_btn"),
-                                  callback_data="add_group_menu")],
+                                  callback_data="wip_alert")],
             [InlineKeyboardButton(text=locale.get_string("main_menu.about_message_btn"),
                                   callback_data="about_menu")]
         ]
