@@ -16,7 +16,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with TGroupsIndexerBot. If not, see <http://www.gnu.org/licenses/>.
-import os
+
 import time
 
 import telegram.error

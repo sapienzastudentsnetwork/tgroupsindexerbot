@@ -763,6 +763,9 @@ class ChatTable:
 
             if is_old_chat_data:
                 try:
+                    connection = Database.connection
+                    connection: psycopg2._psycopg.connection
+
                     cursor.execute(
                         """
                         UPDATE chat
@@ -773,6 +776,8 @@ class ChatTable:
                         """,
                         (old_chat_data["custom_link"], old_chat_data["directory_id"], old_chat_data["hidden_by"], new_chat_id)
                     )
+
+                    connection.commit()
 
                     removed = ChatTable.remove_chat(old_chat_id)
 
