@@ -19,6 +19,7 @@
 
 import logging
 
+from telegram import User
 from telegram.ext import ContextTypes
 
 from tgib.global_vars import GlobalVariables
@@ -31,14 +32,50 @@ class Logger:
 
     exception_log_chat_id = None
 
+    admin_actions_log_chat_id = None
+
     @classmethod
-    def init_logger(cls, exception_log_chat_id: int = None):
+    def init_logger(cls, exception_log_chat_id: int = None, admin_actions_log_chat_id: int = None):
         logging.basicConfig(level=logging.INFO,
                             format='%(levelname)s - %(message)s')
 
         cls.logger = logging.getLogger()
 
         cls.exception_log_chat_id = exception_log_chat_id
+
+        cls.admin_actions_log_chat_id = admin_actions_log_chat_id
+
+    @classmethod
+    async def log_admin_action(cls, action: str, admin: User, target_chat_data: dict,
+                               new_directory_id: int = None, full_old_category_name: str = None,
+                               full_new_category_name: str = None):
+
+        if cls.admin_actions_log_chat_id:
+            target_chat_id = target_chat_data["chat_id"]
+
+            old_directory_id = target_chat_data["directory_id"]
+
+            text = "<b>" + action.upper() + f'</b>\n\n✍️ <a href="tg://user?id={admin.id}">{admin.full_name}</a>'
+
+            if admin.username:
+                text += f" (@{admin.username})"
+
+            text += f" [<code>{admin.id}</code>]"
+
+            text += f"\n\n💬 \"" + target_chat_data["title"] + f"\" [<code>{target_chat_id}</code>]"
+
+            if action not in ("hide", "unhide") and old_directory_id is not None:
+                text += f"\n\n🗑 \"{full_old_category_name}\" [<code>{old_directory_id}</code>]"
+
+            if new_directory_id is not None:
+                text += f"\n\n🎯 \"{full_new_category_name}\" [<code>{new_directory_id}</code>]"
+
+            bot_instance: telegram.Bot = GlobalVariables.bot_instance
+
+            await bot_instance.send_message(
+                chat_id=cls.admin_actions_log_chat_id,
+                text=text
+            )
 
     @classmethod
     def log(cls, log_type, author, text, exception=None) -> bool:

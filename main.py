@@ -62,7 +62,7 @@ def add_application_handlers(application: Application):
 
 
 def main() -> None:
-    Logger.init_logger(os_getenv("EXCEPTION_LOG_CHAT_ID"))
+    Logger.init_logger(os_getenv("EXCEPTION_LOG_CHAT_ID"), os_getenv("ADMIN_ACTIONS_LOG_CHAT_ID"))
 
     Locale.init_locales()
 

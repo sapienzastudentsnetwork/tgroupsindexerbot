@@ -27,8 +27,8 @@ from tgib.data.database import SessionTable, DirectoryTable, AccountTable, ChatT
 from tgib.global_vars import GlobalVariables
 from tgib.handlers.queries import Queries
 from tgib.i18n.locales import Locale
+from tgib.logs import Logger
 from tgib.ui.menus import Menus
-
 
 class Commands:
     command_cooldowns = {"dont": 15, "reload": 15, "netstatus": 60}
@@ -41,7 +41,8 @@ class Commands:
     group_admin_commands = ("reload",)
     bot_admin_commands = ("hide", "unhide", "move", "unindex")
     bot_owner_commands = ("addadmin", "rmadmin", "listadmins")
-    alias_commands = {"removeadmin": "rmadmin", "bangroup": "hide", "unbangroup": "unhide", "deindex": "unindex"}
+    alias_commands = {"removeadmin": "rmadmin", "bangroup": "hide", "unbangroup": "unhide",
+                      "deindex": "unindex", "index": "move", "dontasktoask": "dont"}
 
     @classmethod
     async def commands_handler(cls, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -130,7 +131,7 @@ class Commands:
                         text, reply_markup = Queries.explore_category(
                             locale,
                             DirectoryTable.CATEGORIES_ROOT_DIR_ID,
-                            user_data["can_add_groups"], user_data["is_admin"]
+                            user_data["is_admin"]
                         )
 
                     else:
@@ -219,11 +220,11 @@ class Commands:
 
                                         elif new_chat_data and not new_chat_data["missing_permissions"]:
                                             if old_chat_data["directory_id"] is not None:
-                                                full_category_name = DirectoryTable.get_full_category_name(locale.lang_code, old_chat_data["directory_id"])
+                                                full_target_category_name = DirectoryTable.get_full_category_name(locale.lang_code, old_chat_data["directory_id"])
 
-                                                if full_category_name:
+                                                if full_target_category_name:
                                                     text += "\n\n" + locale.get_string("commands.reload.indexed") \
-                                                        .replace("[category]", full_category_name)
+                                                        .replace("[category]", full_target_category_name)
                                             else:
                                                 text += "\n\n" + locale.get_string("commands.reload.not_indexed")
 
@@ -281,6 +282,8 @@ class Commands:
 
                                                     text = locale.get_string("commands.visibility.hide.successful")
 
+                                                    await Logger.log_admin_action("hide", update.effective_user, target_chat_data)
+
                                             else:
                                                 text = locale.get_string("commands.visibility.already_hidden")
 
@@ -293,6 +296,8 @@ class Commands:
                                                         DirectoryTable.increment_chats_count(chat_directory_id, +1)
 
                                                     text = locale.get_string("commands.visibility.unhide.successful")
+
+                                                    await Logger.log_admin_action("unhide", update.effective_user, target_chat_data)
 
                                             else:
                                                 text = locale.get_string("commands.visibility.already_not_hidden")
@@ -312,9 +317,9 @@ class Commands:
                                                     target_directory_id = int(query_msg_text.split(" ")[1])
 
                                                 if not invalid_request:
-                                                    full_category_name = DirectoryTable.get_full_category_name(locale.lang_code, target_directory_id)
+                                                    full_target_category_name = DirectoryTable.get_full_category_name(locale.lang_code, target_directory_id)
 
-                                                    if full_category_name is not None:
+                                                    if full_target_category_name is not None:
                                                         if chat_directory_id is None or target_directory_id != chat_directory_id:
                                                             updated = ChatTable.update_chat_directory(target_chat_id, target_directory_id)
 
@@ -324,7 +329,20 @@ class Commands:
                                                                 if chat_directory_id is not None:
                                                                     DirectoryTable.increment_chats_count(chat_directory_id, -1)
 
-                                                                text = locale.get_string("commands.move.successful")
+                                                                    full_old_category_name = DirectoryTable.get_full_category_name(locale.lang_code, chat_directory_id)
+
+                                                                    text = locale.get_string("commands.move.moved") \
+                                                                        .replace("[old_category]", str(full_old_category_name))
+
+                                                                else:
+                                                                    text = locale.get_string("commands.move.indexed")
+
+                                                                await Logger.log_admin_action(
+                                                                    "move", update.effective_user, target_chat_data,
+                                                                    new_directory_id=target_directory_id,
+                                                                    full_old_category_name=full_old_category_name,
+                                                                    full_new_category_name=full_target_category_name
+                                                                )
 
                                                             else:
                                                                 text = locale.get_string("commands.directory_database_error")
@@ -332,7 +350,7 @@ class Commands:
                                                         else:
                                                             text = locale.get_string("commands.move.already_current_category")
 
-                                                        text = text.replace("[category]", full_category_name)
+                                                        text = text.replace("[category]", full_target_category_name)
 
                                                     else:
                                                         text = locale.get_string("commands.directory_database_error")
@@ -349,7 +367,15 @@ class Commands:
                                                 if updated:
                                                     DirectoryTable.increment_chats_count(chat_directory_id, -1)
 
-                                                    text = locale.get_string("commands.visibility.unindex.successful")
+                                                    full_target_category_name = DirectoryTable.get_full_category_name(locale.lang_code, chat_directory_id)
+
+                                                    text = locale.get_string("commands.visibility.unindex.successful") \
+                                                        .replace("[category]", str(full_target_category_name))
+
+                                                    await Logger.log_admin_action(
+                                                        "unindex", update.effective_user, target_chat_data,
+                                                        full_old_category_name=full_target_category_name
+                                                    )
 
                                             else:
                                                 text = locale.get_string("commands.visibility.already_not_indexed_at_all")

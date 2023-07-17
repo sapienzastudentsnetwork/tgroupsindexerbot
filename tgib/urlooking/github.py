@@ -18,7 +18,6 @@
 # along with TGroupsIndexerBot. If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from os import getenv as os_getenv
 
 import feedparser
 import telegram.ext
