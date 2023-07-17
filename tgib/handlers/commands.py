@@ -82,20 +82,20 @@ class Commands:
 
                     try:
                         new_message = await bot.send_message(chat_id=user_id, text=text, reply_markup=reply_markup)
-                    except:
+                    except Exception:
                         new_message = await bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
 
                         async def delete_message(context: ContextTypes.DEFAULT_TYPE) -> None:
                             try:
                                 await bot.delete_message(chat_id=chat_id, message_id=new_message.message_id)
-                            except:
+                            except Exception:
                                 pass
 
                         GlobalVariables.job_queue.run_once(callback=delete_message, when=10)
 
                     try:
                         await bot.delete_message(chat_id=chat_id, message_id=query_message.message_id)
-                    except:
+                    except Exception:
                         pass
 
                 return
@@ -210,8 +210,22 @@ class Commands:
                                                     text += locale.get_string("commands.reload.cant_add_members")
 
                                                 auto_delete_delay = 15
-                                            except:
+                                            except Exception:
                                                 text = locale.get_string("commands.reload.unsuccessful")
+
+                                    if old_chat_data:
+                                        if old_chat_data["hidden_by"] is not None:
+                                            text += "\n\n" + locale.get_string("commands.reload.hidden")
+
+                                        elif new_chat_data and not new_chat_data["missing_permissions"]:
+                                            if old_chat_data["directory_id"] is not None:
+                                                full_category_name = DirectoryTable.get_full_category_name(locale.lang_code, old_chat_data["directory_id"])
+
+                                                if full_category_name:
+                                                    text += "\n\n" + locale.get_string("commands.reload.indexed") \
+                                                        .replace("[category]", full_category_name)
+                                            else:
+                                                text += "\n\n" + locale.get_string("commands.reload.not_indexed")
 
                                 else:
                                     text = locale.get_string("commands.reload.unsuccessful")
@@ -229,7 +243,7 @@ class Commands:
                                         try:
                                             target_chat_id = int(query_msg_text.split(" ")[1])
 
-                                        except:
+                                        except Exception:
                                             text = locale.get_string("commands.wrong_chat_id_format")
 
                                             delete_query_message = False
@@ -323,7 +337,7 @@ class Commands:
                                                     else:
                                                         text = locale.get_string("commands.directory_database_error")
 
-                                            except:
+                                            except Exception:
                                                 text = locale.get_string("commands.wrong_directory_id_format")
 
                                                 delete_query_message = False
@@ -354,7 +368,7 @@ class Commands:
                                     try:
                                         target_chat_id = int(command_args[0])
 
-                                    except:
+                                    except Exception:
                                         text = locale.get_string("commands.wrong_chat_id_format")
 
                                         delete_query_message = False
@@ -492,7 +506,7 @@ class Commands:
                 except telegram.error.BadRequest as ex:
                     if "Chat not found" in ex.message:
                         error_message = locale.get_string("commands.groups.errors.badrequest.chat_not_found")
-                except:
+                except Exception:
                     pass
 
                 if query_message.chat.type != "private" and not new_message:
@@ -522,11 +536,11 @@ class Commands:
                         async def delete_message(context: ContextTypes.DEFAULT_TYPE) -> None:
                             try:
                                 await bot.delete_message(chat_id=chat_id, message_id=new_message.message_id)
-                            except:
+                            except Exception:
                                 pass
 
                         job_queue.run_once(callback=delete_message, when=10)
-                    except:
+                    except Exception:
                         pass
 
                 if is_user_data and not error_message and new_message:
@@ -535,7 +549,7 @@ class Commands:
                     if old_latest_menu_message_id != -1:
                         try:
                             await bot.delete_message(chat_id=user_id, message_id=old_latest_menu_message_id)
-                        except:
+                        except Exception:
                             pass
 
                         SessionTable.update_session(user_id, new_message.message_id)
@@ -553,10 +567,10 @@ class Commands:
                             new_message = await bot.send_message(chat_id=user_id, text=text)
 
                             message_chat_id = user_id
-                        except:
+                        except Exception:
                             try:
                                 new_message = await bot.send_message(chat_id=chat_id, text=text)
-                            except:
+                            except Exception:
                                 pass
                     else:
                         try:
@@ -571,9 +585,9 @@ class Commands:
                                         chat_id=user_id,
                                         text=error_message
                                     )
-                                except:
+                                except Exception:
                                     pass
-                        except:
+                        except Exception:
                             pass
                 else:
                     reply_to_message: telegram.Message
@@ -590,9 +604,9 @@ class Commands:
                                     chat_id=user_id,
                                     text=error_message
                                 )
-                            except:
+                            except Exception:
                                 pass
-                    except:
+                    except Exception:
                         pass
 
                 if new_message and (cooldown or command_name not in ("dont",)) and \
@@ -601,7 +615,7 @@ class Commands:
                     async def delete_message(context: ContextTypes.DEFAULT_TYPE) -> None:
                         try:
                             await bot.delete_message(chat_id=message_chat_id, message_id=new_message.message_id)
-                        except:
+                        except Exception:
                             pass
 
                     GlobalVariables.job_queue.run_once(callback=delete_message, when=auto_delete_delay)
@@ -612,5 +626,5 @@ class Commands:
 
                 try:
                     await bot.delete_message(chat_id=chat_id, message_id=query_message.message_id)
-                except:
+                except Exception:
                     pass

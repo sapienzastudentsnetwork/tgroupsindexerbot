@@ -45,9 +45,9 @@ class Logger:
         message = f"{author} | {text}"
 
         if exception is not None:
-            ex_type = str(type(exception)).replace("<class '", "").replace("'>", "")
+            exception_type = str(type(exception)).replace("<class '", "").replace("'>", "")
 
-            message += f"\n{ex_type}\n{exception}"
+            message += f"\n\n{exception_type}: {exception}"
 
         logger = cls.logger
 
@@ -61,9 +61,14 @@ class Logger:
                     print("exception_log_chat_id: " + str(cls.exception_log_chat_id))
 
                     try:
+                        message_text = f"<b>EXCEPTION</b>\n\n<code>{author}</code>\n\n{text}"
+
+                        if exception is not None:
+                            message_text += f"\n\n<i><b>{exception_type}:</b> {exception}</i>"
+
                         await bot_instance.send_message(
                             chat_id=cls.exception_log_chat_id,
-                            text=f"<b>EXCEPTION</b>\n\n<code>{author}</code>\n\n<i>" + text.replace("\n", "\n\n") + "</i>"
+                            text=message_text
                         )
 
                     except Exception as ex:
