@@ -912,7 +912,7 @@ class ChatTable:
         return chat_data, bool(record)
 
     @classmethod
-    async def fetch_chat(cls, bot_instance: telegram.Bot, chat_id: int, chat_data: dict = None, cursor: psycopg2._psycopg.cursor = None) -> (dict, bool):
+    async def fetch_chat(cls, bot_instance: telegram.Bot, chat_id: int, chat_data: dict = None, cursor: psycopg2._psycopg.cursor = None, migrating_from_chat_id: int = None) -> (dict, dict | None, bool):
         if cursor is None:
             cursor, iscursor = Database.get_cursor()
 
@@ -932,56 +932,79 @@ class ChatTable:
                                f"Couldn't get data from database about chat having chat_id '{chat_id}'", ex)
 
         try:
-            chat = await bot_instance.getChat(chat_id)
+            try:
+                bot_member = await bot_instance.get_chat_member(chat_id, bot_instance.id)
 
-        except telegram.error.RetryAfter as ex:
-            Logger.log("exception", "ChatTable.fetch_chat",
-                       f"RetryAfter occurred while getting chat having id '{chat_id}'", ex)
+                chat = await bot_instance.getChat(chat_id)
 
-            time.sleep(ex.retry_after + random.uniform(1, 2))
+            except telegram.error.RetryAfter as ex:
+                Logger.log("exception", "ChatTable.fetch_chat",
+                           f"RetryAfter occurred while getting chat having id '{chat_id}'", ex)
 
-            chat = await bot_instance.getChat(chat_id)
+                time.sleep(ex.retry_after + random.uniform(1, 2))
+
+                bot_member = await bot_instance.get_chat_member(chat_id, bot_instance.id)
+
+                chat = await bot_instance.getChat(chat_id)
 
         except telegram.error.ChatMigrated as ex:
             new_chat_id = ex.new_chat_id
 
-            print(f"[DEBUG] {chat_id} - migrated to > {new_chat_id}")
+            Logger.log("info", "ChatTable.fetch_chat",
+                       f"The group having chat_id = '{chat_id}'"
+                       f" migrated to a supergroup with chat_id = '{new_chat_id}'")
 
-            try:
-                chat = await bot_instance.getChat(new_chat_id)
+            migrated = ChatTable.migrate_chat_id(chat_id, new_chat_id)
 
-                ChatTable.migrate_chat_id(chat_id, new_chat_id)
+            # If it was correctly migrated by the ChatTable.migrate_chat_id method a record associated to the
+            # previous chat_id will no longer exists. The case in which it may not be migrated[*] correctly is
+            # assumed to be the case where there is no record associated with the new chat_id. In that case,
+            # we pass the previous chat_id as an argument to the new function call so that it will then fall
+            # into one of the following two cases:
+            #
+            # - The supergroup is a group from which the bot has been kicked (-> the record associated with
+            #   the previous chat_id gets deleted), e.g. because the group was immediately deleted by its owner
+            #   after the migration and the bot didn't notice that (e.g. it was offline at that time);
+            #
+            # - The supergroup is a valid group, an entry with the new chat_id is added to the database,
+            #   the migration[*] occurs (and is assumed to be successful this time), and then the record
+            #   related to the previous chat_id gets finally deleted[*]
+            #
+            # [*] with the ChatTable.migrate_chat_id method
 
-                chat_id = new_chat_id
+            if migrated:
+                return cls.fetch_chat(bot_instance, new_chat_id, chat_data, cursor)
+            else:
+                return cls.fetch_chat(bot_instance, new_chat_id, chat_data, cursor, migrating_from_chat_id=chat_id)
 
-                chat_data = {}
+        except telegram.error.Forbidden as ex:
+            if "bot was kicked from the supergroup chat" in ex.message:
+                Logger.log("info", "ChatTable.fetch_chat",
+                           f"The bot was kicked from the group with chat_id = '{chat_id}'")
 
-                try:
-                    chat_data, _ = cls.get_chat_data(chat_id, cursor)
+                if chat_data:
+                    ChatTable.remove_chat(chat_id)
 
-                except (Exception, psycopg2.DatabaseError) as ex:
-                    Logger.log("exception", "ChatTable.fetch_chat",
-                               f"Couldn't get data from database about chat having chat_id '{chat_id}'", ex)
-            except:
-                return chat_data, {}, False
+                if migrating_from_chat_id:
+                    ChatTable.remove_chat(migrating_from_chat_id)
 
-        except:
-            return chat_data, {}, False
+                return chat_data, None, True
 
-        #
+            else:
+                Logger.log("exception", "ChatTable.fetch_chat",
+                           f"Couldn't get chat having chat_id '{chat_id}'", ex)
+
+                return chat_data, None, False
+
+        except Exception as ex:
+            Logger.log("exception", "ChatTable.fetch_chat",
+                       f"Couldn't get chat having chat_id '{chat_id}'", ex)
+
+            return chat_data, None, False
 
         chat: telegram.Chat
 
         current_title = chat.title
-
-        try:
-            bot_member = await bot_instance.get_chat_member(chat_id, bot_instance.id)
-        except Exception as ex:
-            ex_type = str(type(ex)).replace("<class '", "").replace("'>", "")
-
-            print(f"[DEBUG - chat_id: {chat_id}] {ex_type} : {ex}")
-
-            return chat_data, {}, False
 
         current_missing_permissions = False
 
@@ -1075,6 +1098,9 @@ class ChatTable:
 
                     Logger.log("debug", "ChatTable.fetch_chat", f"Succesfully updated chat '{chat_id}' info")
                 else:
+                    if migrating_from_chat_id:
+                        ChatTable.migrate_chat_id(migrating_from_chat_id, chat_id)
+
                     Logger.log("debug", "ChatTable.fetch_chat", f"Succesfully added chat '{chat_id}' info to database")
 
             except (Exception, psycopg2.DatabaseError) as ex:
