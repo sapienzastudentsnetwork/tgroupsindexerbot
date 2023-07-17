@@ -62,7 +62,7 @@ def add_application_handlers(application: Application):
 
 
 def main() -> None:
-    Logger.init_logger()
+    Logger.init_logger(os_getenv("EXCEPTION_LOG_CHAT_ID"))
 
     Locale.init_locales()
 
@@ -85,11 +85,9 @@ def main() -> None:
 
     GlobalVariables.set_accounts_count(AccountTable.get_account_records_count())
 
-    application.job_queue.run_repeating(
-        callback=GitHubMonitor.look_for_updates,
-        interval=GitHubMonitor.interval,
-        first=1
-    )
+    GlobalVariables.bot_owner = os_getenv("OWNER_CHAT_ID")
+
+    GlobalVariables.bot_instance = application.bot
 
     GlobalVariables.job_queue = application.job_queue
 

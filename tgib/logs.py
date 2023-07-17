@@ -19,24 +19,60 @@
 
 import logging
 
+from telegram.ext import ContextTypes
+
+from tgib.global_vars import GlobalVariables
+
+import telegram.ext
+
 
 class Logger:
     logger = None
 
+    exception_log_chat_id = None
+
     @classmethod
-    def init_logger(cls):
+    def init_logger(cls, exception_log_chat_id: int = None):
         logging.basicConfig(level=logging.INFO,
                             format='%(levelname)s - %(message)s')
 
         cls.logger = logging.getLogger()
 
+        cls.exception_log_chat_id = exception_log_chat_id
+
     @classmethod
-    def log(cls, log_type, author, text) -> bool:
+    def log(cls, log_type, author, text, exception=None) -> bool:
         message = f"{author} | {text}"
-        logger  = cls.logger
+
+        if exception is not None:
+            ex_type = str(type(exception)).replace("<class '", "").replace("'>", "")
+
+            message += f"\n{ex_type}\n{exception}"
+
+        logger = cls.logger
 
         if log_type == "exception":
             logger.exception(message)
+
+            bot_instance: telegram.Bot = GlobalVariables.bot_instance
+
+            if cls.exception_log_chat_id:
+                async def alert_on_telegram(context: ContextTypes.DEFAULT_TYPE) -> None:
+                    print("exception_log_chat_id: " + str(cls.exception_log_chat_id))
+
+                    try:
+                        await bot_instance.send_message(
+                            chat_id=cls.exception_log_chat_id,
+                            text=f"<b>EXCEPTION</b>\n\n<code>{author}</code>\n\n<i>" + text.replace("\n", "\n\n") + "</i>"
+                        )
+
+                    except Exception as ex:
+                        ex_type = str(type(ex)).replace("<class '", "").replace("'>", "")
+
+                        logger.exception(f"Logger.log.alert_on_telegram | {ex_type}: {ex}")
+
+                GlobalVariables.job_queue.run_once(alert_on_telegram, when=0)
+
         elif log_type == "info":
             logger.info(message)
         elif log_type == "debug":

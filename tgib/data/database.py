@@ -63,10 +63,8 @@ class Database:
 
             exit()
 
-        return None
-
     @classmethod
-    def get_cursor(cls) -> (psycopg2._psycopg.cursor, bool):
+    def get_cursor(cls) -> (psycopg2._psycopg.cursor | None, bool):
         try:
             cursor = cls.connection.cursor()
 
@@ -82,13 +80,13 @@ class Database:
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("critical", "Database.get_cursor",
-                           f"An exception occurred while trying to init DB again to get connection cursor: \n{ex}")
+                           f"An exception occurred while trying to init DB again to get connection cursor", ex)
 
                 return None, False
 
         except (Exception, psycopg2.DatabaseError) as ex:
             Logger.log("exception", "Database.get_cursor",
-                       f"An exception occurred while trying to get connection cursor: \n{ex}")
+                       f"An exception occurred while trying to get connection cursor", ex)
 
             return None, False
 
@@ -233,10 +231,35 @@ class Database:
                 connection.commit()
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "Database.create_tables",
-                           f"An exception occurred while trying to create a table: \n{ex}")
+                           f"An exception occurred while trying to create a table", ex)
 
         else:
             Logger.log("error", "Database.create_tables", f"Couldn't get cursor required to create tables")
+
+    @classmethod
+    def record_to_dict(cls, column_names: list, record: list) -> (dict | None):
+        if record:
+            record_dict = {}
+            for i, column_name in enumerate(column_names):
+                record_dict[column_name] = record[i]
+
+            return record_dict
+        else:
+            return None
+
+    @classmethod
+    def records_to_dict(cls, column_names: list, records: list) -> dict:
+        records_dict = {}
+
+        if records:
+            for record in records:
+                primary_key_value = record[0]
+
+                record_dict = cls.record_to_dict(column_names, record)
+
+                records_dict[primary_key_value] = record_dict
+
+        return records_dict
 
 
 class AccountTable:
@@ -256,7 +279,7 @@ class AccountTable:
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "AccountTable.get_account_records_count",
-                           f"An exception occurred while trying to get the number of account records: \n{ex}")
+                           f"An exception occurred while trying to get the number of account records", ex)
 
                 return -1
 
@@ -284,7 +307,7 @@ class AccountTable:
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "AccountTable.create_account_record",
-                           f"An exception occurred while trying to create account record for '{chat_id}': \n{ex}")
+                           f"An exception occurred while trying to create account record for '{chat_id}'", ex)
 
                 return False
 
@@ -295,7 +318,71 @@ class AccountTable:
             return False
 
     @classmethod
-    def get_account_record(cls, chat_id: int, create_if_not_existing: bool = True) -> (dict, bool):
+    def update_admin_status(cls, chat_id: int, new_value: bool) -> bool:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            try:
+                connection = Database.connection
+                connection: psycopg2._psycopg.connection
+
+                cursor.execute(
+                    """
+                    UPDATE account
+                    SET is_admin = %s
+                    WHERE chat_id = %s;
+                    """,
+                    (new_value, chat_id)
+                )
+
+                connection.commit()
+
+                if chat_id in cls.cached_account_records:
+                    cls.cached_account_records[chat_id]["is_admin"] = new_value
+
+                return True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "ChatTable.change_admin_status",
+                           f"Couldn't update admin status to '{new_value}' for user having chat_id '{chat_id}'", ex)
+
+                return False
+
+        else:
+            Logger.log("error", "ChatTable.change_admin_status", f"Couldn't get cursor required to update admin status"
+                                                                 f" to '{new_value}' for user having id '{chat_id}'")
+
+            return False
+
+    @classmethod
+    def get_bot_admin_records(cls) -> (dict | None, bool):
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute("SELECT * FROM account WHERE is_admin IS TRUE")
+
+                column_names = [desc[0] for desc in cursor.description]
+                records = cursor.fetchall()
+
+                return Database.records_to_dict(column_names, records), True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "AccountTable.get_bot_admin_records",
+                           f"An exception occurred while trying to get bot admin account records", ex)
+
+                return None, False
+
+        else:
+            Logger.log("error", "AccountTable.get_bot_admin_records",
+                       f"Couldn't get cursor required to get bot admin account records")
+
+            return None, False
+
+    @classmethod
+    def get_account_record(cls, chat_id: int, create_if_not_existing: bool = True) -> (dict | None, bool):
         if chat_id not in cls.cached_account_records:
             cursor, iscursor = Database.get_cursor()
 
@@ -318,18 +405,18 @@ class AccountTable:
                         if create_if_not_existing and AccountTable.create_account_record(chat_id):
                             return AccountTable.get_account_record(chat_id, False)
                         else:
-                            return {}, False
+                            return None, False
 
                 except (Exception, psycopg2.DatabaseError) as ex:
                     Logger.log("exception", "AccountTable.get_account_record",
-                               f"An exception occurred while trying to get account record with '{chat_id}' as chat_id: \n{ex}")
+                               f"An exception occurred while trying to get account record with '{chat_id}' as chat_id", ex)
 
-                    return {}, False
+                    return None, False
 
             else:
-                Logger.log("error", "Database.get_user", f"Couldn't get cursor required to get user")
+                Logger.log("error", "AccountTable.get_account_record", f"Couldn't get cursor required to get user")
 
-                return {}, False
+                return None, False
         else:
             return cls.cached_account_records[chat_id], True
 
@@ -344,7 +431,7 @@ class DirectoryTable:
     cached_chat_counts = {}
 
     @classmethod
-    def create_directory(cls, i18n_en_name: str, i18n_it_name: str = None, directory_id: int = None, parent_directory_id: int = None) -> (int, bool):
+    def create_directory(cls, i18n_en_name: str, i18n_it_name: str = None, directory_id: int = None, parent_directory_id: int = None) -> (int | None, bool):
         cursor, iscursor = Database.get_cursor()
 
         if iscursor:
@@ -378,18 +465,18 @@ class DirectoryTable:
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "DirectoryTable.create_directory",
-                           f"An exception occurred while trying to create a new directory: \n{ex}")
+                           f"An exception occurred while trying to create a new directory", ex)
 
-                return {}, False
+                return None, False
 
         else:
             Logger.log("error", "DirectoryTable.create_directory",
                        f"Couldn't get cursor required to create a new directory")
 
-            return -1, False
+            return None, False
 
     @classmethod
-    def get_directory_data(cls, directory_id: int) -> (dict, bool):
+    def get_directory_data(cls, directory_id: int) -> (dict | None, bool):
         if directory_id not in cls.cached_directory_records:
             cursor, iscursor = Database.get_cursor()
 
@@ -415,20 +502,20 @@ class DirectoryTable:
                 except (Exception, psycopg2.DatabaseError) as ex:
                     Logger.log("exception", "DirectoryTable.get_directory_data",
                                f"An exception occurred while trying to get directory name for directory "
-                               f"having id equal to '{directory_id}': \n{ex}")
+                               f"having id equal to '{directory_id}'", ex)
 
-                    return {}, False
+                    return None, False
 
             else:
                 Logger.log("error", "DirectoryTable.get_directory_data",
                            f"Couldn't get cursor required to get directory name")
 
-                return {}, False
+                return None, False
         else:
             return cls.cached_directory_records[directory_id], True
 
     @classmethod
-    def get_sub_directories(cls, parent_id: int) -> (dir, bool):
+    def get_sub_directories(cls, parent_id: int) -> (dict | None, bool):
         if parent_id not in cls.cached_sub_directories:
             cursor, iscursor = Database.get_cursor()
 
@@ -454,15 +541,15 @@ class DirectoryTable:
                 except (Exception, psycopg2.DatabaseError) as ex:
                     Logger.log("exception", "DirectoryTable.get_sub_directories",
                                f"An exception occurred while trying to get sub-directories of "
-                               f"directory with parent_id equal to '{parent_id}': \n{ex}")
+                               f"directory with parent_id equal to '{parent_id}'", ex)
 
-                    return {}, False
+                    return None, False
 
             else:
                 Logger.log("error", "DirectoryTable.get_sub_directories",
                            f"Couldn't get cursor required to get sub-directories")
 
-                return {}, False
+                return None, False
         else:
             return cls.cached_sub_directories[parent_id], True
 
@@ -506,7 +593,7 @@ class DirectoryTable:
                 except (Exception, psycopg2.DatabaseError) as ex:
                     Logger.log("exception", "DirectoryTable.get_chat_count",
                                f"An exception occurred while trying to get the number of chats "
-                               f"with a parent directory having id '{directory_id}': \n{ex}")
+                               f"with a parent directory having id '{directory_id}'", ex)
 
                     return -1, False
 
@@ -569,24 +656,7 @@ class DirectoryTable:
 
 class ChatTable:
     @classmethod
-    def chat_records_to_dict(cls, column_names: list, records: list) -> dict:
-        chats = {}
-
-        for record in records:
-            chat_id = record[0]
-
-            chat_data = {}
-            for i, column_name in enumerate(column_names):
-                if i == 0:
-                    continue
-                chat_data[column_name] = record[i]
-
-            chats[chat_id] = chat_data
-
-        return chats
-
-    @classmethod
-    def get_chats(cls, directory_id: int, skip_missing_permissions_chats: bool = True, skip_hidden_chats: bool = True) -> (dict, bool):
+    def get_chats(cls, directory_id: int, skip_missing_permissions_chats: bool = True, skip_hidden_chats: bool = True) -> (dict | None, bool):
         cursor, iscursor = Database.get_cursor()
 
         if iscursor:
@@ -607,14 +677,14 @@ class ChatTable:
             column_names = [desc[0] for desc in cursor.description]
             records = cursor.fetchall()
 
-            chats = cls.chat_records_to_dict(column_names, records)
+            chats = Database.records_to_dict(column_names, records)
 
             return chats, True
 
         else:
             Logger.log("error", "ChatTable.get_chats", f"Couldn't get cursor required to get chats")
 
-            return {}, False
+            return None, False
 
     @classmethod
     def update_chat_visibility(cls, chat_id: int, hidden_by: int = None) -> bool:
@@ -640,7 +710,7 @@ class ChatTable:
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "ChatTable.update_chat_visibility",
-                           f"Couldn't update visibility to hidden by '{hidden_by}' for chat having id '{chat_id}': \n{ex}")
+                           f"Couldn't update visibility to hidden by '{hidden_by}' for chat having id '{chat_id}'", ex)
 
                 return False
 
@@ -674,7 +744,7 @@ class ChatTable:
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "ChatTable.update_chat_directory",
-                           f"Couldn't update directory_id to '{new_directory_id}' for chat having id '{chat_id}': \n{ex}")
+                           f"Couldn't update directory_id to '{new_directory_id}' for chat having id '{chat_id}'", ex)
 
                 return False
 
@@ -714,7 +784,7 @@ class ChatTable:
                 except (Exception, psycopg2.DatabaseError) as ex:
                     Logger.log("exception", "ChatTable.migrate_chat_id",
                                f"Couldn't update data of supergroup having '{new_chat_id}'"
-                               f" by migrating them from data associated to its previous chat_id '{old_chat_id}: \n{ex}")
+                               f" by migrating them from data associated to its previous chat_id '{old_chat_id}", ex)
 
                     return False
 
@@ -766,13 +836,13 @@ class ChatTable:
 
                     except (Exception, psycopg2.DatabaseError) as ex:
                         Logger.log("exception", "ChatTable.set_missing_permissions",
-                                   f"Couldn't remove having chat_id '{chat_id}' from database: \n{ex}")
+                                   f"Couldn't remove having chat_id '{chat_id}' from database", ex)
 
                         return False
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "ChatTable.set_missing_permissions",
-                           f"Couldn't get data of chat having chat_id '{chat_id}' from database: \n{ex}")
+                           f"Couldn't get data of chat having chat_id '{chat_id}' from database", ex)
 
                 return False
 
@@ -804,7 +874,7 @@ class ChatTable:
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "ChatTable.remove_chat",
-                           f"Couldn't remove having chat_id '{chat_id}' from database: \n{ex}")
+                           f"Couldn't remove having chat_id '{chat_id}' from database", ex)
 
                 return False
 
@@ -832,9 +902,7 @@ class ChatTable:
         column_names = [desc[0] for desc in cursor.description]
         record = cursor.fetchone()
 
-        if record:
-            for i, column_name in enumerate(column_names):
-                chat_data[column_name] = record[i]
+        chat_data = Database.record_to_dict(column_names, record)
 
         return chat_data, bool(record)
 
@@ -856,13 +924,14 @@ class ChatTable:
 
                 except (Exception, psycopg2.DatabaseError) as ex:
                     Logger.log("exception", "ChatTable.fetch_chat",
-                               f"Couldn't get data from database about chat having chat_id '{chat_id}': \n{ex}")
+                               f"Couldn't get data from database about chat having chat_id '{chat_id}'", ex)
 
         try:
             chat = await bot_instance.getChat(chat_id)
 
         except telegram.error.RetryAfter as ex:
-            Logger.log("exception", "ChatTable.fetch_chat", str(ex))
+            Logger.log("exception", "ChatTable.fetch_chat",
+                       f"RetryAfter occurred while getting chat having id '{chat_id}'", ex)
 
             time.sleep(ex.retry_after + random.uniform(1, 2))
 
@@ -895,7 +964,7 @@ class ChatTable:
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "ChatTable.fetch_chat",
-                           f"Couldn't get data from database about chat having chat_id '{chat_id}': \n{ex}")
+                           f"Couldn't get data from database about chat having chat_id '{chat_id}'", ex)
 
         current_missing_permissions = False
 
@@ -918,7 +987,8 @@ class ChatTable:
             chat_admins = await bot_instance.get_chat_administrators(chat_id)
 
         except telegram.error.RetryAfter as ex:
-            Logger.log("exception", "ChatTable.fetch_chat", str(ex))
+            Logger.log("exception", "ChatTable.fetch_chat",
+                       f"RetryAfter occurred while getting chat administrators for chat having id '{chat_id}'", ex)
 
             time.sleep(ex.retry_after + random.uniform(1, 2))
 
@@ -992,9 +1062,9 @@ class ChatTable:
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 if chat_data:
-                    Logger.log("exception", "ChatTable.fetch_chat", f"Couldn't update chat '{chat_id}': \n{ex}")
+                    Logger.log("exception", "ChatTable.fetch_chat", f"Couldn't update chat '{chat_id}'", ex)
                 else:
-                    Logger.log("exception", "ChatTable.fetch_chat", f"Couldn't add chat '{chat_id}': \n{ex}")
+                    Logger.log("exception", "ChatTable.fetch_chat", f"Couldn't add chat '{chat_id}'", ex)
 
                 return chat_data, new_chat_data, False
 
@@ -1015,7 +1085,7 @@ class ChatTable:
             column_names = [desc[0] for desc in cursor.description]
             records = cursor.fetchall()
 
-            chats = cls.chat_records_to_dict(column_names, records)
+            chats = Database.records_to_dict(column_names, records)
 
             for chat_id, chat_data in chats.items():
                 await cls.fetch_chat(bot_instance, chat_id, chat_data, cursor)
@@ -1056,7 +1126,7 @@ class SessionTable:
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("critical", "SessionTable.add_session",
                            f"An exception occurred while trying to insert '{latest_menu_message_id}' "
-                           f"latest_menu_message_id in 'session' table for '{chat_id}': \n{ex}")
+                           f"latest_menu_message_id in 'session' table for '{chat_id}'", ex)
 
         else:
             Logger.log("error", "SessionTable.add_session", f"Couldn't get cursor required to insert session data")
@@ -1082,7 +1152,7 @@ class SessionTable:
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("critical", "SessionTable.update_session",
                            f"An exception occurred while trying to update latest_menu_message_id for "
-                           f"'{chat_id}' to `{new_latest_menu_message_id}': \n{ex}")
+                           f"'{chat_id}' to `{new_latest_menu_message_id}'", ex)
 
         else:
             Logger.log("error", "SessionTable.update_session", f"Couldn't get cursor required to update session data")
@@ -1122,7 +1192,7 @@ class SessionTable:
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("critical", "SessionTable.expire_old_sessions",
-                           f"An exception occurred while trying to expire old sessions: \n{ex}")
+                           f"An exception occurred while trying to expire old sessions", ex)
 
         else:
             Logger.log("error", "SessionTable.expire_old_sessions",
@@ -1153,7 +1223,7 @@ class PersistentVarsTable:
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("critical", "PersistentVarsTable.add_new_var",
-                           f"An exception occurred while trying to add '{key}' with value '{value}': \n{ex}")
+                           f"An exception occurred while trying to add '{key}' with value '{value}'", ex)
         else:
             Logger.log("error", "PersistentVarsTable.add_new_var",
                        f"Couldn't get cursor required to add '{key}' with value '{value}'")
@@ -1183,7 +1253,7 @@ class PersistentVarsTable:
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("critical", "PersistentVarsTable.update_value_by_key",
-                           f"An exception occurred while trying to update '{key}' value to '{new_value}': \n{ex}")
+                           f"An exception occurred while trying to update '{key}' value to '{new_value}'", ex)
         else:
             Logger.log("error", "PersistentVarsTable.update_value_by_key",
                        f"Couldn't get cursor required to update '{key}' value to '{new_value}'")
@@ -1205,7 +1275,7 @@ class PersistentVarsTable:
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("critical", "PersistentVarsTable.get_value_by_key",
-                           f"An exception occurred while trying to get '{key}' value: \n{ex}")
+                           f"An exception occurred while trying to get '{key}' value", ex)
         else:
             Logger.log("error", "PersistentVarsTable.get_value_by_key",
                        f"Couldn't get cursor required to get '{key}' value")

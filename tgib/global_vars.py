@@ -18,6 +18,10 @@
 # along with TGroupsIndexerBot. If not, see <http://www.gnu.org/licenses/>.
 
 class GlobalVariables:
+    bot_owner = None
+
+    bot_instance = None
+
     job_queue = None
 
     queries_fd = "  "

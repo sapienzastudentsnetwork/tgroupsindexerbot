@@ -81,7 +81,7 @@ class GitHubMonitor:
                 await cls.notify_update(id=id, author=author, update_date=entry_update_date, summary=summary)
 
     @classmethod
-    def get_atom_feed_latest_update_date(cls, atom_feed: feedparser.FeedParserDict):
+    def get_atom_feed_latest_update_date(cls, atom_feed: feedparser.FeedParserDict) -> (str | None):
         if "feed" in atom_feed:
             if "updated" in atom_feed["feed"]:
                 return str(atom_feed["feed"]["updated"])
@@ -110,11 +110,12 @@ class GitHubMonitor:
                 cls.atom_feed_update_date = current_atom_feed_update_date
 
         except Exception as ex:
-            Logger.log("exception", "GitHubMonitor", str(ex))
+            Logger.log("exception", "GitHubMonitor",
+                       f"An exception occurred while looking for updates", ex)
 
             try:
                 await cls.tgib_bot_instance.send_message(
-                    chat_id=os_getenv("DEVELOPER_CHAT_ID"),
+                    chat_id=os_getenv("OWNER_CHAT_ID"),
                     text=f"<b>EXCEPTION</b>\n\n{ex}"
                 )
 

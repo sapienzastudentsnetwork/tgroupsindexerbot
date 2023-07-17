@@ -101,7 +101,7 @@ class Queries:
         return InlineKeyboardMarkup(encoded_inline_keyboard)
 
     @classmethod
-    async def is_admin(cls, bot, chat_id, user_id):
+    async def is_admin(cls, bot, chat_id, user_id) -> (bool | None):
         try:
             chat_member = await bot.get_chat_member(chat_id, user_id)
             return chat_member.status in (ChatMember.OWNER, ChatMember.ADMINISTRATOR)
@@ -113,7 +113,7 @@ class Queries:
         datetime_now = datetime.now(pytz.timezone('Europe/Rome'))
 
         date_str = datetime_now.strftime("%d/%m/%Y")
-        time_str = datetime_now.strftime("%H:%M")
+        time_str = datetime_now.strftime("%H:%M:%S")
         offset_str = datetime_now.strftime("%z")
 
         return date_str, time_str, offset_str
