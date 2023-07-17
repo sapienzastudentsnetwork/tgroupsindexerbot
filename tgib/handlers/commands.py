@@ -76,7 +76,7 @@ class Commands:
 
                     keyboard = [
                         [InlineKeyboardButton(text=locale.get_string("commands.command_not_found.contact_us_btn"),
-                                              url="tg://resolve?domain=sapienzastudentsnetworkbot")],
+                                              url="tg://resolve?domain=" + GlobalVariables.contact_username)],
                     ]
 
                     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -128,11 +128,7 @@ class Commands:
                         text, reply_markup = Menus.get_main_menu(locale)
 
                     elif command_name == "groups":
-                        text, reply_markup = Queries.explore_category(
-                            locale,
-                            DirectoryTable.CATEGORIES_ROOT_DIR_ID,
-                            user_data["is_admin"]
-                        )
+                        text, reply_markup = Queries.explore_category(locale, DirectoryTable.CATEGORIES_ROOT_DIR_ID, user_data)
 
                     else:
                         if command_name in cls.group_specific_commands and query_message.chat.type == "private":
@@ -282,7 +278,7 @@ class Commands:
 
                                                     text = locale.get_string("commands.visibility.hide.successful")
 
-                                                    await Logger.log_admin_action("hide", update.effective_user, target_chat_data)
+                                                    await Logger.log_action("hide", update.effective_user, target_chat_data)
 
                                             else:
                                                 text = locale.get_string("commands.visibility.already_hidden")
@@ -297,7 +293,7 @@ class Commands:
 
                                                     text = locale.get_string("commands.visibility.unhide.successful")
 
-                                                    await Logger.log_admin_action("unhide", update.effective_user, target_chat_data)
+                                                    await Logger.log_action("unhide", update.effective_user, target_chat_data)
 
                                             else:
                                                 text = locale.get_string("commands.visibility.already_not_hidden")
@@ -337,7 +333,7 @@ class Commands:
                                                                 else:
                                                                     text = locale.get_string("commands.move.indexed")
 
-                                                                await Logger.log_admin_action(
+                                                                await Logger.log_action(
                                                                     "move", update.effective_user, target_chat_data,
                                                                     new_directory_id=target_directory_id,
                                                                     full_old_category_name=full_old_category_name,
@@ -372,7 +368,7 @@ class Commands:
                                                     text = locale.get_string("commands.visibility.unindex.successful") \
                                                         .replace("[category]", str(full_target_category_name))
 
-                                                    await Logger.log_admin_action(
+                                                    await Logger.log_action(
                                                         "unindex", update.effective_user, target_chat_data,
                                                         full_old_category_name=full_target_category_name
                                                     )

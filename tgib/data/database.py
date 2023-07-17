@@ -656,7 +656,7 @@ class DirectoryTable:
 
 class ChatTable:
     @classmethod
-    def get_chats(cls, directory_id: int, skip_missing_permissions_chats: bool = True, skip_hidden_chats: bool = True) -> (dict | None, bool):
+    def get_directory_indexed_chats(cls, user_id: int, directory_id: int, skip_missing_permissions_chats: bool = True, skip_hidden_chats: bool = True) -> (dict | None, bool):
         cursor, iscursor = Database.get_cursor()
 
         if iscursor:
@@ -664,15 +664,29 @@ class ChatTable:
 
             where_string = "WHERE directory_id = %s"
 
-            if skip_missing_permissions_chats:
-                where_string += " AND missing_permissions = FALSE"
+            query_vars = [directory_id]
 
-            if skip_hidden_chats:
-                where_string += " AND hidden_by IS NULL"
+            if skip_missing_permissions_chats or skip_hidden_chats:
+                where_string += " AND (("
+
+                if skip_missing_permissions_chats:
+                    where_string += "missing_permissions = FALSE"
+
+                if skip_hidden_chats:
+                    if skip_missing_permissions_chats:
+                        where_string += " AND "
+
+                    where_string += "hidden_by IS NULL"
+
+                where_string += ") OR %s = ANY(chat_admins))"
+
+                query_vars.append(user_id)
+
+            query_vars = tuple(query_vars)
 
             cursor.execute("SELECT * FROM chat "
                            f"{where_string} "
-                           "ORDER BY title ASC", (directory_id,))
+                           "ORDER BY title ASC", query_vars)
 
             column_names = [desc[0] for desc in cursor.description]
             records = cursor.fetchall()
@@ -683,6 +697,70 @@ class ChatTable:
 
         else:
             Logger.log("error", "ChatTable.get_chats", f"Couldn't get cursor required to get chats")
+
+            return None, False
+
+    @classmethod
+    def get_total_chats_user_is_admin_of(cls, chat_id: int) -> (int | None, bool):
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute("""
+                    SELECT COUNT(*)
+                    FROM chat
+                    WHERE %s = ANY(chat_admins)
+                """, (chat_id,))
+
+                total_chats = cursor.fetchone()[0]
+
+                return total_chats, True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "ChatTable.get_total_chats_user_is_admin_of",
+                           f"An exception occurred while trying to get the total number of chats "
+                           f"user having chat_id '{chat_id}' is admin of", ex)
+
+                return None, False
+        else:
+            Logger.log("error", "ChatTable.get_total_chats_user_is_admin_of",
+                       f"Couldn't get cursor required to get the total number of chats "
+                       f"user having chat_id '{chat_id}' is admin of")
+
+            return None, False
+
+    @classmethod
+    def get_chats_user_is_admin_of(cls, chat_id: int, offset: int, limit: int = 8) -> (dict | None, bool):
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute("""
+                    SELECT *
+                    FROM chat
+                    WHERE %s = ANY(chat_admins)
+                    ORDER BY title ASC
+                    OFFSET %s LIMIT %s
+                """, (chat_id, offset * limit, limit))
+
+                column_names = [desc[0] for desc in cursor.description]
+                records = cursor.fetchall()
+
+                return Database.records_to_dict(column_names, records), True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "ChatTable.get_chat_user_is_admin_of",
+                           f"An exception occurred while trying to get data of the chats"
+                           f" user having chat_id '{chat_id}' is admin of", ex)
+
+                return None, False
+        else:
+            Logger.log("error", "ChatTable.get_chat_user_is_admin_of",
+                       f"Couldn't get cursor required to get chats user having chat_id '{chat_id}' is admin of")
 
             return None, False
 
@@ -721,7 +799,7 @@ class ChatTable:
             return False
 
     @classmethod
-    def update_chat_directory(cls, chat_id: int, new_directory_id: int) -> bool:
+    def update_chat_directory(cls, chat_id: int, new_directory_id: int | None) -> bool:
         cursor, iscursor = Database.get_cursor()
 
         if iscursor:

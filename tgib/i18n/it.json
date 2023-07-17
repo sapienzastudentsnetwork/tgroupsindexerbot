@@ -13,17 +13,17 @@
   "main_menu.add_bot_to_group_btn": "\uD83D\uDCA0 Aggiungi un gruppo",
   "main_menu.about_message_btn":    "ℹ️ Riguardo il bot",
 
-  "about_menu.text": [
-    "ℹ️ Bot Telegram per l'indicizzazione di gruppi gestiti da studenti e studentesse dell'ateneo",
-    "\n\n📊 [accounts_count] utenti diversi hanno usufruito almeno una volta del bot a partire dal 14/01/2023",
-    "\n\n\uD83D\uDCA0 Istanza attualmente gestita da <a href=\"https://telegram.me/SapienzaStudentsNetwork\">Sapienza Students Network</a>, coordinato da @Matypist",
-    "\n\n\uD83E\uDDD1\u200D\uD83D\uDCBB Creato a partire da TGroupsIndexerBot <a href=\"https://github.com/sapienzastudentsnetwork/tgroupsindexerbot\">[GitHub]</a> di @Matypist",
-    "\n\n\uD83D\uDCC4 Originariamente ideato e programmato in GO <a href=\"https://gitlab.com/sapienzastudents/antispam-telegram-bot\">[GitLab]</a>"
+  "about_menu.sapienzastudentsbot": [
+    "\uD83E\uDE90 Bot Telegram per l'indicizzazione di gruppi gestiti da studenti e studentesse dell'ateneo",
+    "\n\n\uD83D\uDC69\u200D\uD83D\uDE80 <b><u>[accounts_count]</u></b> utenti diversi hanno usufruito almeno una volta del bot a partire dal <u>14/01/2023</u>",
+    "\n\n\uD83D\uDEF0 Istanza attualmente gestita da <a href=\"https://telegram.me/SapienzaStudentsNetwork\">Sapienza Students Network</a>, coordinato da @Matypist \uD83D\uDC7E",
+    "\n\n\uD83D\uDE80 Creato a partire da <b>TGroupsIndexerBot</b> <a href=\"https://github.com/sapienzastudentsnetwork/tgroupsindexerbot\">[GitHub]</a> di @Matypist",
+    "\n\n\uD83C\uDF03 Originariamente ideato e programmato in GO <a href=\"https://gitlab.com/sapienzastudents/antispam-telegram-bot\">[GitLab]</a>"
   ],
-  "about_menu.github_repo_btn": "\uD83C\uDF10 Repository GitHub",
-  "about_menu.git_channel_btn": "\uD83D\uDD04 Canale Git",
-  "about_menu.report_issue_btn": "\uD83D\uDD8D Segnala un problema",
-  "about_menu.feature_request_btn": "\uD83D\uDCE4 Suggerisci nuove funzionalità",
+  "about_menu.github_repo_btn": "\uD83D\uDCBB Repository GitHub",
+  "about_menu.git_channel_btn": "\uD83E\uDDD1\u200D\uD83D\uDCBB Canale Git",
+  "about_menu.report_issue_btn": "❤️\u200D\uD83E\uDE79 Segnala un problema",
+  "about_menu.feature_request_btn": "\uD83D\uDC9D Suggerisci nuove funzionalità",
   "about_menu.contact_us_btn": "\uD83D\uDCAC Contattaci",
   "about_menu.back_btn": "◀️ Torna al menù",
 
@@ -46,13 +46,15 @@
   "expired_session_menu.about_btn": "Come mai❔",
   "expired_session_menu.about_alert": "Le sessioni scadono automaticamente ad ogni aggiornamento (e conseguente riavvio) del bot e comunque almeno una volta entro 24 ore",
 
-  "explore_directories.sub_directory.back_btn":      "◀️ Indietro",
-  "explore_directories.back_to_menu_btn":            "◀️ Torna al menù",
+  "explore_directories.index_group_here":       "\uD83D\uDCA0 Indicizza un gruppo qui",
+  "explore_directories.sub_directory.back_btn": "◀️ Indietro",
+  "explore_directories.back_to_menu_btn":       "◀️ Torna al menù",
 
   "explore_groups.join_href_text":                   "[ENTRA]",
   "explore_groups.category.generation_date_line":    "<i>Lista di gruppi generata il [date] alle ore [time] (UTC+[offset]), controllare periodicamente per aggiornamenti</i>",
   "explore_groups.category.no_category_groups_line": "\nGenerali (senza sotto-categoria):\n",
   "explore_groups.category.sub_categories_line":     "\nSotto-categorie (pulsanti):",
+  "explore_groups.category.no_groups": "\uD83D\uDE14 Nessun gruppo in questa categoria attualmente \uD83D\uDE14\n\n\uD83D\uDD04 Ricontrolla periodicamente o sii il/la primo/a ad indicizzarne uno ⏬",
 
   "wip_alert": "Funzionalità in fase di sviluppo, provvisoriamente resa possibile contattando @Matypist su Telegram",
 
@@ -86,7 +88,7 @@
   "commands.visibility.already_not_hidden": "ℹ️ Il gruppo '<u>[title]</u>' {<code>[chat_id]</code>} non è di già nascosto",
   "commands.visibility.already_not_indexed_at_all": "ℹ️ Il gruppo '<u>[title]</u>' non è di già indicizzato più in nessuna categoria",
   "commands.move.indexed": "☑️ Gruppo '<u>[title]</u>' {<code>[chat_id]</code>} indicizzato con successo nella categoria '[category]'",
-  "commands.move.moved": "☑️ Gruppo '<u>[title]</u>' {<code>[chat_id]</code>} indicizzato con successo nella categoria '[old_category]' dalla categoria '[category]'",
+  "commands.move.moved": "☑️ Gruppo '<u>[title]</u>' {<code>[chat_id]</code>} spostato con successo nella categoria '[old_category]' dalla categoria '[category]'",
   "commands.move.already_current_category": "ℹ️ Il gruppo '<u>[title]</u>' {<code>[chat_id]</code>} è stato già indicizzato / spostato nella categoria richiesta ('[category]')",
   "commands.admins.set": "\uD83D\uDC6E\u200D♂️ L'utente '<code>[chat_id]</code>' è ora un amministratore/trice del bot",
   "commands.admins.unset": "\uD83D\uDE14 Utente '<code>[chat_id]</code>' rimosso dagli amministratori del bot",
@@ -123,5 +125,91 @@
     " e che sia nel formato corretto)"
   ],
   "commands.command_not_found.text": "❔ Nessun comando [command] trovato [user], se pensi possa trattarsi di un errore contatta un amministratore del bot",
-  "commands.command_not_found.contact_us_btn": "\uD83D\uDCAC Contattaci"
+  "commands.command_not_found.contact_us_btn": "\uD83D\uDCAC Contattaci",
+
+  "add_group_menu.text": [
+    "⏬ Per poter aggiungere un gruppo al bot è necessario che il bot ([bot_username]) sia un amministratore del gruppo",
+    "\n\n0️⃣ Assicurati che un gruppo equivalente a quello che desideri aggiungere non sia già indicizzato sul bot;",
+    "\n\n1️⃣ Il primo passaggio è quindi quello di aggiungere il bot come amministratore al gruppo;",
+    "\n\n2️⃣ Il secondo passaggio è di esplorare le categorie ed utilizzare,",
+    " in corrispondenza della categoria nella quale si vuole inserire / spostare il gruppo,",
+    " il pulsante per indicizzare un gruppo lì.",
+    "\n\n\uD83D\uDCAC Per qualsiasi esigenza (ad esempio se non dovesse essere disponibile sul bot",
+    " una categoria appropriata per il tuo gruppo), non esitare a contattarci per ricevere assistenza",
+    "\n\n\uD83D\uDE42 Grazie per entrare a far parte della nostra comunità! Saremo onorati di avervi tra noi"
+  ],
+  "add_group_menu.1_btn": "1️⃣ Aggiungi il bot ad un gruppo di cui sei admin",
+  "add_group_menu.2_btn": "2️⃣ Esplora le categorie disponibili",
+  "add_group_menu.contact_us_btn": "\uD83D\uDCAC Contattaci per assistenza",
+  "add_group_menu.back_btn": "◀️ Torna al menù",
+
+  "index_group_menu.text": [
+    "\n\nℹ️ Se un gruppo in cui il bot è stato aggiunto come amministratore e ha il permesso di aggiungere membri / invitare utenti tramite link non dovesse risultare nella lista che segue:",
+    "\n\n• Assicurati di essere tu stesso/a un'amministratore/trice del gruppo in questione",
+    "\n\n• Prova ad eseguire il comando <code>/reload</code> nel gruppo in questione",
+    "\n\n• Aggiorna la lista usando il pulsante dedicato",
+    "\n\n• In ultima analisi, se non dovesse ancora risultare, contattaci per assistenza"
+  ],
+  "index_group_menu.generation_date_line": "⏬ <i>Lista di gruppi generata il [date] alle ore [time] (UTC+[offset])</i>",
+  "index_group_menu.no_groups_available": "\uD83D\uDE14 Nessun gruppo attualmente disponibile per l'indicizzazione",
+  "index_group_menu.page_btn": "Pagina [n]",
+  "index_group_menu.refresh_btn": "\uD83D\uDD04️ Aggiorna la lista",
+  "index_group_menu.add_bot_to_group_btn": "\uD83D\uDCA0 Aggiungi il bot a un gruppo",
+  "index_group_menu.contact_us_btn": "\uD83D\uDCAC Contattaci per assistenza",
+  "index_group_menu.back_btn": "◀️ Indietro",
+
+  "hidden_by_menu.text": [
+    "ℹ️ Il gruppo '<u>[title]</u>' {<code>[chat_id]</code>} non può attualmente essere indicizzato poiché è stato nascosto da un amministratore",
+    " del bot. Se pensi possa trattarsi di un errore o per qualsiasi eventuale dubbio in merito non esitare a contattarci."
+  ],
+  "hidden_by_menu.alt_text": [
+    "ℹ️ Il gruppo '<u>[title]</u>' {<code>[chat_id]</code>} non poteva essere indicizzato poiché era stato nascosto da un amministratore del bot.",
+    "\n\n✅ Adesso sembrerebbe non essere più nascosto però, quindi puoi tornare indietro e provare di nuovo \uD83D\uDE42",
+    "\n\n⚠️ Se tornando indietro dovesse ancora risultare nascosto non esitare a contattarci per assistenza"
+  ],
+
+  "missing_permissions_menu.text": "ℹ️ Il gruppo '<u>[title]</u>' non può attualmente essere indicizzato poiché i permessi del bot non sono stati impostati correttamente",
+  "missing_permissions_menu.alt_text": "ℹ️ Il gruppo '<u>[title]</u>' non poteva essere indicizzato poiché i permessi del bot non erano stati impostati correttamente",
+  "missing_permissions_menu.is_not_admin": "❌ Il bot non è stato impostato come <b>amministratore del gruppo</b>",
+  "missing_permissions_menu.cant_invite_users_via_link": "❌ Il bot non ha il permesso necessario di <b>invitare utenti tramite link</b>",
+  "missing_permissions_menu.cant_add_members": "❌ Il bot non ha il permesso necessario di <b>aggiungere membri</b>",
+  "missing_permissions_menu.fix_then_try_again": "\uD83D\uDEE0 Una volta risolti questi problemi torna indietro e prova ancora, o per qualsiasi dubbio in merito non esitare a contattarci",
+  "missing_permissions_menu.already_fixed_try_again": [
+    "✅ Adesso sembrerebbe tutto risolto però, quindi puoi tornare indietro e provare di nuovo \uD83D\uDE42",
+    "\n\n⚠️ Se tornando indietro non dovesse ancora risultare risolto non esitare a contattarci per assistenza."
+  ],
+  "missing_permissions_menu.cant_get_group_info": "⛔️ La procedura di ottenimento informazioni sul gruppo non è andata a buon fine, assicurati che il gruppo esista ancora e il bot ne faccia parte e poi riprova",
+  "missing_permissions_menu.contact_us_btn": "\uD83D\uDCAC Contattaci per assistenza",
+  "missing_permissions_menu.back_btn": "◀️ Indietro",
+
+  "index_group_confirm_menu.text": "❔ Sei sicuro di voler inserire il gruppo '<u>[title]</u>' nella categoria '[category]'?",
+  "unindex_group_confirm_menu.text": "❔ Sei sicuro di voler deindicizzare il gruppo '<u>[title]</u>' dalla categoria '[category]'?",
+  "index_group_confirm_menu.will_be_moved": "❗️ Se confermi il gruppo verrà spostato qui dalla sua precedente categoria '<i>[current_category]</i>'",
+  "index_group_confirm_menu.owner_will_be_alerted": "\uD83E\uDD34Il proprietario del gruppo verrà automaticamente informato della tua modifica in caso di conferma.",
+  "index_group_confirm_menu.confirm_btn": "Sì, procedi ▶️",
+  "index_group_confirm_menu.undo_btn": "◀️ No, torna indietro",
+  "index_group_confirm_menu.back_btn": "◀️ Indietro",
+
+  "index_group.indexed": "☑️ Gruppo '<u>[title]</u>' indicizzato con successo nella categoria '[category]'",
+  "index_group.moved": "☑️ Gruppo '<u>[title]</u>' spostato con successo nella categoria '[old_category]' dalla categoria '[category]'",
+  "unindex_group.successful": "☑️ Gruppo '<u>[title]</u>' deindicizzato con successo dalla categoria '[category]'",
+
+  "index_group.error.cant_get_group_info": [
+    "⛔️ La procedura di ottenimento informazioni sul gruppo non è andata a buon fine, ",
+    "assicurati che il gruppo esista ancora e il bot ne faccia parte e poi riprova"
+  ],
+
+  "index_group.error.already_current_category":   "ℹ️ Il gruppo '<u>[title]</u>' è stato già spostato nella categoria richiesta ('[category]')",
+  "index_group_error.already_not_indexed_at_all": "ℹ️ Il gruppo '<u>[title]</u>' non è di già indicizzato più in nessuna categoria",
+  "index_group_error.already_not_indexed_there":  "ℹ️ Il gruppo '<u>[title]</u>' non è di già indicizzato più nella categoria '[category]'",
+
+  "index_group.error.admin_required": [
+    "⛔️ Devi essere amministratore del gruppo per poter impostare o modificare la categoria in cui viene indicizzato"
+  ],
+
+  "index_group.change_group_info_permission_required": [
+    "\uD83D\uDE14 Devi essere amministratore del gruppo <b>con il permesso di poterne modificare le informazioni</b>",
+    " per poter impostare o modificare la categoria in cui viene indicizzato. Ti consigliamo di provare a chiedere al",
+    " proprietario del gruppo o ad un amministratore del bot di cambiare la categoria al tuo posto."
+  ]
 }

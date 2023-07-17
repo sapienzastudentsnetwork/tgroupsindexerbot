@@ -46,21 +46,26 @@ class Logger:
         cls.admin_actions_log_chat_id = admin_actions_log_chat_id
 
     @classmethod
-    async def log_admin_action(cls, action: str, admin: User, target_chat_data: dict,
-                               new_directory_id: int = None, full_old_category_name: str = None,
-                               full_new_category_name: str = None):
+    async def log_action(cls, action: str, user: User, target_chat_data: dict,
+                         new_directory_id: int = None, full_old_category_name: str = None,
+                         full_new_category_name: str = None):
 
         if cls.admin_actions_log_chat_id:
             target_chat_id = target_chat_data["chat_id"]
 
             old_directory_id = target_chat_data["directory_id"]
 
-            text = "<b>" + action.upper() + f'</b>\n\n✍️ <a href="tg://user?id={admin.id}">{admin.full_name}</a>'
+            if action in ("hide", "unhide", "move", "unindex"):
+                text = "👮‍♂️ <b><u>" + action.upper() + f"</u></b> (#admin)"
+            else:
+                text = "👤 <b>" + action.upper() + f"</b> (#user)"
 
-            if admin.username:
-                text += f" (@{admin.username})"
+            text += f'\n\n✍️ <a href="tg://user?id={user.id}">{user.full_name}</a>'
 
-            text += f" [<code>{admin.id}</code>]"
+            if user.username:
+                text += f" (@{user.username})"
+
+            text += f" [<code>{user.id}</code>]"
 
             text += f"\n\n💬 \"" + target_chat_data["title"] + f"\" [<code>{target_chat_id}</code>]"
 
@@ -95,8 +100,6 @@ class Logger:
 
             if cls.exception_log_chat_id:
                 async def alert_on_telegram(context: ContextTypes.DEFAULT_TYPE) -> None:
-                    print("exception_log_chat_id: " + str(cls.exception_log_chat_id))
-
                     try:
                         message_text = f"<b>EXCEPTION</b>\n\n<code>{author}</code>\n\n{text}"
 

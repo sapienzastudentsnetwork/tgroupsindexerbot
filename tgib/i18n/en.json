@@ -13,17 +13,17 @@
   "main_menu.add_bot_to_group_btn": "\uD83D\uDCA0 Add a group",
   "main_menu.about_message_btn":    "ℹ️ About the bot",
 
-  "about_menu.text": [
-    "ℹ️ Telegram bot for indexing groups run by students at the university",
-    "\n\n📊 [accounts_count] different users have used the bot at least once since 14/01/2023",
-    "\n\n\uD83D\uDCA0 Instance currently managed by <a href=\"https://telegram.me/SapienzaStudentsNetwork\">Sapienza Students Network</a>, coordinated by @Matypist",
-    "\n\n\uD83E\uDDD1\u200D\uD83D\uDCBB Powered by TGroupsIndexerBot <a href=\"https://github.com/sapienzastudentsnetwork/tgroupsindexerbot\">[GitHub]</a> by @Matypist",
-    "\n\n\uD83D\uDCC4 Originally designed and programmed in GO <a href=\"https://gitlab.com/sapienzastudents/antispam-telegram-bot\">[GitLab]</a>"
+  "about_menu.sapienzastudentsbot": [
+    "\uD83E\uDE90 Telegram bot for indexing groups run by students at the university",
+    "\n\n\uD83D\uDC69\u200D\uD83D\uDE80 <b><u>[accounts_count]</u></b> different users have used the bot at least once since <u>14/01/2023</u>",
+    "\n\n\uD83D\uDEF0 Instance currently managed by <a href=\"https://telegram.me/SapienzaStudentsNetwork\">Sapienza Students Network</a>, coordinated by @Matypist \uD83D\uDC7E",
+    "\n\n\uD83D\uDE80 Powered by <b>TGroupsIndexerBot</b> <a href=\"https://github.com/sapienzastudentsnetwork/tgroupsindexerbot\">[GitHub]</a> by @Matypist",
+    "\n\n\uD83C\uDF03 Originally designed and programmed in GO <a href=\"https://gitlab.com/sapienzastudents/antispam-telegram-bot\">[GitLab]</a>"
   ],
-  "about_menu.github_repo_btn": "\uD83C\uDF10 GitHub Repository",
-  "about_menu.git_channel_btn": "\uD83D\uDD04 Git Channel",
-  "about_menu.report_issue_btn": "\uD83D\uDD8D Report an issue",
-  "about_menu.feature_request_btn": "\uD83D\uDCE4 Suggest a new feature",
+  "about_menu.github_repo_btn": "\uD83D\uDCBB GitHub Repository",
+  "about_menu.git_channel_btn": "\uD83E\uDDD1\u200D\uD83D\uDCBB Git Channel",
+  "about_menu.report_issue_btn": "❤️\u200D\uD83E\uDE79 Report an issue",
+  "about_menu.feature_request_btn": "\uD83D\uDC9D Suggest a new feature",
   "about_menu.contact_us_btn": "\uD83D\uDCAC Contact Us",
   "about_menu.back_btn": "◀️ Back to Menu",
 
@@ -46,13 +46,15 @@
   "expired_session_menu.about_btn": "Why❔",
   "expired_session_menu.about_alert": "Sessions expire automatically each time the bot is updated (and consequently restarted) and in any case at least once within 24 hours",
 
-  "explore_directories.sub_directory.back_btn":      "◀️ Back",
-  "explore_directories.back_to_menu_btn":            "◀️ Back to Menu",
+  "explore_directories.index_group_here":       "\uD83D\uDCA0 Index a new group here",
+  "explore_directories.sub_directory.back_btn": "◀️ Back",
+  "explore_directories.back_to_menu_btn":       "◀️ Back to Menu",
 
   "explore_groups.join_href_text":                   "[JOIN]",
   "explore_groups.category.generation_date_line":    "<i>Groups list generated on [date] at [time] (UTC+[offset]), check periodically for updates</i>",
   "explore_groups.category.no_category_groups_line": "\nGeneral (without sub-category):\n",
   "explore_groups.category.sub_categories_line":     "\nSub-categories (buttons):",
+  "explore_groups.category.no_groups": "\uD83D\uDE14 No groups in this category currently \uD83D\uDE14\n\n\uD83D\uDD04 Recheck periodically or be the first to index one ⏬",
 
   "wip_alert": "Feature under development, provisionally made possible by contacting @Matypist on Telegram",
 
@@ -122,5 +124,91 @@
     " and that it is in the correct format)"
   ],
   "commands.command_not_found.text": "❔ No [command] command found [user], if you think it might be an error contact a bot administrator",
-  "commands.command_not_found.contact_us_btn": "\uD83D\uDCAC Contact Us"
+  "commands.command_not_found.contact_us_btn": "\uD83D\uDCAC Contact Us",
+
+  "add_group_menu.text": [
+    "⏬ In order to add a group to the bot, it is necessary for the bot ([bot_username]) to be an administrator of the group",
+    "\n\n0️⃣ Make sure that a group equivalent to the one you wish to add is not already indexed on the bot;",
+    "\n\n1️⃣ The first step is then to add the bot as an administrator to the group;",
+    "\n\n2️⃣ The second step is to explore the categories and use,",
+    " at the category in which you want to insert/move the group,",
+    " the button to index a group there.",
+    "\n\n\uD83D\uDCAC If you have any needs (e.g. should it not be available on the bot an",
+    " appropriate category for your group), please do not hesitate to contact us for assistance",
+    "\n\n\uD83D\uDE42 Welcome on board! We'll be honored to have your group here"
+  ],
+  "add_group_menu.1_btn": "1️⃣ Add bot to a group you are admin of",
+  "add_group_menu.2_btn": "2️⃣ Explore available categories",
+  "add_group_menu.contact_us_btn":"\uD83D\uDCAC Contact us for assistance",
+  "add_group_menu.back_btn": "◀️ Back to Menu",
+
+  "index_group_menu.text": [
+    "\n\nℹ️ Should a group in which the bot is an administrator and has permission to add members / invite users via link not show up in the list below:",
+    "\n\n• Make sure that you yourself are an administrator of the group in question",
+    "\n\n• Try running the <code>/reload</code> command in the group in question",
+    "\n\n• Refresh the list with the dedicated button",
+    "\n\n• Ultimately, if the group still does not show up, contact us for assistance"
+  ],
+  "index_group_menu.generation_date_line": "⏬ <i>Groups list generated on [date] at [time] (UTC+[offset])</i>",
+  "index_group_menu.no_groups_available": "\uD83D\uDE14 No groups currently available for indexing",
+  "index_group_menu.page_btn": "Page [n]",
+  "index_group_menu.refresh_btn": "\uD83D\uDD04️ Refresh the list",
+  "index_group_menu.add_bot_to_group_btn": "\uD83D\uDCA0 Add the bot to a group",
+  "index_group_menu.contact_us_btn": "\uD83D\uDCAC Contact us for assistance",
+  "index_group_menu.back_btn": "◀️ Back",
+
+  "hidden_by_menu.text": [
+    "ℹ️ The group '<u>[title]</u>' {<code>[chat_id]</code>} cannot currently be indexed because it has been hidden by a bot administrator.",
+    " If you think this might be an error or if you have any concerns about this, please do not hesitate to contact us."
+  ],
+  "hidden_by_menu.alt_text": [
+    "ℹ️ The group '<u>[title]</u>' {<code>[chat_id]</code>} could not be indexed because it was hidden by a bot administrator",
+    "\n\n✅ It would now appear to no longer be hidden though, so you can go back and try again \uD83D\uDE42",
+    "\n\n⚠️ Should it still turn out to be hidden, please do not hesitate to contact us for assistance."
+  ],
+
+  "missing_permissions_menu.text": "ℹ️ The group '<u>[title]</u>' cannot currently be indexed because the bot permissions have not been set correctly",
+  "missing_permissions_menu.alt_text": "ℹ️ The group '<u>[title]</u>' could not be indexed because the bot permissions were not set correctly",
+  "missing_permissions_menu.is_not_admin":"❌ The bot has not been set as a <b>group administrator</b>",
+  "missing_permissions_menu.cant_invite_users_via_link":"❌ The bot does not have the necessary permission to <b>invite users via link</b>",
+  "missing_permissions_menu.cant_add_members":"❌ The bot does not have the necessary permission to <b>add members</b>",
+  "missing_permissions_menu.fix_then_try_again": "\uD83D\uDEE0 Once you have resolved these issues go back and try again, or if you have any questions about this please do not hesitate to contact us",
+  "missing_permissions_menu.already_fixed_try_again": [
+    "✅ Now it would seem to be solved though, so you can go back and try again \uD83D\uDE42",
+    "\n\n⚠️ Should going back still not turn out to be resolved, please do not hesitate to contact us for assistance."
+  ],
+  "missing_permissions_menu.cant_get_group_info": "⛔️ The process of getting group information failed, make sure the group still exists and the bot is part of it and then try again",
+  "missing_permissions_menu.contact_us_btn": "\uD83D\uDCAC Contact us for assistance",
+  "missing_permissions_menu.back_btn": "◀️ Back",
+
+  "unindex_group_confirm_menu.text": "❔ Are you sure you want to unindex the '<u>[title]</u>' group from the '[category]' category?",
+  "index_group_confirm_menu.text":"❔ Are you sure you want to place group '<u>[title]</u>' in category '[category]'?",
+  "index_group_confirm_menu.will_be_moved":"❗️ If you confirm the group will be moved here from its previous category ('<i>[current_category]</i>')",
+  "index_group_confirm_menu.owner_will_be_alerted":"\uD83E\uDD34The group owner will be automatically notified of your change if you confirm.",
+  "index_group_confirm_menu.confirm_btn": "Yes, proceed ▶️",
+  "index_group_confirm_menu.undo_btn": "◀️ No, go back",
+  "index_group_confirm_menu.back_btn":"◀️ Back",
+
+  "index_group.indexed": "☑️ Group '<u>[title]</u>' successfully indexed in the category '[category]'",
+  "index_group.moved": "☑️ Group '<u>[title]</u>' successfully moved from the category '[old_category]' to the category '[category]'",
+  "unindex_group.successful": "☑️ Group '<u>[title]</u>' successfully unindexed from category '[category]'",
+
+  "index_group.error.cant_get_group_info": [
+    "⛔️ The process of getting group information failed, ",
+    "make sure the group still exists and the bot is a member and then try again"
+  ],
+
+  "index_group.error.already_current_category":   "ℹ️ The group '<u>[title]</u>' has already moved to the requested category ('[category]')",
+  "index_group_error.already_not_indexed_at_all": "ℹ️ The group '<u>[title]</u>' is not already indexed anymore in any category",
+  "index_group_error.already_not_indexed_there":  "ℹ️ The group '<u>[title]</u>' is not already indexed anymore in the category '[category]'",
+
+  "index_group.error.admin_required": [
+    "⛔️ You must be an administrator of the group in order to set or change the category in which it is indexed"
+  ],
+
+  "index_group.change_group_info_permission_required": [
+    "\uD83D\uDE14 You must be administrator of the group <b>with permission to change its information</b>",
+    " to be able to set or change the category in which it is indexed. We suggest you to try to ask the group owner",
+    " or a bot administrator to change the category in your place."
+  ]
 }

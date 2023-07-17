@@ -91,6 +91,11 @@ def main() -> None:
 
     GlobalVariables.job_queue = application.job_queue
 
+    GlobalVariables.contact_username = os_getenv("CONTACT_USERNAME")
+
+    if not GlobalVariables.contact_username:
+        GlobalVariables.contact_username = "username"
+
     application.job_queue.run_repeating(
         callback=GitHubMonitor.look_for_updates,
         interval=GitHubMonitor.interval,

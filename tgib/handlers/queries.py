@@ -21,12 +21,13 @@ import hashlib
 from datetime import datetime
 
 import pytz
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatMember
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatMember, Bot, ChatMemberAdministrator, ChatMemberOwner, User
 from telegram.ext import CallbackContext
 
 from tgib.data.database import DirectoryTable, AccountTable, ChatTable, SessionTable
 from tgib.i18n.locales import Locale
 from tgib.global_vars import GlobalVariables
+from tgib.logs import Logger
 from tgib.ui.menus import Menus
 
 
@@ -35,6 +36,7 @@ class Queries:
         "refresh_session",
         "explore_categories",
         "main_menu",
+        "add_group_menu",
         "about_menu",
         "wip_alert",
         "expired_session_about_alert"
@@ -105,7 +107,7 @@ class Queries:
         try:
             chat_member = await bot.get_chat_member(chat_id, user_id)
             return chat_member.status in (ChatMember.OWNER, ChatMember.ADMINISTRATOR)
-        except:
+        except Exception:
             return None
 
     @classmethod
@@ -130,7 +132,415 @@ class Queries:
         return True
 
     @classmethod
-    def explore_category(cls, locale: Locale, directory_id: int, user_is_admin: bool = False) -> (str, InlineKeyboardMarkup):
+    async def hidden_chat_menu(cls, locale: Locale, chat_id: int, directory_id: int, offset: int) -> (str, InlineKeyboardMarkup):
+        chat_data, is_chat_data = ChatTable.get_chat_data(chat_id)
+
+        if is_chat_data:
+            if chat_data["hidden_by"] is not None:
+                text = locale.get_string("hidden_by_menu.text")
+
+            else:
+                text = locale.get_string("hidden_by_menu.alt_text")
+
+            text = text.replace("[title]", chat_data["title"]).replace("[chat_id]", str(chat_id))
+
+        else:
+            return Menus.get_error_menu(locale, "database")
+
+        back_button_callback_data = f"index_group_in{cls.fd}{directory_id}{cls.fd}{offset}"
+        Queries.register_query(back_button_callback_data)
+
+        keyboard = [
+            [InlineKeyboardButton(
+                text=locale.get_string("missing_permissions_menu.contact_us_btn"),
+                url="tg://resolve?domain=" + GlobalVariables.contact_username
+            )],
+
+            [InlineKeyboardButton(
+                text=locale.get_string("missing_permissions_menu.back_btn"),
+                callback_data=back_button_callback_data
+            )]
+        ]
+
+        return text, InlineKeyboardMarkup(keyboard)
+
+    @classmethod
+    async def missing_permissions_menu(cls, locale: Locale, bot: Bot, chat_id: int, directory_id: int, offset: int) -> (str, InlineKeyboardMarkup):
+        try:
+            chat = await bot.get_chat(chat_id)
+
+            bot_member = await bot.get_chat_member(chat_id, bot.id)
+
+            text = locale.get_string("missing_permissions_menu.text").replace("[title]", chat.title)
+
+            fixed = False
+
+            if not isinstance(bot_member, ChatMemberAdministrator):
+                text += "\n\n" + locale.get_string("missing_permissions_menu.is_not_admin")
+
+            elif isinstance(bot_member, ChatMemberAdministrator):
+                bot_member: ChatMemberAdministrator
+
+                if not bot_member.can_invite_users:
+                    chat_permissions = chat.permissions
+
+                    text += "\n\n"
+
+                    if chat_permissions.can_invite_users:
+                        text += locale.get_string("missing_permissions_menu.cant_invite_users_via_link")
+                    else:
+                        text += locale.get_string("missing_permissions_menu.cant_add_members")
+                else:
+                    await ChatTable.fetch_chat(bot, chat_id)
+
+                    text = locale.get_string("missing_permissions_menu.alt_text").replace("[title]", chat.title)
+
+                    fixed = True
+
+            text += "\n\n"
+
+            if not fixed:
+                text += locale.get_string("missing_permissions_menu.fix_then_try_again")
+            else:
+                text += locale.get_string("missing_permissions_menu.already_fixed_try_again")
+
+        except Exception:
+            text = locale.get_string("missing_permissions_menu.cant_get_group_info")
+
+        back_button_callback_data = f"index_group_in{cls.fd}{directory_id}{cls.fd}{offset}"
+        Queries.register_query(back_button_callback_data)
+
+        keyboard = [
+            [InlineKeyboardButton(
+                text=locale.get_string("missing_permissions_menu.contact_us_btn"),
+                url="tg://resolve?domain=" + GlobalVariables.contact_username
+            )],
+
+            [InlineKeyboardButton(
+                text=locale.get_string("missing_permissions_menu.back_btn"),
+                callback_data=back_button_callback_data
+            )]
+        ]
+
+        return text, InlineKeyboardMarkup(keyboard)
+
+    @classmethod
+    def index_group_in_directory_menu(cls, locale: Locale, directory_id: int, offset: int, user_data: dict) -> (str, InlineKeyboardMarkup):
+        chats_per_page = 8
+
+        user_id = user_data["chat_id"]
+
+        number_of_chats_user_is_admin_of, is_number_of_chats_user_is_admin_of = ChatTable.get_total_chats_user_is_admin_of(user_id)
+
+        if is_number_of_chats_user_is_admin_of:
+            chats_user_is_admin_of, is_chats_user_is_admin_of = ChatTable.get_chats_user_is_admin_of(user_id, offset, chats_per_page)
+            chats_user_is_admin_of: dict
+
+            if is_chats_user_is_admin_of:
+                text = locale.get_string("index_group_menu.text")
+
+                keyboard = []
+
+                pages_keyboard = []
+
+                pn = offset + 1
+
+                if offset > 0:
+                    previous_page_callback_data = f"index_group_in{cls.fd}{directory_id}{cls.fd}{offset-1}"
+                    Queries.register_query(previous_page_callback_data)
+
+                    pages_keyboard.append(
+                        [
+                            InlineKeyboardButton(
+                                text="⬅️ " + locale.get_string("index_group_menu.page_btn").replace("[n]", str(pn - 1)),
+                                callback_data=previous_page_callback_data
+                            )
+                        ]
+                    )
+
+                if number_of_chats_user_is_admin_of > (pn * chats_per_page):
+                    next_page_callback_data = f"index_group_in{cls.fd}{directory_id}{cls.fd}{offset+1}"
+                    Queries.register_query(next_page_callback_data)
+
+                    pages_keyboard.append(
+                        [
+                            InlineKeyboardButton(
+                                text=locale.get_string("index_group_menu.page_btn").replace("[n]", str(pn + 1)) + " ➡️",
+                                callback_data=next_page_callback_data
+                            )
+                        ]
+                    )
+
+                if pages_keyboard:
+                    keyboard += pages_keyboard
+
+                if len(chats_user_is_admin_of) > 0:
+                    for curr_chat_id, curr_chat_data in chats_user_is_admin_of.items():
+                        curr_chat_btn_text = curr_chat_data["title"]
+
+                        if curr_chat_data["hidden_by"] is not None:
+                            curr_chat_btn_text += " 🚫"
+
+                            curr_chat_callback_data = f"hidden_chat_menu{cls.fd}{curr_chat_id}{cls.fd}{directory_id}{cls.fd}{offset}"
+
+                        elif curr_chat_data["missing_permissions"] is True:
+                            curr_chat_btn_text += " ⛔️"
+
+                            curr_chat_callback_data = f"missing_permissions_menu{cls.fd}{curr_chat_id}{cls.fd}{directory_id}{cls.fd}{offset}"
+
+                        elif curr_chat_data["directory_id"] == directory_id:
+                            curr_chat_btn_text += " ☑️"
+
+                            curr_chat_callback_data = f"unindex_confirm_menu{cls.fd}{curr_chat_id}{cls.fd}{directory_id}{cls.fd}{offset}"
+
+                        else:
+                            curr_chat_callback_data = f"index_confirm_menu{cls.fd}{curr_chat_id}{cls.fd}{directory_id}{cls.fd}{offset}"
+
+                        Queries.register_query(curr_chat_callback_data)
+
+                        keyboard.append(
+                            [InlineKeyboardButton(text=curr_chat_btn_text,
+                                                  callback_data=curr_chat_callback_data)]
+                        )
+
+                    date_str, time_str, offset_str = cls.get_current_italian_datetime()
+
+                    text += "\n\n" + locale.get_string("index_group_menu.generation_date_line") \
+                        .replace("[date]", date_str) \
+                        .replace("[time]", time_str) \
+                        .replace("[offset]", offset_str[1:3]) + "\n"
+                else:
+                    text += "\n\n" + locale.get_string("index_group_menu.no_groups_available")
+
+
+                back_button_callback_data = f"cd{cls.fd}{directory_id}"
+                Queries.register_query(back_button_callback_data)
+
+                keyboard += [
+                    [InlineKeyboardButton(
+                        text=locale.get_string("index_group_menu.refresh_btn"),
+                        callback_data=f"index_group_in{cls.fd}{directory_id}{cls.fd}{offset}")
+                    ],
+
+                    [InlineKeyboardButton(
+                        text=locale.get_string("index_group_menu.add_bot_to_group_btn"),
+                        url="http://t.me/" + GlobalVariables.bot_instance.username + "?startgroup=start")
+                    ],
+
+                    [InlineKeyboardButton(
+                        text=locale.get_string("index_group_menu.contact_us_btn"),
+                        url="tg://resolve?domain=" + GlobalVariables.contact_username
+                    )],
+
+                    [InlineKeyboardButton(
+                        text=locale.get_string("index_group_menu.back_btn"),
+                        callback_data=back_button_callback_data
+                    )]
+                ]
+
+                return text, InlineKeyboardMarkup(keyboard)
+
+            else:
+                return Menus.get_error_menu(locale, "database")
+        else:
+            return Menus.get_error_menu(locale, "database")
+
+    @classmethod
+    async def index_group_menu(cls, locale: Locale, bot: Bot, user: User, chat_id: int, new_directory_id: int = None, offset: int = 0, requires_confirmation: bool = True, unindex_directory_id: int = None) -> (str, InlineKeyboardMarkup):
+        user_id = user.id
+
+        if new_directory_id is None and unindex_directory_id is None:
+            return Menus.get_error_menu(locale, "query")
+
+        if unindex_directory_id is None:
+            back_directory_id = new_directory_id
+        else:
+            back_directory_id = unindex_directory_id
+
+        text = ""
+
+        keyboard = []
+
+        undo_btn = False
+
+        try:
+            chat_member = await bot.get_chat_member(chat_id, user_id)
+
+            if chat_member.status in (ChatMember.OWNER, ChatMember.ADMINISTRATOR):
+                chat_member: ChatMemberOwner
+
+                if isinstance(chat_member, ChatMemberOwner) or chat_member.can_change_info:
+                    chat_data, is_chat_data = ChatTable.get_chat_data(chat_id)
+
+                    if is_chat_data:
+                        old_directory_id = None
+
+                        if chat_data["directory_id"] is not None:
+                            old_directory_id = chat_data["directory_id"]
+
+                        valid_request = True
+
+                        user_lang_code = locale.lang_code
+
+                        if new_directory_id is not None:
+                            full_category_name = DirectoryTable.get_full_category_name(user_lang_code, new_directory_id)
+                        else:
+                            full_category_name = DirectoryTable.get_full_category_name(user_lang_code, old_directory_id)
+
+                        if new_directory_id is None:
+                            if old_directory_id is None:
+                                text = locale.get_string("index_group_error.already_not_indexed_at_all") \
+                                    .replace("[title]", chat_data["title"])
+
+                                valid_request = False
+
+                            elif old_directory_id != unindex_directory_id:
+                                text = locale.get_string("index_group_error.already_not_indexed_there") \
+                                    .replace("[title]", chat_data["title"]) \
+                                    .replace("[category]", full_category_name)
+
+                                valid_request = False
+
+                        if chat_data["hidden_by"] is not None:
+                            return await cls.hidden_chat_menu(locale, chat_id, back_directory_id, offset)
+
+                        if valid_request:
+                            if old_directory_id is None or old_directory_id != new_directory_id:
+                                if requires_confirmation:
+                                    chat = await bot.get_chat(chat_id)
+
+                                    if new_directory_id is not None:
+                                        text = locale.get_string("index_group_confirm_menu.text")
+
+                                        confirm_button_callback_data = f"index{cls.fd}{chat_id}{cls.fd}{new_directory_id}{cls.fd}{offset}"
+
+                                    else:
+                                        text = locale.get_string("unindex_group_confirm_menu.text")
+
+                                        confirm_button_callback_data = f"unindex{cls.fd}{chat_id}{cls.fd}{unindex_directory_id}{cls.fd}{offset}"
+
+                                    text = text.replace("[title]", chat.title).replace("[category]", str(full_category_name))
+
+                                    if new_directory_id is not None and old_directory_id is not None:
+                                        full_old_category_name = DirectoryTable.get_full_category_name(user_lang_code, old_directory_id)
+
+                                        text += "\n\n" + locale.get_string("index_group_confirm_menu.will_be_moved") \
+                                            .replace("[current_category]", full_old_category_name)
+
+                                    if chat_member.status != ChatMember.OWNER:
+                                        text += "\n\n" + locale.get_string("index_group_confirm_menu.owner_will_be_alerted")
+
+                                    Queries.register_query(confirm_button_callback_data)
+
+                                    keyboard.append(
+                                        [InlineKeyboardButton(
+                                            text=locale.get_string("index_group_confirm_menu.confirm_btn"),
+                                            callback_data=confirm_button_callback_data
+                                        )]
+                                    )
+
+                                    undo_btn = True
+
+                                else:
+                                    updated = ChatTable.update_chat_directory(chat_id, new_directory_id)
+
+                                    if updated:
+                                        if new_directory_id is not None:
+                                            full_old_category_name = None
+
+                                            if old_directory_id is not None:
+                                                DirectoryTable.increment_chats_count(old_directory_id, -1)
+
+                                            DirectoryTable.increment_chats_count(new_directory_id, +1)
+
+                                            if old_directory_id is not None:
+                                                full_old_category_name = DirectoryTable.get_full_category_name(user_lang_code, old_directory_id)
+
+                                                text = locale.get_string("index_group.moved") \
+                                                    .replace("[old_category]", full_old_category_name)
+
+                                                await Logger.log_action(
+                                                    "index", user, chat_data, new_directory_id,
+                                                    full_old_category_name=full_old_category_name,
+                                                    full_new_category_name=full_category_name
+                                                )
+
+                                            else:
+                                                text = locale.get_string("index_group.indexed")
+
+                                                await Logger.log_action(
+                                                    "index", user, chat_data, new_directory_id,
+                                                    full_new_category_name=full_category_name
+                                                )
+
+                                        else:
+                                            old_directory_id: int
+
+                                            DirectoryTable.increment_chats_count(old_directory_id, -1)
+
+                                            text = locale.get_string("unindex_group.successful")
+
+                                            # await Logger.log_action("unindex", user, chat_data,
+                                            #                        full_old_category_name=full_category_name)
+
+                                        text = text.replace("[title]", chat_data["title"]) \
+                                            .replace("[category]", str(full_category_name))
+
+                                    else:
+                                        return Menus.get_error_menu(locale, "database")
+
+                            else:
+                                text = locale.get_string("index_group.error.already_current_category") \
+                                    .replace("[title]", chat_data["title"]) \
+                                    .replace("[category]", str(full_category_name))
+
+                    else:
+                        return Menus.get_error_menu(locale, "database")
+
+                else:
+                    text = locale.get_string("index_group.change_group_info_permission_required")
+
+            else:
+                text = locale.get_string("index_group.error.admin_required")
+
+        except Exception as ex:
+            if new_directory_id is not None:
+                Logger.log("exception", "Queries.index_group_menu",
+                           f"An exception occurred while handling a index query"
+                           f" of '{chat_id}', by '{user_id}', to '{new_directory_id}'", ex)
+            else:
+                Logger.log("exception", "Queries.index_group_menu",
+                           f"An exception occurred while handling a unindex query"
+                           f" of '{chat_id}', by '{user_id}', from '{unindex_directory_id}'", ex)
+
+            text = locale.get_string("index_group.error.cant_get_group_info")
+
+        except Exception:
+            text = locale.get_string("index_group.error.cant_get_group_info")
+
+        back_button_callback_data = f"index_group_in{cls.fd}{back_directory_id}{cls.fd}{offset}"
+        Queries.register_query(back_button_callback_data)
+
+        if undo_btn:
+            keyboard.append(
+                [InlineKeyboardButton(
+                    text=locale.get_string("index_group_confirm_menu.undo_btn"),
+                    callback_data=back_button_callback_data
+                )]
+            )
+
+        else:
+            keyboard.append(
+                [InlineKeyboardButton(
+                    text=locale.get_string("index_group_confirm_menu.back_btn"),
+                    callback_data=back_button_callback_data
+                )]
+            )
+
+        return text, InlineKeyboardMarkup(keyboard)
+
+    @classmethod
+    def explore_category(cls, locale: Locale, directory_id: int, user_data: dict) -> (str, InlineKeyboardMarkup):
         directory_data, is_directory_data = DirectoryTable.get_directory_data(directory_id)
 
         if not is_directory_data and directory_id == DirectoryTable.CATEGORIES_ROOT_DIR_ID:
@@ -162,8 +572,14 @@ class Queries:
                 else:
                     parent_directory_name = str(parent_directory_id)
 
-            groups_dict, is_groups_dict = ChatTable.get_chats(
-                directory_id, skip_missing_permissions_chats=not user_is_admin, skip_hidden_chats=not user_is_admin
+            user_id = user_data["chat_id"]
+            user_is_admin = user_data["is_admin"]
+            user_can_add_groups = user_data["can_add_groups"]
+
+            groups_dict, is_groups_dict = ChatTable.get_directory_indexed_chats(
+                user_id, directory_id,
+                skip_missing_permissions_chats=not user_is_admin,
+                skip_hidden_chats=not user_is_admin
             )
 
             if is_groups_dict:
@@ -190,7 +606,7 @@ class Queries:
                             else:
                                 curr_sub_directory_name = curr_sub_directory_id
 
-                            curr_sub_directory_callback_data = f"cd{GlobalVariables.queries_fd}{curr_sub_directory_id}"
+                            curr_sub_directory_callback_data = f"cd{cls.fd}{curr_sub_directory_id}"
                             Queries.register_query(curr_sub_directory_callback_data)
 
                             curr_sub_directory_btn_text = curr_sub_directory_name
@@ -204,11 +620,20 @@ class Queries:
                 else:
                     return Menus.get_error_menu(locale)
 
+                if user_can_add_groups:
+                    index_group_here_button_text = locale.get_string("explore_directories.index_group_here")
+
+                    index_group_here_callback_data = f"index_group_in{cls.fd}{directory_id}{cls.fd}0"
+                    Queries.register_query(index_group_here_callback_data)
+
+                    keyboard.append([InlineKeyboardButton(text=index_group_here_button_text,
+                                                          callback_data=index_group_here_callback_data)])
+
                 if parent_directory_id != -1:
                     text = f"<b>" + parent_directory_name + " > " + directory_name + "</b>\n"
 
                     back_button_text = locale.get_string("explore_directories.sub_directory.back_btn")
-                    back_button_callback_data = f"cd{GlobalVariables.queries_fd}{parent_directory_id}"
+                    back_button_callback_data = f"cd{cls.fd}{parent_directory_id}"
 
                 else:
                     text = f"<b>" + directory_name + "</b>\n"
@@ -230,16 +655,14 @@ class Queries:
                     text += "\n"
 
                 if len(groups_dict) > 0:
-                    datetime_now = datetime.now(pytz.timezone('Europe/Rome'))
-
-                    date_str   = datetime_now.strftime("%d/%m/%Y")
-                    time_str   = datetime_now.strftime("%H:%M")
-                    offset_str = datetime_now.strftime("%z")
+                    date_str, time_str, offset_str = cls.get_current_italian_datetime()
 
                     text += "\n" + locale.get_string("explore_groups.category.generation_date_line")\
                         .replace("[date]",   date_str)\
                         .replace("[time]",   time_str)\
                         .replace("[offset]", offset_str[1:3]) + "\n"
+                elif len(sub_directories_data) == 0:
+                    text += "\n" + locale.get_string("explore_groups.category.no_groups")
 
                 if len(sub_directories_data) > 0 and len(groups_dict) > 0:
                     text += locale.get_string("explore_groups.category.no_category_groups_line")
@@ -257,7 +680,7 @@ class Queries:
                         group_join_url = group_data_dict["invite_link"]
 
                     if "hidden_by" in group_data_dict and bool(group_data_dict["hidden_by"]):
-                        bullet_char = "👁"
+                        bullet_char = "🚫"
                     elif "missing_permissions" in group_data_dict and bool(group_data_dict["missing_permissions"]):
                         bullet_char = "⛔️"
                     else:
@@ -283,17 +706,18 @@ class Queries:
         return Menus.get_error_menu(locale)
 
     @classmethod
-    def cd_queries_handler(cls, directory_id: int, locale: Locale, user_is_admin: bool = False) -> (str, InlineKeyboardMarkup):
-        return Queries.explore_category(locale, directory_id, user_is_admin)
+    def cd_queries_handler(cls, directory_id: int, locale: Locale, user_data: dict) -> (str, InlineKeyboardMarkup):
+        return Queries.explore_category(locale, directory_id, user_data)
 
     @classmethod
     async def callback_queries_handler(cls, update: Update, context: CallbackContext):
         bot           = context.bot
         query         = update.callback_query
-        chat_id       = update.effective_chat.id
+        user          = update.effective_user
+        user_id       = user.id
         query_message = query.message
 
-        locale = Locale(update.effective_user.language_code)
+        locale = Locale(user.language_code)
 
         if query_message.chat.type == "private":
             hashed_query_data = query.data
@@ -301,40 +725,98 @@ class Queries:
 
             text, reply_markup = "", None
 
-            user_data, is_user_data = AccountTable.get_account_record(chat_id)
+            user_data, is_user_data = AccountTable.get_account_record(user_id)
 
             if is_user_data:
-                user_is_admin = user_data["is_admin"]
+                if Queries.user_can_perform_action(user_id, user_data, query_data):
+                    try:
+                        if query_data in ("refresh_session", "unrecognized query"):
+                            query_data = "main_menu"
 
-                if Queries.user_can_perform_action(chat_id, user_data, query_data):
-                    if query_data in ("refresh_session", "unrecognized query"):
-                        query_data = "main_menu"
+                        if query_data == "explore_categories":
+                            text, reply_markup = cls.cd_queries_handler(DirectoryTable.CATEGORIES_ROOT_DIR_ID, locale, user_data)
 
-                    if query_data == "explore_categories":
-                        text, reply_markup = cls.cd_queries_handler(DirectoryTable.CATEGORIES_ROOT_DIR_ID, locale, user_is_admin)
+                        elif query_data.startswith(f"cd{cls.fd}"):
+                            target_directory_id = int(query_data[len("cd" + cls.fd):])
 
-                    elif query_data.startswith("cd  "):
-                        directory_id = -1
+                            text, reply_markup = cls.cd_queries_handler(target_directory_id, locale, user_data)
 
-                        try:
-                            directory_id = int(query_data[len("cd  "):])
-                        except:
-                            pass
+                        elif query_data == "main_menu":
+                            text, reply_markup = Menus.get_main_menu(locale)
 
-                        if directory_id != -1:
-                            text, reply_markup = cls.cd_queries_handler(directory_id, locale, user_is_admin)
+                        elif query_data == "add_group_menu":
+                            text, reply_markup = Menus.get_add_group_menu(locale, bot.username)
 
-                    elif query_data == "main_menu":
-                        text, reply_markup = Menus.get_main_menu(locale)
+                        elif query_data == "about_menu":
+                            text, reply_markup = Menus.get_about_menu(locale)
 
-                    elif query_data == "about_menu":
-                        text, reply_markup = Menus.get_about_menu(locale)
+                        elif query_data.startswith(f"index_group_in{cls.fd}"):
+                            args = query_data.split(cls.fd)[1:]
 
-                    elif query_data == "wip_alert":
-                        await query.answer(text=locale.get_string("wip_alert"), show_alert=True)
+                            target_directory_id = int(args[0])
 
-                    elif query_data == "expired_session_about_alert":
-                        await query.answer(text=locale.get_string("expired_session_menu.about_alert"), show_alert=True)
+                            offset = int(args[1])
+
+                            text, reply_markup = cls.index_group_in_directory_menu(locale, target_directory_id, offset, user_data)
+
+                        elif query_data.startswith(f"missing_permissions_menu{cls.fd}") \
+                                or query_data.startswith(f"hidden_chat_menu{cls.fd}") \
+                                or query_data.startswith(f"index_confirm_menu{cls.fd}") \
+                                or query_data.startswith(f"index{cls.fd}") \
+                                or query_data.startswith(f"unindex_confirm_menu{cls.fd}") \
+                                or query_data.startswith(f"unindex{cls.fd}"):
+
+                            args = query_data.split(cls.fd)[1:]
+
+                            target_chat_id = int(args[0])
+
+                            target_directory_id = int(args[1])
+
+                            offset = int(args[2])
+
+                            if query_data.startswith(f"missing_permissions_menu{cls.fd}"):
+                                text, reply_markup = await cls.missing_permissions_menu(locale, bot,
+                                                                                        target_chat_id, target_directory_id, offset)
+
+                            elif query_data.startswith(f"hidden_chat_menu{cls.fd}"):
+                                text, reply_markup = await cls.hidden_chat_menu(locale, target_chat_id, target_directory_id, offset)
+
+                            elif query_data.startswith(f"index_confirm_menu{cls.fd}"):
+                                text, reply_markup = await cls.index_group_menu(locale, bot,
+                                                                                user, target_chat_id, target_directory_id, offset,
+                                                                                requires_confirmation=True)
+
+                            elif query_data.startswith(f"index{cls.fd}"):
+                                text, reply_markup = await cls.index_group_menu(locale, bot,
+                                                                                user, target_chat_id, target_directory_id, offset,
+                                                                                requires_confirmation=False)
+
+                            elif query_data.startswith(f"unindex_confirm_menu{cls.fd}"):
+                                text, reply_markup = await cls.index_group_menu(locale, bot,
+                                                                                user, target_chat_id, None, offset,
+                                                                                requires_confirmation=True,
+                                                                                unindex_directory_id=target_directory_id)
+
+                            elif query_data.startswith(f"unindex{cls.fd}"):
+                                text, reply_markup = await cls.index_group_menu(locale, bot,
+                                                                                user, target_chat_id, None, offset,
+                                                                                requires_confirmation=False,
+                                                                                unindex_directory_id=target_directory_id)
+
+                        elif query_data == "wip_alert":
+                            await query.answer(text=locale.get_string("wip_alert"), show_alert=True)
+
+                        elif query_data == "expired_session_about_alert":
+                            await query.answer(text=locale.get_string("expired_session_menu.about_alert"), show_alert=True)
+
+                    except Exception as ex:
+                        Logger.log("exception", "Queries.callback_queries_handler",
+                                   f"An exception occurred while handling query '{query_data}' from '{user_id}'", ex)
+
+                        text, reply_markup = Menus.get_error_menu(locale, "query")
+
+                    except Exception:
+                        text, reply_markup = Menus.get_error_menu(locale, "query")
             else:
                 text, reply_markup = Menus.get_error_menu(locale)
 
@@ -343,19 +825,30 @@ class Queries:
 
                 await query.answer()
 
+                edited = False
+
                 try:
                     await query_message.edit_text(text=text, reply_markup=reply_markup)
-                except:
-                    query_message = await bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
 
-                    if chat_id in SessionTable.active_chat_sessions:
-                        SessionTable.update_session(chat_id=chat_id, new_latest_menu_message_id=query_message.message_id)
+                    edited = True
+                except Exception:
+                    original_query_message = query_message
 
-                if chat_id not in SessionTable.active_chat_sessions:
-                    SessionTable.add_session(chat_id=chat_id, latest_menu_message_id=query_message.message_id)
+                    query_message = await bot.send_message(chat_id=user_id, text=text, reply_markup=reply_markup)
+
+                    if user_id in SessionTable.active_chat_sessions:
+                        SessionTable.update_session(chat_id=user_id, new_latest_menu_message_id=query_message.message_id)
+
+                    try:
+                        await bot.delete_message(chat_id=user_id, message_id=original_query_message.message_id)
+                    except Exception:
+                        pass
+
+                if user_id not in SessionTable.active_chat_sessions:
+                    SessionTable.add_session(chat_id=user_id, latest_menu_message_id=query_message.message_id)
 
         else:
             try:
-                await bot.delete_message(chat_id=chat_id, message_id=query_message.message_id)
-            except:
+                await bot.delete_message(chat_id=user_id, message_id=query_message.message_id)
+            except Exception:
                 pass

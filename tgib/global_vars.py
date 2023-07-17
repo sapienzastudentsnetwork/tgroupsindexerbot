@@ -20,11 +20,11 @@
 class GlobalVariables:
     bot_owner = None
 
+    contact_username = None
+
     bot_instance = None
 
     job_queue = None
-
-    queries_fd = "  "
 
     stats_accounts_count = -1
 
