@@ -113,15 +113,6 @@ class GitHubMonitor:
             Logger.log("exception", "GitHubMonitor",
                        f"An exception occurred while looking for updates", ex)
 
-            try:
-                await cls.tgib_bot_instance.send_message(
-                    chat_id=os_getenv("OWNER_CHAT_ID"),
-                    text=f"<b>EXCEPTION</b>\n\n{ex}"
-                )
-
-            except:
-                pass
-
     @classmethod
     def init(cls, bot_instance: telegram.Bot):
         cls.tgib_bot_instance = bot_instance

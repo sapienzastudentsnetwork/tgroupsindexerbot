@@ -91,6 +91,12 @@ def main() -> None:
 
     GlobalVariables.job_queue = application.job_queue
 
+    application.job_queue.run_repeating(
+        callback=GitHubMonitor.look_for_updates,
+        interval=GitHubMonitor.interval,
+        first=1
+    )
+
     application.run_polling()
 
 
