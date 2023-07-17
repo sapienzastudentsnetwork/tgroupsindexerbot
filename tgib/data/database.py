@@ -521,12 +521,15 @@ class DirectoryTable:
 
     @classmethod
     def increment_chats_count(cls, directory_id: int, increment: int = 1) -> None:
+        if not cls.cached_chat_counts:
+            return
+
         curr_directory_id = directory_id
 
         curr_directory_data, is_curr_directory_data = cls.get_directory_data(directory_id)
 
         while True:
-            if is_curr_directory_data and curr_directory_data["parent_id"]:
+            if is_curr_directory_data and curr_directory_data["parent_id"] and curr_directory_id in cls.cached_chat_counts:
                 cls.cached_chat_counts[curr_directory_id] = cls.cached_chat_counts[curr_directory_id] + increment
 
             if not is_curr_directory_data or curr_directory_data["parent_id"] is None:
@@ -534,6 +537,34 @@ class DirectoryTable:
 
             curr_directory_id = curr_directory_data["parent_id"]
             curr_directory_data, is_curr_directory_data = cls.get_directory_data(curr_directory_id)
+
+    @classmethod
+    def get_full_category_name(cls, user_lang_code: str, directory_id: int, separator: str = " » ") -> str:
+        def_lang_code = Locale.def_lang_code
+
+        full_category_name = None
+
+        curr_directory_data, is_curr_directory_data = cls.get_directory_data(directory_id)
+
+        while True:
+            if is_curr_directory_data and (curr_directory_data[f"i18n_{user_lang_code}_name"] or curr_directory_data[f"i18n_{def_lang_code}_name"]):
+                if curr_directory_data[f"i18n_{user_lang_code}_name"]:
+                    curr_directory_name = curr_directory_data[f"i18n_{user_lang_code}_name"]
+                else:
+                    curr_directory_name = curr_directory_data[f"i18n_{def_lang_code}_name"]
+
+                if full_category_name is None:
+                    full_category_name = curr_directory_name
+                else:
+                    full_category_name = curr_directory_name + separator + full_category_name
+
+            if not is_curr_directory_data or curr_directory_data["parent_id"] is None:
+                break
+
+            curr_parent_directory_id = curr_directory_data["parent_id"]
+            curr_directory_data, is_curr_directory_data = cls.get_directory_data(curr_parent_directory_id)
+
+        return full_category_name
 
 
 class ChatTable:
@@ -584,6 +615,74 @@ class ChatTable:
             Logger.log("error", "ChatTable.get_chats", f"Couldn't get cursor required to get chats")
 
             return {}, False
+
+    @classmethod
+    def update_chat_visibility(cls, chat_id: int, hidden_by: int = None) -> bool:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            try:
+                connection = Database.connection
+                connection: psycopg2._psycopg.connection
+
+                cursor.execute(
+                    """
+                    UPDATE chat
+                    SET hidden_by = %s
+                    WHERE chat_id = %s;
+                    """,
+                    (hidden_by, chat_id)
+                )
+
+                connection.commit()
+
+                return True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "ChatTable.update_chat_visibility",
+                           f"Couldn't update visibility to hidden by '{hidden_by}' for chat having id '{chat_id}': \n{ex}")
+
+                return False
+
+        else:
+            Logger.log("error", "ChatTable.update_chat_visibility", f"Couldn't get cursor required to update visibility to"
+                                                                    f" hidden by '{hidden_by}' for chat having id '{chat_id}'")
+
+            return False
+
+    @classmethod
+    def update_chat_directory(cls, chat_id: int, new_directory_id: int) -> bool:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            try:
+                connection = Database.connection
+                connection: psycopg2._psycopg.connection
+
+                cursor.execute(
+                    """
+                    UPDATE chat
+                    SET directory_id = %s
+                    WHERE chat_id = %s;
+                    """,
+                    (new_directory_id, chat_id)
+                )
+
+                connection.commit()
+
+                return True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "ChatTable.update_chat_directory",
+                           f"Couldn't update directory_id to '{new_directory_id}' for chat having id '{chat_id}': \n{ex}")
+
+                return False
+
+        else:
+            Logger.log("error", "ChatTable.update_chat_directory", f"Couldn't get cursor required to update directory_id"
+                                                                   f" to '{new_directory_id}' for chat having id '{chat_id}'")
+
+            return False
 
     @classmethod
     def migrate_chat_id(cls, old_chat_id: int, new_chat_id: int) -> bool:

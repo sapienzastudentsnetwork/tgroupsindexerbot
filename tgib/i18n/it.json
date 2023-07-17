@@ -76,6 +76,35 @@
   "commands.reload.is_not_admin": "❌ Il bot non è stato impostato come amministratore del gruppo",
   "commands.reload.cant_invite_users_via_link": "❌ Il bot non ha il permesso necessario di invitare utenti tramite link",
   "commands.reload.cant_add_members": "❌ Il bot non ha il permesso necessario di aggiungere membri",
+  "commands.visibility.hide.successful": "\uD83E\uDEE3 Chat '<u>[title]</u>' {<code>[chat_id]</code>} nascosta (bandita dall'indicizzazione) con successo",
+  "commands.visibility.unhide.successful": "\uD83D\uDC41 Chat '<u>[title]</u>' {<code>[chat_id]</code>} riammessa nell'indicizzazione con successo",
+  "commands.visibility.already_hidden": "ℹ️ Il gruppo '<u>[title]</u>' {<code>[chat_id]</code>} è già stato nascosto da un amministratore del bot",
+  "commands.visibility.already_not_hidden": "ℹ️ Il gruppo '<u>[title]</u>' {<code>[chat_id]</code>} non è di già nascosto",
+  "commands.visibility.wrong_chat_id_format": [
+    "❌ L'ID di chat fornito non risulta essere un intero valido (assicurarsi di averlo effettivamente fornito",
+    " e che sia nel formato corretto)"
+  ],
+  "commands.chat_database_error": [
+    "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria ad ottenere i dati della chat richiesta,",
+    " assicurati che l'ID indicato sia corretto ed una chat con tale ID esista effettivamente in questa istanza del bot",
+    " o contatta il gestore del bot qualora il problema dovesse persistere"
+  ],
+  "commands.directory_database_error": [
+    "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria ad ottenere i dati della directory richiesta,",
+    " assicurati che l'ID indicato sia corretto ed una directory con tale ID esista effettivamente in questa istanza del bot",
+    " o contatta il gestore del bot qualora il problema dovesse persistere"
+  ],
+  "commands.database_error": [
+    "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria ad eseguire il comando",
+    "\n\n<i>Contatta il gestore del bot qualora il problema dovesse persistere</i>"
+  ],
+  "commands.move.successful": "☑️ Gruppo '<u>[title]</u>' {<code>[chat_id]</code>} indicizzato / spostato con successo nella categoria '[category]'",
+  "commands.move.already_current_category": "ℹ️ Il gruppo '<u>[title]</u>' {<code>[chat_id]</code>} è stato già indicizzato / spostato nella categoria richiesta ('[category]')",
+  "commands.move.wrong_directory_id_format": [
+    "❌ L'ID di directory fornito non risulta essere un intero valido (assicurarsi di averlo effettivamente fornito",
+    " e che sia nel formato corretto)"
+  ],
+  "commands.bot_admin_specific_command": "⛔️ Spiacente [user], il comando <code>[command]</code> può essere eseguito soltanto da un amministratore del bot",
   "commands.command_not_found.text": "❔ Nessun comando [command] trovato [user], se pensi possa trattarsi di un errore contatta un amministratore del bot",
   "commands.command_not_found.contact_us_btn": "\uD83D\uDCAC Contattaci"
 }

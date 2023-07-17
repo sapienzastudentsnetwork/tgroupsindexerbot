@@ -33,7 +33,7 @@ from tgib.ui.menus import Menus
 class Commands:
     command_cooldowns = {"dont": 15, "reload": 15, "netstatus": 60}
     user_last_command_use_dates = {"dont": {}, "reload": {}, "netstatus": {}}
-    registered_commands = ["start", "groups", "dont", "reload", "id"]
+    registered_commands = ["start", "groups", "dont", "reload", "id", "hide", "unhide", "move"]
 
     @classmethod
     async def commands_handler(cls, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -43,27 +43,22 @@ class Commands:
         query_message = update.message
 
         if query_message.chat.type != "channel":
+            bot_username_lower = bot.username.lower()
+
             command = query_message.text.split()[0][1:].lower()
 
-            bot_username_lower = bot.username.lower()
+            command_name = command.replace("@" + bot_username_lower, "")
 
             locale = Locale(update.effective_user.language_code)
 
-            is_a_registered_command = False
-
-            for registered_command in cls.registered_commands:
-                if command == registered_command or command == f"{registered_command}@{bot_username_lower}":
-                    is_a_registered_command = True
-
-                    break
+            is_a_registered_command = (command_name in cls.registered_commands)
 
             if not is_a_registered_command:
                 if command.endswith(bot_username_lower):
                     text = locale.get_string("commands.command_not_found.text") \
                         .replace("[user]",
                                  f'<a href="tg://user?id={user_id}">' + update.effective_user.first_name + '</a>') \
-                        .replace("[command]",
-                                 f'<code>/' + command.replace("@" + bot_username_lower, "") + "</code>")
+                        .replace("[command]", f'<code>/' + command_name + "</code>")
 
                     keyboard = [
                         [InlineKeyboardButton(text=locale.get_string("commands.command_not_found.contact_us_btn"),
@@ -105,16 +100,18 @@ class Commands:
 
             cooldown = False
 
+            delete_query_message = True
+
+            invalid_request = False
+
             if not is_user_data and query_message.chat.type == "private":
                 text, reply_markup = Menus.get_error_menu(locale, source="database")
             else:
-                if (is_user_data and Queries.user_can_perform_action(user_id, user_data, "/" + command)) or (not is_user_data):
-                    invalid_request = False
-
-                    if command == "start" or command == "start@" + bot_username_lower:
+                if (is_user_data and Queries.user_can_perform_action(user_id, user_data, "/" + command_name)) or (not is_user_data):
+                    if command_name == "start":
                         text, reply_markup = Menus.get_main_menu(locale)
 
-                    elif command in ("groups", "groups@" + bot_username_lower):
+                    elif command_name == "groups":
                         text, reply_markup = Queries.explore_category(
                             locale,
                             DirectoryTable.CATEGORIES_ROOT_DIR_ID,
@@ -122,24 +119,31 @@ class Commands:
                         )
 
                     else:
-                        if command in ("reload",) and query_message.chat.type == "private":
+                        if command_name in ("reload",) and query_message.chat.type == "private":
                             text = locale.get_string("commands.groups.group_specific_command") \
                                 .replace("[command]",
-                                         f'/<a href="/{command}">' + command.replace("@" + bot_username_lower, "") + "</a>")
+                                         f'/<a href="/{command}">' + command_name + "</a>")
 
                             invalid_request = True
 
-                        elif command in ("reload",) and not user_is_bot_admin and not Queries.is_admin(bot, chat_id, user_id):
+                        elif command_name in ("reload",) and not user_is_bot_admin and not Queries.is_admin(bot, chat_id, user_id):
                             text = locale.get_string("commands.groups.admin_specific_command") \
                                 .replace("[user]",
                                          f'<a href="tg://user?id={user_id}">' + update.effective_user.first_name + '</a>') \
-                                .replace("[command]",
-                                         f'/<a href="/{command}">' + command.replace("@" + bot_username_lower, "") + "</a>")
+                                .replace("[command]", f'/<a href="/{command}">' + command_name + "</a>")
+
+                            invalid_request = True
+
+                        elif command_name in ("hide", "unhide", "move") and not user_is_bot_admin:
+                            text = locale.get_string("commands.bot_admin_specific_command") \
+                                .replace("[user]",
+                                         f'<a href="tg://user?id={user_id}">' + update.effective_user.first_name + '</a>') \
+                                .replace("[command]", f'/<a href="/{command}">' + command_name + "</a>")
 
                             invalid_request = True
 
                         if not invalid_request:
-                            if command == "dont":
+                            if command_name == "dont":
                                 text = ""
 
                                 for lang_code in Locale.lang_codes:
@@ -148,7 +152,7 @@ class Commands:
                                 if query_message.reply_to_message:
                                     reply_to_message = query_message.reply_to_message
 
-                            elif command == "reload":
+                            elif command_name == "reload":
                                 old_chat_data, new_chat_data, is_new_chat_data = await ChatTable.fetch_chat(bot, chat_id)
 
                                 if is_new_chat_data:
@@ -184,38 +188,136 @@ class Commands:
                                 else:
                                     text = locale.get_string("commands.reload.unsuccessful")
 
-                            elif command == "id":
+                            elif command_name in ("hide", "unhide", "move"):
+                                target_chat_id = None
+
+                                query_msg_text = query_message.text
+
+                                if update.effective_chat.type in ("group", "supergroup"):
+                                    target_chat_id = chat_id
+
+                                else:
+                                    try:
+                                        target_chat_id = int(query_msg_text.split(" ")[1])
+
+                                    except:
+                                        text = locale.get_string("commands.visibility.wrong_chat_id_format")
+
+                                        delete_query_message = False
+
+                                if target_chat_id is not None:
+                                    chat_data, is_chat_data = ChatTable.get_chat_data(target_chat_id)
+
+                                    if not is_chat_data:
+                                        text = locale.get_string("commands.chat_database_error")
+
+                                        delete_query_message = False
+
+                                    else:
+                                        chat_directory_id = None
+
+                                        if chat_data["directory_id"] is not None:
+                                            chat_directory_id = chat_data["directory_id"]
+
+                                        if command_name == "hide":
+                                            if chat_data["hidden_by"] is None:
+                                                updated = ChatTable.update_chat_visibility(target_chat_id, hidden_by=user_id)
+
+                                                if updated:
+                                                    if chat_directory_id is not None:
+                                                        DirectoryTable.increment_chats_count(chat_directory_id, -1)
+
+                                                    text = locale.get_string("commands.visibility.hide.successful")
+
+                                            else:
+                                                text = locale.get_string("commands.visibility.already_hidden")
+
+                                        elif command_name == "unhide":
+                                            if chat_data["hidden_by"] is not None:
+                                                updated = ChatTable.update_chat_visibility(target_chat_id, hidden_by=None)
+
+                                                if updated:
+                                                    if chat_directory_id is not None:
+                                                        DirectoryTable.increment_chats_count(chat_directory_id, +1)
+
+                                                    text = locale.get_string("commands.visibility.unhide.successful")
+
+                                            else:
+                                                text = locale.get_string("commands.visibility.already_not_hidden")
+
+                                        elif command_name == "move":
+                                            try:
+                                                if update.effective_chat.type not in ("group", "supergroup"):
+                                                    target_directory_id = int(query_msg_text.split(" ")[2])
+                                                else:
+                                                    target_directory_id = int(query_msg_text.split(" ")[1])
+
+                                                full_category_name = DirectoryTable.get_full_category_name(locale.lang_code, target_directory_id)
+
+                                                if full_category_name is not None:
+                                                    if chat_directory_id is None or target_directory_id != chat_directory_id:
+                                                        updated = ChatTable.update_chat_directory(target_chat_id, target_directory_id)
+
+                                                        if updated:
+                                                            DirectoryTable.increment_chats_count(target_directory_id, +1)
+
+                                                            if chat_directory_id is not None:
+                                                                DirectoryTable.increment_chats_count(chat_directory_id, -1)
+
+                                                            text = locale.get_string("commands.move.successful")
+
+                                                        else:
+                                                            text = locale.get_string("commands.directory_database_error")
+
+                                                    else:
+                                                        text = locale.get_string("commands.move.already_current_category")
+
+                                                    text = text.replace("[category]", full_category_name)
+
+                                                else:
+                                                    text = locale.get_string("commands.directory_database_error")
+
+                                            except:
+                                                text = locale.get_string("commands.move.wrong_directory_id_format")
+
+                                                delete_query_message = False
+
+                                        if text:
+                                            text = text.replace("[title]", chat_data["title"]).replace("[chat_id]", str(target_chat_id))
+                                        else:
+                                            text = locale.get_string("commands.database_error")
+
+                                            delete_query_message = False
+
+                            elif command_name == "id":
                                 text = locale.get_string("commands.id").replace("[chat_id]", str(chat_id))
 
-                    if query_message.chat.type != "private" and not invalid_request and not user_is_bot_admin and command in cls.command_cooldowns:
+                    if query_message.chat.type != "private" and not invalid_request and not user_is_bot_admin and command_name in cls.command_cooldowns:
                         current_epoch = int(time.time())
 
-                        if user_id in cls.user_last_command_use_dates[command]:
-                            time_difference = current_epoch - cls.user_last_command_use_dates[command][user_id]
+                        if user_id in cls.user_last_command_use_dates[command_name]:
+                            time_difference = current_epoch - cls.user_last_command_use_dates[command_name][user_id]
 
-                            minimum_time_difference_required = cls.command_cooldowns[command]
+                            minimum_time_difference_required = cls.command_cooldowns[command_name]
 
                             if time_difference >= minimum_time_difference_required:
-                                cls.user_last_command_use_dates[command][user_id] = current_epoch
+                                cls.user_last_command_use_dates[command_name][user_id] = current_epoch
                             else:
                                 text = locale.get_string("commands.groups.cooldown") \
                                     .replace("[user]",
                                              f'<a href="tg://user?id={user_id}">' + update.effective_user.first_name + '</a>') \
-                                    .replace("[command]",
-                                             f'/<a href="/{command}">' + command.replace("@" + bot_username_lower,
-                                                                                         "") + "</a>") \
-                                    .replace("[remaining_time]",
-                                             str(minimum_time_difference_required - time_difference))
+                                    .replace("[command]", f'/<a href="/{command}">' + command_name + "</a>") \
+                                    .replace("[remaining_time]", str(minimum_time_difference_required - time_difference))
 
                                 cooldown = True
 
                         else:
-                            cls.user_last_command_use_dates[command][user_id] = current_epoch
+                            cls.user_last_command_use_dates[command_name][user_id] = current_epoch
 
             if reply_markup:
                 reply_markup = Queries.encode_queries(reply_markup)
 
-            if command.startswith("start") or command.startswith("groups"):
+            if command_name in ("start", "groups"):
                 new_message, error_message = None, None
 
                 try:
@@ -240,8 +342,7 @@ class Commands:
                     text = error_message \
                         .replace("[user]",
                                  f'<a href="tg://user?id={user_id}">' + update.effective_user.first_name + '</a>') \
-                        .replace("[command]",
-                                 f'/<a href="/{command}">' + command.replace("@" + bot_username_lower, "") + "</a>")
+                        .replace("[command]", f'/<a href="/{command}">' + command_name + "</a>")
 
                     reply_markup = InlineKeyboardMarkup([
                         [
@@ -304,8 +405,7 @@ class Commands:
                             if "Not enough rights to send text messages to the chat" in ex.message:
                                 try:
                                     error_message = locale.get_string("commands.groups.errors.forbidden.not_enough_rights") \
-                                        .replace("[command]",
-                                                 f'<code>/' + command.replace("@" + bot_username_lower, "") + "</code>")
+                                        .replace("[command]", f'<code>/' + command_name + "</code>")
 
                                     await bot.send_message(
                                         chat_id=user_id,
@@ -324,8 +424,7 @@ class Commands:
                         if "Not enough rights to send text messages to the chat" in ex.message:
                             try:
                                 error_message = locale.get_string("commands.groups.errors.forbidden.not_enough_rights") \
-                                    .replace("[command]",
-                                             f'<code>/' + command.replace("@" + bot_username_lower, "") + "</code>")
+                                    .replace("[command]", f'<code>/' + command_name + "</code>")
 
                                 await bot.send_message(
                                     chat_id=user_id,
@@ -336,7 +435,9 @@ class Commands:
                     except:
                         pass
 
-                if new_message and (cooldown or command not in ("dont",)):
+                if new_message and (cooldown or command_name not in ("dont",)) and \
+                        (command_name not in ("hide", "unhide", "move")
+                         or invalid_request is True or update.effective_chat.type in ("group", "supergroup")):
                     async def delete_message(context: ContextTypes.DEFAULT_TYPE) -> None:
                         try:
                             await bot.delete_message(chat_id=message_chat_id, message_id=new_message.message_id)
@@ -345,7 +446,8 @@ class Commands:
 
                     GlobalVariables.job_queue.run_once(callback=delete_message, when=auto_delete_delay)
 
-            try:
-                await bot.delete_message(chat_id=chat_id, message_id=query_message.message_id)
-            except:
-                pass
+            if delete_query_message or (command_name in ("hide", "unhide", "move") and update.effective_chat.type in ("group", "supergroup")):
+                try:
+                    await bot.delete_message(chat_id=chat_id, message_id=query_message.message_id)
+                except:
+                    pass

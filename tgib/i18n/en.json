@@ -75,6 +75,35 @@
   "commands.reload.is_not_admin": "❌ The bot has not been set up as a group administrator",
   "commands.reload.cant_invite_users_via_link": "❌ The bot does not have the necessary permission to invite users via link",
   "commands.reload.cant_add_members": "❌ The bot does not have the necessary permission to add members",
+  "commands.visibility.hide.successful": "\uD83E\uDEE3 Chat '<u>[title]</u>' {<code>[chat_id]</code>} hidden (banned from indexing) successfully",
+  "commands.visibility.unhide.successful": "\uD83D\uDC41 Chat '<u>[title]</u>' {<code>[chat_id]</code>} successfully readmitted to indexing",
+  "commands.visibility.already_hidden": "ℹ️ The group '<u>[title]</u>' {<code>[chat_id]</code>} has already been hidden by a bot administrator.",
+  "commands.visibility.already_not_hidden": "ℹ️ The group '<u>[title]</u>' {<code>[chat_id]</code>} is not already hidden",
+  "commands.visibility.wrong_chat_id_format": [
+    "❌ The chat ID provided does not appear to be a valid integer (make sure you actually provided it",
+    " and that it is in the correct format)"
+  ],
+  "commands.chat_database_error": [
+    "\uD83D\uDE14 An error occurred in the interaction with the database required to obtain the requested chat data,",
+    " make sure that the given ID is correct and a directory with that ID actually exists in this instance of the bot",
+    " or contact the bot manager should the problem persist."
+  ],
+  "commands.directory_database_error": [
+    "\uD83D\uDE14 An error occurred in the interaction with the database required to obtain the requested directory data,",
+    " make sure that the given ID is correct and a chat with that ID actually exists in this instance of the bot",
+    " or contact the bot manager should the problem persist."
+  ],
+  "commands.database_error": [
+    "\uD83D\uDE14 An error occurred in the interaction with the database required to execute the command",
+    "\n\n<i>Please contact the bot manager should the problem persists</i>"
+  ],
+  "commands.move.successful": "☑️ Group '<u>[title]</u>' {<code>[chat_id]</code>} indexed / successfully moved to '[category]' category",
+  "commands.move.already_current_category": "ℹ️ The group '<u>[title]</u>' {<code>[chat_id]</code>} has already been indexed / moved to the requested category ('[category]')",
+  "commands.move.wrong_directory_id_format": [
+    "❌ The directory ID provided does not appear to be a valid integer (make sure you actually provided it",
+    " and that it is in the correct format)"
+  ],
+  "commands.bot_admin_specific_command": "⛔️ Sorry [user], the <code>[command]</code> command can only be executed by a bot administrator",
   "commands.command_not_found.text": "❔ No [command] command found [user], if you think it might be an error contact a bot administrator",
   "commands.command_not_found.contact_us_btn": "\uD83D\uDCAC Contact Us"
 }
