@@ -759,7 +759,7 @@ class ChatTable:
         cursor, iscursor = Database.get_cursor()
 
         if iscursor:
-            old_chat_data, is_old_chat_data = ChatTable.get_chat_data(cursor, old_chat_id)
+            old_chat_data, is_old_chat_data = ChatTable.get_chat_data(old_chat_id, cursor)
 
             if is_old_chat_data:
                 try:
