@@ -250,12 +250,10 @@ class Queries:
                     Queries.register_query(previous_page_callback_data)
 
                     pages_keyboard.append(
-                        [
-                            InlineKeyboardButton(
-                                text="⬅️ " + locale.get_string("index_group_menu.page_btn").replace("[n]", str(pn - 1)),
-                                callback_data=previous_page_callback_data
-                            )
-                        ]
+                        InlineKeyboardButton(
+                            text="⬅️ " + locale.get_string("index_group_menu.page_btn").replace("[n]", str(pn - 1)),
+                            callback_data=previous_page_callback_data
+                        )
                     )
 
                 if number_of_chats_user_is_admin_of > (pn * chats_per_page):
@@ -263,12 +261,10 @@ class Queries:
                     Queries.register_query(next_page_callback_data)
 
                     pages_keyboard.append(
-                        [
-                            InlineKeyboardButton(
-                                text=locale.get_string("index_group_menu.page_btn").replace("[n]", str(pn + 1)) + " ➡️",
-                                callback_data=next_page_callback_data
-                            )
-                        ]
+                        InlineKeyboardButton(
+                            text=locale.get_string("index_group_menu.page_btn").replace("[n]", str(pn + 1)) + " ➡️",
+                            callback_data=next_page_callback_data
+                        )
                     )
 
                 if pages_keyboard:
