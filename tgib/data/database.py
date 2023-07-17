@@ -945,6 +945,8 @@ class ChatTable:
         except telegram.error.ChatMigrated as ex:
             new_chat_id = ex.new_chat_id
 
+            print(f"[DEBUG] {chat_id} - migrated to > {new_chat_id}")
+
             try:
                 chat = await bot_instance.getChat(new_chat_id)
 
@@ -972,7 +974,14 @@ class ChatTable:
 
         current_title = chat.title
 
-        bot_member = await bot_instance.get_chat_member(chat_id, bot_instance.id)
+        try:
+            bot_member = await bot_instance.get_chat_member(chat_id, bot_instance.id)
+        except Exception as ex:
+            ex_type = str(type(ex)).replace("<class '", "").replace("'>", "")
+
+            print(f"[DEBUG - chat_id: {chat_id}] {ex_type} : {ex}")
+
+            return chat_data, {}, False
 
         current_missing_permissions = False
 
