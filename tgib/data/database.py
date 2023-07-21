@@ -804,18 +804,23 @@ class ChatTable:
             return None, False
 
     @classmethod
-    def get_total_chats_user_is_admin_of(cls, chat_id: int) -> (int | None, bool):
+    def get_total_chats_user_is_admin_of(cls, chat_id: int, count_only_indexed_chats: bool = False) -> (int | None, bool):
         cursor, iscursor = Database.get_cursor()
 
         if iscursor:
             cursor: psycopg2._psycopg.cursor
 
             try:
-                cursor.execute("""
+                query = """
                     SELECT COUNT(*)
                     FROM chat
                     WHERE %s = ANY(chat_admins)
-                """, (chat_id,))
+                """
+
+                if count_only_indexed_chats:
+                    query = query + " AND directory_id IS NOT NULL AND hidden_by IS NULL"
+
+                cursor.execute(query, (chat_id,))
 
                 total_chats = cursor.fetchone()[0]
 

@@ -105,7 +105,7 @@ class Queries:
         return InlineKeyboardMarkup(encoded_inline_keyboard)
 
     @classmethod
-    async def is_admin(cls, bot, chat_id, user_id) -> (bool | None):
+    async def is_chat_admin(cls, bot, chat_id, user_id) -> (bool | None):
         try:
             chat_member = await bot.get_chat_member(chat_id, user_id)
             return chat_member.status in (ChatMember.OWNER, ChatMember.ADMINISTRATOR)

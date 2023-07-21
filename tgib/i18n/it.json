@@ -72,41 +72,57 @@
   "commands.groups.errors.forbidden.blocked_by_user": "Ciao [user], per poter eseguire il comando [command] assicurati prima di non avermi bloccato in passato e poi riprova \uD83D\uDE41",
   "commands.groups.errors.forbidden.not_enough_rights": [
     "\uD83D\uDE14 Spiacente, purtroppo non ho permessi sufficienti per inviare messaggi nel gruppo in cui hai provato ad",
-    " eseguire il comando [command], volendo potresti provare a segnalare questo problema agli amministratori del gruppo (o,",
-    " qualora fossi tu stesso un amministratore del gruppo e non dovessi avere comunque idea del perché, agli amministratori",
-    " del bot)"
+    " eseguire il comando [command], volendo potresti provare a segnalare questo problema agli/lle amministratori/trici",
+    " del gruppo (o, qualora fossi tu stesso/a un amministratore/trice del gruppo e non dovessi avere comunque idea del",
+    " perché, agli/lle amministratori/trici del bot)"
   ],
   "commands.groups.error": "Ciao [user], sto avendo qualche problema nell'eseguire il comando [command] per te, potresti provare nuovamente contattandomi direttamente anziché attraverso il gruppo? \uD83D\uDE4F",
   "commands.groups.group_specific_command": "✋ Il comando <code>[command]</code> è progettato per essere usato in un gruppo  di cui fa parte il bot, non in chat diretta con il bot!",
-  "commands.groups.admin_specific_command": "⛔️ Spiacente [user], il comando <code>[command]</code> può essere eseguito soltanto da un amministratore del gruppo",
+  "commands.groups.admin_specific_command": "⛔️ Spiacente [user], il comando <code>[command]</code> può essere eseguito soltanto da un amministratore/trice del gruppo",
   "commands.groups.cooldown": "✋ Un po' di pazienza [user], devi attendere ancora [remaining_time] secondi prima di poter usare di nuovo il comando [command] nei gruppi",
   "commands.dont": "\uD83C\uDDEE\uD83C\uDDF9 https://dontasktoask.com/it/\nPoni direttamente la tua domanda e chi può risponderà \uD83D\uDE42",
   "commands.id": "\uD83C\uDD94 ID di questa chat: <code>[chat_id]</code>",
-  "commands.reload.unsuccessful": "⛔️ La procedura di ricarica dati del gruppo non è andata a buon fine, contatta un amministratore del bot qualora il problema dovesse persistere",
+  "commands.reload.unsuccessful": "⛔️ La procedura di ricarica dati del gruppo non è andata a buon fine, contatta un amministratore/trice del bot qualora il problema dovesse persistere",
   "commands.reload.successful": "☑️ Informazioni del gruppo ricaricate",
   "commands.reload.is_not_admin": "❌ Il bot non è stato impostato come amministratore del gruppo",
   "commands.reload.cant_invite_users_via_link": "❌ Il bot non ha il permesso necessario di invitare utenti tramite link",
   "commands.reload.cant_add_members": "❌ Il bot non ha il permesso necessario di aggiungere membri",
-  "commands.reload.hidden": "\uD83D\uDEAB Attualmente nascosto dall'indicizzazione da un amministratore del bot",
+  "commands.reload.hidden": "\uD83D\uDEAB Attualmente nascosto dall'indicizzazione da un amministratore/trice del bot",
   "commands.reload.indexed": "\uD83D\uDD0D Attualmente indicizzato nella categoria '[category]'",
   "commands.reload.not_indexed": "\uD83E\uDD77 Attualmente non indicizzato in nessuna categoria",
+  "commands.userstatus.you_are": "Sei",
+  "commands.userstatus.he_is": "È",
+  "commands.userstatus.is_bot_owner": "\uD83D\uDC51 [conjugation] il/la proprietario/a di questa istanza del bot",
+  "commands.userstatus.is_a_bot_admin": "\uD83D\uDC6E\u200D♀️ [conjugation] un amministratore/trice del bot",
+  "commands.userstatus.is_admin_of_n_indexed_groups": "⚙️ [conjugation] tra gli/le amministratori/trici di <code>[n]</code> gruppi indicizzati sul bot",
+  "commands.userstatus.is_a_bot_user": "\uD83D\uDC64 [conjugation] un utente del bot",
+  "commands.userstatus.no_target_data_available": "\uD83D\uDE45 Nessun informazione aggiuntiva disponibile",
+  "commands.userstatus.insufficient_perms": [
+    "✋ Devi essere amministratore/trice di questa istanza del bot o un amministratore/trice del gruppo",
+    " in questione per poter esibire il tuo /userstatus o quello di un altro utente al suo interno"
+  ],
   "commands.visibility.hide.successful": "\uD83E\uDEE3 Chat '<u>[title]</u>' {<code>[chat_id]</code>} nascosta (bandita dall'indicizzazione) con successo",
   "commands.visibility.unhide.successful": "\uD83D\uDC41 Chat '<u>[title]</u>' {<code>[chat_id]</code>} riammessa nell'indicizzazione con successo",
   "commands.visibility.unindex.successful": "☑️ Gruppo '<u>[title]</u>' deindicizzato con successo dalla categoria '[category]'",
-  "commands.visibility.already_hidden": "ℹ️ Il gruppo '<u>[title]</u>' {<code>[chat_id]</code>} è già stato nascosto da un amministratore del bot",
+  "commands.visibility.already_hidden": "ℹ️ Il gruppo '<u>[title]</u>' {<code>[chat_id]</code>} è già stato nascosto da un amministratore/trice del bot",
   "commands.visibility.already_not_hidden": "ℹ️ Il gruppo '<u>[title]</u>' {<code>[chat_id]</code>} non è di già nascosto",
   "commands.visibility.already_not_indexed_at_all": "ℹ️ Il gruppo '<u>[title]</u>' non è di già indicizzato più in nessuna categoria",
   "commands.move.indexed": "☑️ Gruppo '<u>[title]</u>' {<code>[chat_id]</code>} indicizzato con successo nella categoria '[category]'",
   "commands.move.moved": "☑️ Gruppo '<u>[title]</u>' {<code>[chat_id]</code>} spostato con successo nella categoria '[old_category]' dalla categoria '[category]'",
   "commands.move.already_current_category": "ℹ️ Il gruppo '<u>[title]</u>' {<code>[chat_id]</code>} è stato già indicizzato / spostato nella categoria richiesta ('[category]')",
   "commands.admins.set": "\uD83D\uDC6E\u200D♂️ L'utente '<code>[chat_id]</code>' è ora un amministratore/trice del bot",
-  "commands.admins.unset": "\uD83D\uDE14 Utente '<code>[chat_id]</code>' rimosso dagli amministratori del bot",
-  "commands.admins.list.first_line": "\uD83C\uDFE2 Amministratori del bot (<code>/listadmins</code>):",
-  "commands.admins.list.empty": "\uD83D\uDE14 Nessun amministratore del bot al momento \uD83D\uDE14",
+  "commands.admins.unset": "\uD83D\uDE14 Utente '<code>[chat_id]</code>' rimosso dagli/lle amministratori/trici del bot",
+  "commands.admins.list.first_line": "\uD83C\uDFE2 Amministratori/trici del bot (<code>/listadmins</code>):",
+  "commands.admins.list.empty": "\uD83D\uDE14 Nessun amministratore/trice del bot al momento \uD83D\uDE14",
   "commands.admins.list.generation_date_line": "<i>Lista generata il [date] alle ore [time] (UTC+[offset])</i>",
   "commands.admins.database_error": "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria ad eseguire il comando",
-  "commands.admins.already_admin": "ℹ️ L'utente '<code>[chat_id]</code>' è stato già impostato come amministratore del bot",
-  "commands.admins.already_not_admin": "ℹ️ L'utente '<code>[chat_id]</code>' non è di già un amministratore del bot",
+  "commands.admins.already_admin": "ℹ️ L'utente '<code>[chat_id]</code>' è stato già impostato come amministratore/trice del bot",
+  "commands.admins.already_not_admin": "ℹ️ L'utente '<code>[chat_id]</code>' non è di già un amministratore/trice del bot",
+  "commands.account_database_error": [
+    "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria ad ottenere i dati dell'utente richiesto,",
+    " assicurati che l'ID indicato sia corretto ed un utente con tale ID abbia effettivamente avviato questa istanza del bot",
+    " almeno una volta in passato o contatta il gestore di questa istanza del bot qualora il problema dovesse persistere"
+  ],
   "commands.chat_database_error": [
     "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria ad ottenere i dati della chat richiesta,",
     " assicurati che l'ID indicato sia corretto ed una chat con tale ID esista effettivamente in questa istanza del bot",
@@ -122,9 +138,13 @@
     "\n\n<i>Contatta il gestore di questa istanza del bot qualora il problema dovesse persistere</i>"
   ],
   "commands.private_specific_command": "✋ Spiacente [user], il comando <code>[command]</code> è progettato per essere usato in chat diretta con il bot!",
-  "commands.bot_admin_specific_command": "⛔️ Spiacente [user], il comando <code>[command]</code> può essere eseguito soltanto da un amministratore del bot",
+  "commands.bot_admin_specific_command": "⛔️ Spiacente [user], il comando <code>[command]</code> può essere eseguito soltanto da un amministratore/trice del bot",
   "commands.bot_owner_specific_command": "⛔️ Spiacente [user], il comando <code>[command]</code> può essere eseguito soltanto dal gestore di questa istanza del bot",
   "commands.min_n_args": "✋ Questo comando richiede minimo [n] argomenti, assicurati di aver specificato tutti i valori richiesti",
+  "commands.wrong_user_id_format": [
+    "❌ L'ID utente fornito non risulta essere un intero valido (assicurarsi di averlo effettivamente fornito",
+    " e che sia nel formato corretto)"
+  ],
   "commands.wrong_chat_id_format": [
     "❌ L'ID di chat fornito non risulta essere un intero valido (assicurarsi di averlo effettivamente fornito",
     " e che sia nel formato corretto)"
@@ -133,7 +153,7 @@
     "❌ L'ID di directory fornito non risulta essere un intero valido (assicurarsi di averlo effettivamente fornito",
     " e che sia nel formato corretto)"
   ],
-  "commands.command_not_found.text": "❔ Nessun comando [command] trovato [user], se pensi possa trattarsi di un errore contatta un amministratore del bot",
+  "commands.command_not_found.text": "❔ Nessun comando [command] trovato [user], se pensi possa trattarsi di un errore contatta un amministratore/trice del bot",
   "commands.command_not_found.contact_us_btn": "\uD83D\uDCAC Contattaci",
 
   "add_group_menu.text": [
@@ -172,7 +192,7 @@
     " del bot. Se pensi possa trattarsi di un errore o per qualsiasi eventuale dubbio in merito non esitare a contattarci."
   ],
   "hidden_by_menu.alt_text": [
-    "ℹ️ Il gruppo '<u>[title]</u>' {<code>[chat_id]</code>} non poteva essere indicizzato poiché era stato nascosto da un amministratore del bot.",
+    "ℹ️ Il gruppo '<u>[title]</u>' {<code>[chat_id]</code>} non poteva essere indicizzato poiché era stato nascosto da un amministratore/trice del bot.",
     "\n\n✅ Adesso sembrerebbe non essere più nascosto però, quindi puoi tornare indietro e provare di nuovo \uD83D\uDE42",
     "\n\n⚠️ Se tornando indietro dovesse ancora risultare nascosto non esitare a contattarci per assistenza"
   ],
@@ -213,13 +233,13 @@
   "index_group_error.already_not_indexed_there":  "ℹ️ Il gruppo '<u>[title]</u>' non è di già indicizzato più nella categoria '[category]'",
 
   "index_group.error.admin_required": [
-    "⛔️ Devi essere amministratore del gruppo per poter impostare o modificare la categoria in cui viene indicizzato"
+    "⛔️ Devi essere amministratore/trice del gruppo per poter impostare o modificare la categoria in cui viene indicizzato"
   ],
 
   "index_group.change_group_info_permission_required": [
-    "\uD83D\uDE14 Devi essere amministratore del gruppo <b>con il permesso di poterne modificare le informazioni</b>",
+    "\uD83D\uDE14 Devi essere amministratore/trice del gruppo <b>con il permesso di poterne modificare le informazioni</b>",
     " per poter impostare o modificare la categoria in cui viene indicizzato. Ti consigliamo di provare a chiedere al",
-    " proprietario del gruppo o ad un amministratore del bot di cambiare la categoria al tuo posto."
+    " proprietario del gruppo o ad un amministratore/trice del bot di cambiare la categoria al tuo posto."
   ],
 
   "add_category.ask_for_i18n_en_name": "\uD83C\uDDEC\uD83C\uDDE7 Inserisci il nome in inglese per la categoria",

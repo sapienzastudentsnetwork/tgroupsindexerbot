@@ -20,7 +20,7 @@
 import time
 
 import telegram.error
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatMemberAdministrator
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatMemberAdministrator, ChatMemberOwner
 from telegram.ext import ContextTypes
 
 from tgib.data.database import SessionTable, DirectoryTable, AccountTable, ChatTable
@@ -32,9 +32,9 @@ from tgib.ui.menus import Menus
 
 
 class Commands:
-    command_cooldowns = {"dont": 15, "reload": 15, "netstatus": 60}
-    user_last_command_use_dates = {"dont": {}, "reload": {}, "netstatus": {}}
-    registered_commands = ["start", "groups", "dont", "reload", "id",
+    command_cooldowns = {"dont": 15, "reload": 15, "userstatus": 60}
+    user_last_command_use_dates = {"dont": {}, "reload": {}, "userstatus": {}}
+    registered_commands = ["start", "groups", "dont", "userstatus", "reload", "id",
                            "hide", "unhide", "move", "unindex",
                            "addadmin", "rmadmin", "listadmins"]
     private_specific_commands = ("addadmin", "rmadmin")
@@ -48,8 +48,10 @@ class Commands:
 
     @classmethod
     async def commands_handler(cls, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        bot_instance           = context.bot
-        chat_id       = update.effective_chat.id
+        bot_instance  = context.bot
+        chat          = update.effective_chat
+        chat_id       = chat.id
+        user          = update.effective_user
         user_id       = update.effective_user.id
         query_message = update.message
 
@@ -112,17 +114,21 @@ class Commands:
 
             user_is_bot_admin = (is_user_data and user_data and user_data["is_admin"])
 
-            auto_delete_delay = 10
-
             cooldown = False
 
             delete_query_message = True
 
+            delete_answer = None
+
+            delete_answer_delay = 10
+
             invalid_request = False
+
+            private_chat_priority = False
 
             bot_owner_chat_id = GlobalVariables.bot_owner
 
-            if not is_user_data and query_message.chat.type == "private":
+            if not is_user_data and chat.type == "private":
                 text, reply_markup = Menus.get_error_menu(locale, source="database")
             else:
                 if (is_user_data and Queries.user_can_perform_action(user_data, "/" + command_name)) or (not is_user_data):
@@ -145,7 +151,7 @@ class Commands:
 
                             invalid_request = True
 
-                        elif command_name in cls.group_admin_commands and not user_is_bot_admin and not Queries.is_admin(bot_instance, chat_id, user_id):
+                        elif command_name in cls.group_admin_commands and not user_is_bot_admin and not Queries.is_chat_admin(bot_instance, chat_id, user_id):
                             text = locale.get_string("commands.groups.admin_specific_command") \
                                 .replace("[user]",
                                          f'<a href="tg://user?id={user_id}">' + update.effective_user.first_name + '</a>') \
@@ -179,6 +185,103 @@ class Commands:
                                 if query_message.reply_to_message:
                                     reply_to_message = query_message.reply_to_message
 
+                            elif command == "userstatus":
+                                private_chat_priority = True
+
+                                target_user = user
+                                target_user_id = user_id
+
+                                conjugation = locale.get_string("commands.userstatus.you_are")
+
+                                if chat.type != "private":
+                                    conjugation = locale.get_string("commands.userstatus.he_is")
+
+                                    if query_message.reply_to_message:
+                                        reply_to_message = query_message.reply_to_message
+
+                                        target_user = query_message.reply_to_message.from_user
+                                        target_user_id = target_user.id
+
+                                    if not user_is_bot_admin:
+                                        if not await Queries.is_chat_admin(bot_instance, user_id, target_user_id):
+                                            invalid_request = True
+
+                                            text = locale.get_string("commands.userstatus.insufficient_perms")
+
+                                elif len(command_args) > 0 and user_is_bot_admin:
+                                    try:
+                                        target_user_id = int(command_args[0])
+                                        
+                                        try:
+                                            target_user = await bot_instance.get_chat(chat_id=target_user_id)
+
+                                        except:
+                                            target_user = None
+
+                                        conjugation = locale.get_string("commands.userstatus.he_is")
+
+                                    except:
+                                        invalid_request = True
+
+                                        text = locale.get_string("commands.wrong_user_id_format")
+
+                                if not invalid_request:
+                                    if target_user_id == user_id:
+                                        target_user_data = user_data
+
+                                        private_chat_priority = False
+
+                                        delete_answer_delay = 20
+
+                                    else:
+                                        target_user_data, is_target_user_data = AccountTable.get_account_record(target_user_id, False)
+
+                                    target_info = ""
+
+                                    if target_user_data:
+                                        if target_user_id == int(bot_owner_chat_id):
+                                            target_info = locale.get_string("commands.userstatus.is_bot_owner") + "\n\n"
+
+                                        elif target_user_data["is_admin"]:
+                                            target_info = locale.get_string("commands.userstatus.is_a_bot_admin") + "\n\n"
+
+                                        elif chat.type != "private" or target_user_id != user_id:
+                                            target_info = locale.get_string("commands.userstatus.is_a_bot_user") + "\n\n"
+
+                                    number_of_indexed_chats_is_admin_of, _ = ChatTable.get_total_chats_user_is_admin_of(target_user_id, True)
+
+                                    if number_of_indexed_chats_is_admin_of is not None and number_of_indexed_chats_is_admin_of > 0:
+                                        target_info += locale.get_string("commands.userstatus.is_admin_of_n_indexed_groups") \
+                                            .replace("[n]", str(number_of_indexed_chats_is_admin_of))
+
+                                    if not target_info:
+                                        target_info = locale.get_string("commands.userstatus.no_target_data_available")
+                                    else:
+                                        target_info = target_info.replace("[conjugation]", conjugation)
+
+                                    target_user_info = f'[<code>{target_user_id}</code>]'
+
+                                    if target_user:
+                                        if target_user.username:
+                                            target_user_info = f"(@{target_user.username}) {target_user_info}"
+
+                                            if target_user.username == "Matypist":
+                                                if locale.lang_code == "it":
+                                                    target_info = "💠 [conjugation] il creatore di TGroupsIndexerBot " \
+                                                                  "<a href='https://github.com/sapienzastudentsnetwork/" \
+                                                                  "tgroupsindexerbot'>[🌐]</a>" + "\n\n" + target_info
+                                                else:
+                                                    target_info = "💠 [conjugation] the creator of TGroupsIndexerBot " \
+                                                                  "<a href='https://github.com/sapienzastudentsnetwork/" \
+                                                                  "tgroupsindexerbot'>[🌐]</a>" + "\n\n" + target_info
+
+                                                target_info = target_info.replace("[conjugation]", conjugation)
+
+                                        if target_user.full_name:
+                                            target_user_info = f'<a href="tg://user?id={target_user_id}">{target_user.full_name}</a> {target_user_info}'
+
+                                    text = target_user_info + "\n\n" + target_info
+
                             elif command_name == "reload":
                                 old_chat_data, new_chat_data, is_new_chat_data = await ChatTable.fetch_chat(bot_instance, chat_id)
 
@@ -190,7 +293,7 @@ class Commands:
                                     if not isinstance(bot_member, ChatMemberAdministrator):
                                         text += "\n\n" + locale.get_string("commands.reload.is_not_admin")
 
-                                        auto_delete_delay = 15
+                                        delete_answer_delay = 15
 
                                     elif isinstance(bot_member, ChatMemberAdministrator):
                                         bot_member: ChatMemberAdministrator
@@ -208,7 +311,7 @@ class Commands:
                                                 else:
                                                     text += locale.get_string("commands.reload.cant_add_members")
 
-                                                auto_delete_delay = 15
+                                                delete_answer_delay = 15
                                             except Exception:
                                                 text = locale.get_string("commands.reload.unsuccessful")
 
@@ -590,8 +693,13 @@ class Commands:
 
                 new_message = None
 
-                if cooldown or not reply_to_message:
-                    if cooldown:
+                prioritary_conditions_over_reply_to_message = (cooldown or invalid_request)
+
+                if not private_chat_priority:
+                    private_chat_priority = prioritary_conditions_over_reply_to_message or not reply_to_message
+
+                if private_chat_priority:
+                    if prioritary_conditions_over_reply_to_message:
                         try:
                             new_message = await bot_instance.send_message(chat_id=user_id, text=text)
 
@@ -638,21 +746,25 @@ class Commands:
                     except Exception:
                         pass
 
-                if new_message and (cooldown or command_name not in ("dont",)) and \
-                        (command_name not in ("hide", "unhide", "move", "addadmin", "rmadmin", "listadmins")
-                         or invalid_request is True or update.effective_chat.type in ("group", "supergroup")):
+                if delete_answer is None:
+                    delete_answer = new_message and (cooldown or command_name not in ("dont",)) and \
+                        (command_name not in ("hide", "unhide", "move", "addadmin", "rmadmin", "listadmins", "userstatus")
+                         or invalid_request is True or update.effective_chat.type in ("group", "supergroup"))
+
+                if delete_answer:
                     async def delete_message(context: ContextTypes.DEFAULT_TYPE) -> None:
                         try:
                             await bot_instance.delete_message(chat_id=message_chat_id, message_id=new_message.message_id)
                         except Exception:
                             pass
 
-                    GlobalVariables.job_queue.run_once(callback=delete_message, when=auto_delete_delay)
+                    GlobalVariables.job_queue.run_once(callback=delete_message, when=delete_answer_delay)
 
-            if delete_query_message or \
-                    (command_name in ("hide", "unhide", "move", "listadmins")
-                     and update.effective_chat.type in ("group", "supergroup")):
+            if not delete_query_message:
+                delete_query_message = (command_name in ("hide", "unhide", "move", "listadmins")
+                     and update.effective_chat.type in ("group", "supergroup"))
 
+            if delete_query_message:
                 try:
                     await bot_instance.delete_message(chat_id=chat_id, message_id=query_message.message_id)
                 except Exception:
