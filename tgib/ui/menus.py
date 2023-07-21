@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with TGroupsIndexerBot. If not, see <http://www.gnu.org/licenses/>.
 
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Bot
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
 from tgib.global_vars import GlobalVariables
 from tgib.i18n.locales import Locale
@@ -47,7 +47,7 @@ class Menus:
 
         keyboard = [
             [InlineKeyboardButton(text=locale.get_string("add_group_menu.1_btn"),
-                                  url="http://t.me/" + bot_username + "?startgroup=start")],
+                                  url="https://t.me/" + bot_username + "?startgroup=start")],
             [InlineKeyboardButton(text=locale.get_string("add_group_menu.2_btn"),
                                   callback_data="explore_categories")],
             [InlineKeyboardButton(text=locale.get_string("add_group_menu.contact_us_btn"),

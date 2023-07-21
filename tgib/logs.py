@@ -46,9 +46,59 @@ class Logger:
         cls.admin_actions_log_chat_id = admin_actions_log_chat_id
 
     @classmethod
-    async def log_action(cls, action: str, user: User, target_chat_data: dict,
-                         new_directory_id: int = None, full_old_category_name: str = None,
-                         full_new_category_name: str = None):
+    async def log_directory_action(cls, action: str, admin: User, directory_id: int,
+                                   i18n_it_name: str, i18n_en_name: str,
+                                   parent_directory_id: int, parent_directory_name: str,
+                                   new_i18n_it_name: str = None, new_i18n_en_name: str = None,
+                                   new_parent_directory_id: int = None, new_parent_directory_name: str = None):
+
+        if cls.admin_actions_log_chat_id:
+            text = "👮‍♂️ <b><u>" + action.upper() + f"</u></b> (#admin)"
+
+            text += f'\n\n✍️ <a href="tg://user?id={admin.id}">{admin.full_name}</a>'
+
+            if admin.username:
+                text += f" (@{admin.username})"
+
+            text += f" [<code>{admin.id}</code>]"
+
+            text += f"\n\n🆔 {directory_id}"
+
+            text += f"\n\n🇮🇹 {i18n_it_name}"
+
+            if new_i18n_it_name:
+                text += f"\n      ↪️ {new_i18n_it_name}"
+
+            text += f"\n\n🇬🇧 {i18n_en_name}"
+
+            if new_i18n_en_name:
+                text += f"\n      ↪️ {new_i18n_en_name}"
+
+            parent_directory_name_symbol = "📍"
+
+            if action in ("move directory", "delete directory"):
+                parent_directory_name_symbol = "🗑"
+
+            elif action == "edit directory":
+                parent_directory_name_symbol = "📁"
+
+            if parent_directory_id != directory_id:
+                text += f"\n\n{parent_directory_name_symbol} {parent_directory_name} [<code>{parent_directory_id}</code>]"
+
+            if action == "move directory" and new_parent_directory_id and new_parent_directory_name:
+                text += f"\n\n🎯 {new_parent_directory_name} [<code>{new_parent_directory_id}</code>]"
+
+            bot_instance: telegram.Bot = GlobalVariables.bot_instance
+
+            await bot_instance.send_message(
+                chat_id=cls.admin_actions_log_chat_id,
+                text=text
+            )
+
+    @classmethod
+    async def log_chat_action(cls, action: str, user: User, target_chat_data: dict,
+                              new_directory_id: int = None, full_old_category_name: str = None,
+                              full_new_category_name: str = None):
 
         if cls.admin_actions_log_chat_id:
             target_chat_id = target_chat_data["chat_id"]

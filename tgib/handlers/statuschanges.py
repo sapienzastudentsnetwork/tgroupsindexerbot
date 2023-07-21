@@ -43,7 +43,7 @@ class StatusChanges:
     async def my_chat_member_handler(cls, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         chat = update.effective_chat
 
-        bot = context.bot
+        bot_instance = context.bot
 
         chat_member_update = update.my_chat_member
 
@@ -71,13 +71,13 @@ class StatusChanges:
                 Logger.log("info", "StatusChanges.my_chat_member_handler",
                            f"The bot was added to the group with chat_id = '{chat_id}'")
 
-                await ChatTable.fetch_chat(bot, chat_id)
+                await ChatTable.fetch_chat(bot_instance, chat_id)
 
             elif old_status in (ChatMember.RESTRICTED, ChatMember.MEMBER) and new_status == ChatMember.ADMINISTRATOR:
                 Logger.log("info", "StatusChanges.my_chat_member_handler",
                            f"The bot was made administrator in the group with chat_id = '{chat_id}'")
 
-                await ChatTable.fetch_chat(bot, chat_id)
+                await ChatTable.fetch_chat(bot_instance, chat_id)
 
             elif was_member and not is_member:
                 Logger.log("info", "StatusChanges.my_chat_member_handler",

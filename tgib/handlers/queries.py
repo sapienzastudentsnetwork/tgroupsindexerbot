@@ -22,7 +22,7 @@ from datetime import datetime
 
 import pytz
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatMember, Bot, ChatMemberAdministrator, ChatMemberOwner, User
-from telegram.ext import CallbackContext
+from telegram.ext import CallbackContext, ContextTypes
 
 from tgib.data.database import DirectoryTable, AccountTable, ChatTable, SessionTable
 from tgib.i18n.locales import Locale
@@ -46,6 +46,8 @@ class Queries:
     registered_hashes  = {}
 
     fd = "  "
+
+    user_input_subdirectories_data: dict = {}
 
     @classmethod
     def register_query(cls, query_data: str) -> None:
@@ -121,13 +123,31 @@ class Queries:
         return date_str, time_str, offset_str
 
     @classmethod
-    def user_can_perform_action(cls, chat_id: int, user_data: dict, action: str):
-        # TODO: if it is a group visualisation action then check
-        #       whether the user has the can_view_groups permission
+    def user_can_perform_action(cls, user_data: dict, action: str):
+        is_admin          = user_data["is_admin"]
+        can_view_groups   = user_data["can_view_groups"]
+        can_add_groups    = user_data["can_add_groups"]
+        can_modify_groups = user_data["can_modify_groups"]
 
-        # TODO: when the functionality to add and/or modify groups will be
-        #       implemented also add a check if the user has respectively
-        #       the can_add_groups and can_modify_groups permissions
+        if not can_view_groups and action in ("explore_categories", "/groups", "cd"):
+            return False
+
+        elif not can_add_groups and (action in ("add_group_menu",)
+                                     or action.startswith("index")
+                                     or action.startswith("hidden_chat_menu")
+                                     or action.startswith("missing_permissions_menu")):
+            return False
+
+        elif not can_modify_groups and (action in ("/reload")
+                                        or action.startswith("unindex")):
+            return False
+
+        # N.B.: checking for bot admin permissions for bot admin commands
+        #       is handled by Commands.commands_handler itself
+
+        elif not is_admin and (action.startswith("create_subdirectory_in")
+                               or action.startswith("edit_directory")):
+            return False
 
         return True
 
@@ -320,7 +340,7 @@ class Queries:
 
                     [InlineKeyboardButton(
                         text=locale.get_string("index_group_menu.add_bot_to_group_btn"),
-                        url="http://t.me/" + GlobalVariables.bot_instance.username + "?startgroup=start")
+                        url="https://t.me/" + GlobalVariables.bot_instance.username + "?startgroup=start")
                     ],
 
                     [InlineKeyboardButton(
@@ -340,6 +360,61 @@ class Queries:
                 return Menus.get_error_menu(locale, "database")
         else:
             return Menus.get_error_menu(locale, "database")
+
+    @classmethod
+    def create_subdirectory_menu(cls, locale: Locale, chat_id: int, parent_directory_id: int):
+        input_subdirectory_data = {"i18n_en_name": None, "i18n_it_name": None, "parent_id": parent_directory_id}
+
+        text = locale.get_string("add_category.ask_for_i18n_en_name")
+
+        back_callback_data = f"cd{cls.fd}" + str(input_subdirectory_data["parent_id"])
+
+        Queries.register_query(back_callback_data)
+
+        keyboard = [[
+            InlineKeyboardButton(
+                text=locale.get_string("add_category.undo_btn"),
+                callback_data=back_callback_data
+            )
+        ]]
+
+        cls.user_input_subdirectories_data[chat_id] = input_subdirectory_data
+
+        return text, InlineKeyboardMarkup(keyboard)
+
+    @classmethod
+    def edit_directory_menu(cls, locale: Locale, chat_id: int, directory_id: int):
+        input_subdirectory_data = {"id": directory_id, "i18n_en_name": None, "i18n_it_name": None}
+
+        directory_data, is_directory_data = DirectoryTable.get_directory_data(directory_id)
+
+        if is_directory_data:
+            input_subdirectory_data["old_i18n_en_name"] = directory_data["i18n_en_name"]
+            input_subdirectory_data["old_i18n_it_name"] = directory_data["i18n_it_name"]
+
+            if directory_data["parent_id"] is not None:
+                input_subdirectory_data["parent_id"] = directory_data["parent_id"]
+            else:
+                input_subdirectory_data["parent_id"] = directory_id
+
+            text = locale.get_string("edit_category.ask_for_new_i18n_en_name")
+
+            cls.user_input_subdirectories_data[chat_id] = input_subdirectory_data
+        else:
+            text = locale.get_string("edit_category.cant_get_directory_info")
+
+        back_callback_data = f"cd{cls.fd}" + str(input_subdirectory_data["parent_id"])
+
+        Queries.register_query(back_callback_data)
+
+        keyboard = [[
+            InlineKeyboardButton(
+                text=locale.get_string("edit_category.undo_btn"),
+                callback_data=back_callback_data
+            )
+        ]]
+
+        return text, InlineKeyboardMarkup(keyboard)
 
     @classmethod
     async def index_group_menu(cls, locale: Locale, bot: Bot, user: User, chat_id: int, new_directory_id: int = None, offset: int = 0, requires_confirmation: bool = True, unindex_directory_id: int = None) -> (str, InlineKeyboardMarkup):
@@ -455,7 +530,7 @@ class Queries:
                                                 text = locale.get_string("index_group.moved") \
                                                     .replace("[old_category]", full_old_category_name)
 
-                                                await Logger.log_action(
+                                                await Logger.log_chat_action(
                                                     "index", user, chat_data, new_directory_id,
                                                     full_old_category_name=full_old_category_name,
                                                     full_new_category_name=full_category_name
@@ -464,7 +539,7 @@ class Queries:
                                             else:
                                                 text = locale.get_string("index_group.indexed")
 
-                                                await Logger.log_action(
+                                                await Logger.log_chat_action(
                                                     "index", user, chat_data, new_directory_id,
                                                     full_new_category_name=full_category_name
                                                 )
@@ -476,8 +551,8 @@ class Queries:
 
                                             text = locale.get_string("unindex_group.successful")
 
-                                            # await Logger.log_action("unindex", user, chat_data,
-                                            #                        full_old_category_name=full_category_name)
+                                            # await Logger.log_chat_action("unindex", user, chat_data,
+                                            #                              full_old_category_name=full_category_name)
 
                                         text = text.replace("[title]", chat_data["title"]) \
                                             .replace("[category]", str(full_category_name))
@@ -509,9 +584,6 @@ class Queries:
                            f"An exception occurred while handling a unindex query"
                            f" of '{chat_id}', by '{user_id}', from '{unindex_directory_id}'", ex)
 
-            text = locale.get_string("index_group.error.cant_get_group_info")
-
-        except Exception:
             text = locale.get_string("index_group.error.cant_get_group_info")
 
         back_button_callback_data = f"index_group_in{cls.fd}{back_directory_id}{cls.fd}{offset}"
@@ -617,13 +689,30 @@ class Queries:
                     return Menus.get_error_menu(locale)
 
                 if user_can_add_groups:
-                    index_group_here_button_text = locale.get_string("explore_directories.index_group_here")
+                    index_group_here_button_text = locale.get_string("explore_directories.index_group_here_btn")
 
                     index_group_here_callback_data = f"index_group_in{cls.fd}{directory_id}{cls.fd}0"
                     Queries.register_query(index_group_here_callback_data)
 
                     keyboard.append([InlineKeyboardButton(text=index_group_here_button_text,
                                                           callback_data=index_group_here_callback_data)])
+
+                if user_is_admin:
+                    create_subdirectory_button_text = locale.get_string("explore_directories.create_subdirectory_here_btn")
+                    create_subdirectory_button_callback_data = f"create_subdirectory_in{cls.fd}{directory_id}"
+
+                    Queries.register_query(create_subdirectory_button_callback_data)
+
+                    keyboard.append([InlineKeyboardButton(text=create_subdirectory_button_text,
+                                                          callback_data=create_subdirectory_button_callback_data)])
+
+                    edit_directory_button_text = locale.get_string("explore_directories.edit_directory_btn")
+                    edit_directory_button_callback_data = f"edit_directory{cls.fd}{directory_id}"
+
+                    Queries.register_query(edit_directory_button_callback_data)
+
+                    keyboard.append([InlineKeyboardButton(text=edit_directory_button_text,
+                                                          callback_data=edit_directory_button_callback_data)])
 
                 if parent_directory_id != -1:
                     text = f"<b>" + parent_directory_name + " > " + directory_name + "</b>\n"
@@ -706,6 +795,31 @@ class Queries:
         return Queries.explore_category(locale, directory_id, user_data)
 
     @classmethod
+    async def cancel_categories_operation(cls, locale: Locale, bot: Bot, user_id: int):
+        if user_id in cls.user_input_subdirectories_data:
+            if "id" in cls.user_input_subdirectories_data[user_id]:
+                operation_canceled_string = locale.get_string("edit_category.canceled")
+            else:
+                operation_canceled_string = locale.get_string("add_category.canceled")
+
+            cls.user_input_subdirectories_data[user_id] = {}
+            cls.user_input_subdirectories_data.pop(user_id)
+
+            try:
+                operation_canceled_message = await bot.send_message(chat_id=user_id, text=operation_canceled_string)
+
+                async def delete_message(context: ContextTypes.DEFAULT_TYPE) -> None:
+                    try:
+                        await bot.delete_message(chat_id=user_id, message_id=operation_canceled_message.message_id)
+                    except Exception:
+                        pass
+
+                GlobalVariables.job_queue.run_once(callback=delete_message, when=5)
+
+            except Exception:
+                pass
+
+    @classmethod
     async def callback_queries_handler(cls, update: Update, context: CallbackContext):
         bot           = context.bot
         query         = update.callback_query
@@ -724,8 +838,11 @@ class Queries:
             user_data, is_user_data = AccountTable.get_account_record(user_id)
 
             if is_user_data:
-                if Queries.user_can_perform_action(user_id, user_data, query_data):
+                if Queries.user_can_perform_action(user_data, query_data):
                     try:
+                        if user_id in cls.user_input_subdirectories_data:
+                            await cls.cancel_categories_operation(locale, bot, user_id)
+
                         if query_data in ("refresh_session", "unrecognized query"):
                             query_data = "main_menu"
 
@@ -754,6 +871,20 @@ class Queries:
                             offset = int(args[1])
 
                             text, reply_markup = cls.index_group_in_directory_menu(locale, target_directory_id, offset, user_data)
+
+                        elif query_data.startswith(f"create_subdirectory_in{cls.fd}"):
+                            args = query_data.split(cls.fd)[1:]
+
+                            parent_directory_id = int(args[0])
+
+                            text, reply_markup = cls.create_subdirectory_menu(locale, user_id, parent_directory_id)
+
+                        elif query_data.startswith(f"edit_directory{cls.fd}"):
+                            args = query_data.split(cls.fd)[1:]
+
+                            directory_id = int(args[0])
+
+                            text, reply_markup = cls.edit_directory_menu(locale, user_id, directory_id)
 
                         elif query_data.startswith(f"missing_permissions_menu{cls.fd}") \
                                 or query_data.startswith(f"hidden_chat_menu{cls.fd}") \
@@ -810,38 +941,51 @@ class Queries:
                                    f"An exception occurred while handling query '{query_data}' from '{user_id}'", ex)
 
                         text, reply_markup = Menus.get_error_menu(locale, "query")
-
-                    except Exception:
-                        text, reply_markup = Menus.get_error_menu(locale, "query")
+                else:
+                    text, reply_markup = Menus.get_error_menu(locale, "unauthorized")
             else:
                 text, reply_markup = Menus.get_error_menu(locale)
 
             if text or reply_markup:
+                edit_message_id = query_message.message_id
+
+                if user_id in SessionTable.active_chat_sessions and SessionTable.active_chat_sessions[user_id] != query_message.id:
+                    edit_message_id = SessionTable.active_chat_sessions[user_id]
+
+                    try:
+                        await bot.delete_message(chat_id=user_id, message_id=query_message.message_id)
+
+                    except Exception:
+                        pass
+
                 reply_markup = Queries.encode_queries(reply_markup)
 
                 await query.answer()
 
                 edited = False
 
+                new_message_id = edit_message_id
+
                 try:
-                    await query_message.edit_text(text=text, reply_markup=reply_markup)
+                    await bot.edit_message_text(text=text, chat_id=user_id, message_id=edit_message_id, reply_markup=reply_markup)
 
                     edited = True
-                except Exception:
-                    original_query_message = query_message
 
-                    query_message = await bot.send_message(chat_id=user_id, text=text, reply_markup=reply_markup)
+                except Exception:
+                    new_message = await bot.send_message(chat_id=user_id, text=text, reply_markup=reply_markup)
+
+                    new_message_id = new_message.message_id
 
                     if user_id in SessionTable.active_chat_sessions:
-                        SessionTable.update_session(chat_id=user_id, new_latest_menu_message_id=query_message.message_id)
+                        SessionTable.update_session(chat_id=user_id, new_latest_menu_message_id=new_message_id)
 
                     try:
-                        await bot.delete_message(chat_id=user_id, message_id=original_query_message.message_id)
+                        await bot.delete_message(chat_id=user_id, message_id=edit_message_id)
                     except Exception:
                         pass
 
                 if user_id not in SessionTable.active_chat_sessions:
-                    SessionTable.add_session(chat_id=user_id, latest_menu_message_id=query_message.message_id)
+                    SessionTable.add_session(chat_id=user_id, latest_menu_message_id=new_message_id)
 
         else:
             try:

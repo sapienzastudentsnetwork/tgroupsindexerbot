@@ -41,18 +41,27 @@
   "query_error_menu.contact_us_btn": "\uD83D\uDCAC Contattaci",
   "query_error_menu.back_btn": "◀️ Torna al menù",
 
+  "unauthorized_error_menu.text": [
+    "\uD83D\uDE14 L'operazione che hai provato ad effettuare non risulta esserti consentita",
+    "\n\n<i>Ti preghiamo di contattarci qualora pensi possa trattarsi di un errore</i>"
+  ],
+  "unauthorized_error_menu.contact_us_btn": "\uD83D\uDCAC Contattaci",
+  "unauthorized_error_menu.back_btn": "◀️ Torna al menù",
+
   "expired_session_menu.text": "ℹ️ La sessione precedente è scaduta, fai click sul pulsante per riprendere la navigazione",
   "expired_session_menu.refresh_session_btn":  "Vai al menù principale ▶️",
   "expired_session_menu.about_btn": "Come mai❔",
   "expired_session_menu.about_alert": "Le sessioni scadono automaticamente ad ogni aggiornamento (e conseguente riavvio) del bot e comunque almeno una volta entro 24 ore",
 
-  "explore_directories.index_group_here":       "\uD83D\uDCA0 Indicizza un gruppo qui",
-  "explore_directories.sub_directory.back_btn": "◀️ Indietro",
-  "explore_directories.back_to_menu_btn":       "◀️ Torna al menù",
+  "explore_directories.index_group_here_btn":         "\uD83D\uDCA0 Indicizza un gruppo qui",
+  "explore_directories.create_subdirectory_here_btn": "\uD83D\uDCC2 Crea sotto-categoria qui",
+  "explore_directories.edit_directory_btn":           "✏️ Modifica questa categoria",
+  "explore_directories.sub_directory.back_btn":       "◀️ Indietro",
+  "explore_directories.back_to_menu_btn":             "◀️ Torna al menù",
 
   "explore_groups.join_href_text":                   "[ENTRA]",
   "explore_groups.category.generation_date_line":    "<i>Lista di gruppi generata il [date] alle ore [time] (UTC+[offset]), controllare periodicamente per aggiornamenti</i>",
-  "explore_groups.category.no_category_groups_line": "\nGenerali (senza sotto-categoria):\n",
+  "explore_groups.category.no_category_groups_line": "\nGruppi generali (senza sotto-categoria):\n",
   "explore_groups.category.sub_categories_line":     "\nSotto-categorie (pulsanti):",
   "explore_groups.category.no_groups": "\uD83D\uDE14 Nessun gruppo in questa categoria attualmente \uD83D\uDE14\n\n\uD83D\uDD04 Ricontrolla periodicamente o sii il/la primo/a ad indicizzarne uno ⏬",
 
@@ -101,20 +110,20 @@
   "commands.chat_database_error": [
     "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria ad ottenere i dati della chat richiesta,",
     " assicurati che l'ID indicato sia corretto ed una chat con tale ID esista effettivamente in questa istanza del bot",
-    " o contatta il gestore del bot qualora il problema dovesse persistere"
+    " o contatta il gestore di questa istanza del bot qualora il problema dovesse persistere"
   ],
   "commands.directory_database_error": [
     "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria ad ottenere i dati della directory richiesta,",
     " assicurati che l'ID indicato sia corretto ed una directory con tale ID esista effettivamente in questa istanza del bot",
-    " o contatta il gestore del bot qualora il problema dovesse persistere"
+    " o contatta il gestore di questa istanza del bot qualora il problema dovesse persistere"
   ],
   "commands.database_error": [
     "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria ad eseguire il comando",
-    "\n\n<i>Contatta il gestore del bot qualora il problema dovesse persistere</i>"
+    "\n\n<i>Contatta il gestore di questa istanza del bot qualora il problema dovesse persistere</i>"
   ],
   "commands.private_specific_command": "✋ Spiacente [user], il comando <code>[command]</code> è progettato per essere usato in chat diretta con il bot!",
   "commands.bot_admin_specific_command": "⛔️ Spiacente [user], il comando <code>[command]</code> può essere eseguito soltanto da un amministratore del bot",
-  "commands.bot_owner_specific_command": "⛔️ Spiacente [user], il comando <code>[command]</code> può essere eseguito soltanto dal gestore del bot",
+  "commands.bot_owner_specific_command": "⛔️ Spiacente [user], il comando <code>[command]</code> può essere eseguito soltanto dal gestore di questa istanza del bot",
   "commands.min_n_args": "✋ Questo comando richiede minimo [n] argomenti, assicurati di aver specificato tutti i valori richiesti",
   "commands.wrong_chat_id_format": [
     "❌ L'ID di chat fornito non risulta essere un intero valido (assicurarsi di averlo effettivamente fornito",
@@ -195,8 +204,8 @@
   "unindex_group.successful": "☑️ Gruppo '<u>[title]</u>' deindicizzato con successo dalla categoria '[category]'",
 
   "index_group.error.cant_get_group_info": [
-    "⛔️ La procedura di ottenimento informazioni sul gruppo non è andata a buon fine, ",
-    "assicurati che il gruppo esista ancora e il bot ne faccia parte e poi riprova"
+    "⛔️ La procedura di ottenimento informazioni sul gruppo non è andata a buon fine,",
+    " assicurati che il gruppo esista ancora e il bot ne faccia parte e poi riprova"
   ],
 
   "index_group.error.already_current_category":   "ℹ️ Il gruppo '<u>[title]</u>' è stato già spostato nella categoria richiesta ('[category]')",
@@ -211,5 +220,59 @@
     "\uD83D\uDE14 Devi essere amministratore del gruppo <b>con il permesso di poterne modificare le informazioni</b>",
     " per poter impostare o modificare la categoria in cui viene indicizzato. Ti consigliamo di provare a chiedere al",
     " proprietario del gruppo o ad un amministratore del bot di cambiare la categoria al tuo posto."
-  ]
+  ],
+
+  "add_category.ask_for_i18n_en_name": "\uD83C\uDDEC\uD83C\uDDE7 Inserisci il nome in inglese per la categoria",
+  "add_category.ask_for_i18n_it_name": [
+    "\uD83C\uDDEE\uD83C\uDDF9 Inserisci la traduzione in italiano del nome per la categoria",
+    "\n\n<i>(<b>Nome inglese:</b> \"[i18n_en_name]\")</i>"
+  ],
+
+  "add_category.undo_btn": "\uD83D\uDDD1 Annulla creazione e torna indietro",
+
+  "add_category.database_error": [
+    "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria ad aggiungere una categoria",
+    " con i dati inseriti, assicurati che la directory dentro cui intendevi inserirla esista ancora e che i dati",
+    " inseriti siano validi, o contatta il gestore del bot qualora il problema dovesse persistere"
+  ],
+
+  "add_category.canceled": [
+    "\uD83D\uDEAB Aggiunta in corso della categoria annullata"
+  ],
+
+  "add_category.successful_menu.first_line": "☑️ Inserimento della nuova categoria avvenuto con successo:",
+  "add_category.successful_menu.back_btn": "↪️ Torna alla categoria di inserimento",
+
+  "edit_category.cant_get_directory_info": [
+    "⛔️ La procedura di ottenimento informazioni sulla categoria non è andata a buon fine,",
+    " assicurati che la categoria esista ancora o contatta il gestore del bot qualora il",
+    " problema dovesse persistere"
+  ],
+
+  "edit_category.ask_for_new_i18n_en_name": "\uD83C\uDDEC\uD83C\uDDE7 Inserisci il nuovo nome in inglese per la categoria",
+  "edit_category.ask_for_new_i18n_it_name": [
+    "\uD83C\uDDEE\uD83C\uDDF9 Inserisci la nuova traduzione in italiano del nome per la categoria",
+    "\n\n<i>(<b>Nome inglese:</b> \"[i18n_en_name]\")</i>"
+  ],
+
+  "edit_category.current_value": "<b>Valore corrente:</b> <code>[current_value]</code>",
+
+  "edit_category.undo_btn": "\uD83D\uDED1 Annulla modifiche e torna indietro",
+
+  "edit_category.database_error": [
+    "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria ad effettuare l'aggiornamento",
+    " richiesto, assicurati che la directory esista ancora e che i dati inseriti siano validi, o contatta il gestore",
+    " del bot qualora il problema dovesse persistere"
+  ],
+
+  "edit_category.canceled": [
+    "\uD83D\uDEAB Modifiche in corso alla categoria scartate"
+  ],
+
+  "edit_category.no_changes_made": "☑️ Valori uguali ai precedenti, nessun cambiamento effettuato",
+
+  "edit_category.successful_menu.first_line": "☑️ Aggiornamento avvenuto con successo:",
+  "edit_category.successful_menu.back_btn": "↘️ Torna alla categoria modificata",
+
+  "add_category.error.too_long_input": "Hai inserito un nome di categoria troppo lungo (ben [length] caratteri), riprova con al massimo 100 caratteri!"
 }

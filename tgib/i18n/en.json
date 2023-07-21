@@ -41,18 +41,27 @@
   "query_error_menu.contact_us_btn": "\uD83D\uDCAC Contact Us",
   "query_error_menu.back_btn": "◀️ Back to Menu",
 
+  "unauthorized_error_menu.text": [
+    "\uD83D\uDE14 The operation you tried to perform is not allowed for you",
+    "\n\n<i>Please contact us should you believe this to be an error</i>"
+  ],
+  "unauthorized_error_menu.contact_us_btn": "\uD83D\uDCAC Contact Us",
+  "unauthorized_error_menu.back_btn": "◀️ Back to Menu",
+
   "expired_session_menu.text": "ℹ️ The previous session has expired, click on the button to resume navigation",
   "expired_session_menu.refresh_session_btn": "Go to the main menu ▶️",
   "expired_session_menu.about_btn": "Why❔",
   "expired_session_menu.about_alert": "Sessions expire automatically each time the bot is updated (and consequently restarted) and in any case at least once within 24 hours",
 
-  "explore_directories.index_group_here":       "\uD83D\uDCA0 Index a new group here",
-  "explore_directories.sub_directory.back_btn": "◀️ Back",
-  "explore_directories.back_to_menu_btn":       "◀️ Back to Menu",
+  "explore_directories.index_group_here_btn":         "\uD83D\uDCA0 Index a new group here",
+  "explore_directories.create_subdirectory_here_btn": "\uD83D\uDCC2 Create a subcategory here",
+  "explore_directories.edit_directory_btn":           "✏️ Edit category",
+  "explore_directories.sub_directory.back_btn":       "◀️ Back",
+  "explore_directories.back_to_menu_btn":             "◀️ Back to Menu",
 
   "explore_groups.join_href_text":                   "[JOIN]",
   "explore_groups.category.generation_date_line":    "<i>Groups list generated on [date] at [time] (UTC+[offset]), check periodically for updates</i>",
-  "explore_groups.category.no_category_groups_line": "\nGeneral (without sub-category):\n",
+  "explore_groups.category.no_category_groups_line": "\nGeneral groups (without sub-category):\n",
   "explore_groups.category.sub_categories_line":     "\nSub-categories (buttons):",
   "explore_groups.category.no_groups": "\uD83D\uDE14 No groups in this category currently \uD83D\uDE14\n\n\uD83D\uDD04 Recheck periodically or be the first to index one ⏬",
 
@@ -100,20 +109,20 @@
   "commands.chat_database_error": [
     "\uD83D\uDE14 An error occurred in the interaction with the database required to obtain the requested chat data,",
     " make sure that the given ID is correct and a chat with that ID actually exists in this instance of the bot",
-    " or contact the bot manager should the problem persist."
+    " or contact this bot instance's owner should the problem persist."
   ],
   "commands.directory_database_error": [
     "\uD83D\uDE14 An error occurred in the interaction with the database required to obtain the requested directory data,",
     " make sure that the given ID is correct and a directory with that ID actually exists in this instance of the bot",
-    " or contact the bot manager should the problem persist."
+    " or contact this bot instance's owner should the problem persist."
   ],
   "commands.database_error": [
     "\uD83D\uDE14 An error occurred in the interaction with the database required to execute the command",
-    "\n\n<i>Please contact the bot manager should the problem persists</i>"
+    "\n\n<i>Please contact this bot instance's owner should the problem persists</i>"
   ],
   "commands.private_specific_command": "✋ The <code>[command]</code> command is designed to be used in direct chat with the bot!",
   "commands.bot_admin_specific_command": "⛔️ Sorry [user], the <code>[command]</code> command can only be executed by a bot administrator",
-  "commands.bot_owner_specific_command": "⛔️ Sorry [user], the <code>[command]</code> command can only be executed by the bot manager",
+  "commands.bot_owner_specific_command": "⛔️ Sorry [user], the <code>[command]</code> command can only be executed by this bot instance's owner",
   "commands.min_n_args": "✋ This command requires minimum [n] arguments, make sure you have specified all required values",
   "commands.wrong_chat_id_format": [
     "❌ The chat ID provided does not appear to be a valid integer (make sure you actually provided it",
@@ -194,8 +203,8 @@
   "unindex_group.successful": "☑️ Group '<u>[title]</u>' successfully unindexed from category '[category]'",
 
   "index_group.error.cant_get_group_info": [
-    "⛔️ The process of getting group information failed, ",
-    "make sure the group still exists and the bot is a member and then try again"
+    "⛔️ The process of getting group information failed,",
+    " make sure the group still exists and the bot is a member and then try again"
   ],
 
   "index_group.error.already_current_category":   "ℹ️ The group '<u>[title]</u>' has already moved to the requested category ('[category]')",
@@ -210,5 +219,59 @@
     "\uD83D\uDE14 You must be administrator of the group <b>with permission to change its information</b>",
     " to be able to set or change the category in which it is indexed. We suggest you to try to ask the group owner",
     " or a bot administrator to change the category in your place."
-  ]
+  ],
+
+  "add_category.ask_for_i18n_en_name": "\uD83C\uDDEC\uD83C\uDDE7 Send an English name for the category",
+  "add_category.ask_for_i18n_it_name": [
+    "\uD83C\uDDEE\uD83C\uDDF9 Send an Italian translation of the name for the category",
+    "\n\n<i>(<b>English name:</b> \"[i18n_en_name]\")</i>"
+  ],
+
+  "add_category.undo_btn": "\uD83D\uDDD1 Undo creation and go back",
+
+  "add_category.database_error": [
+    "\uD83D\uDE14 An error occurred in the interaction with the database required to add a category with the",
+    " data entered, make sure that the category you intended to insert it into still exists and that the data",
+    " entered are valid, or contact this bot instance's owner should the problem persists"
+  ],
+
+  "add_category.canceled": [
+    "\uD83D\uDEAE Ongoing addition of a new category canceled"
+  ],
+
+  "add_category.successful_menu.first_line": "☑️ Successful insertion of the new category:",
+  "add_category.successful_menu.back_btn": "↪️ Go back to the insertion category",
+
+  "edit_category.cant_get_directory_info": [
+    "⛔️ La procedura di ottenimento informazioni sulla categoria non è andata a buon fine,",
+    " assicurati che la categoria esista ancora o contatta il gestore del bot qualora il",
+    " problema dovesse persistere"
+  ],
+
+  "edit_category.ask_for_new_i18n_en_name": "\uD83C\uDDEC\uD83C\uDDE7 Send the new English name for the category",
+  "edit_category.ask_for_new_i18n_it_name": [
+    "\uD83C\uDDEE\uD83C\uDDF9 Send the new Italian translation of the name for the category",
+    "\n\n<i>(<b>English name:</b> \"[i18n_en_name]\")</i>"
+  ],
+
+  "edit_category.current_value": "<b>Current value:</b> <code>[current_value]</code>",
+
+  "edit_category.undo_btn": "\uD83D\uDED1 Undo changes and go back",
+
+  "edit_category.database_error": [
+    "\uD83D\uDE14 An error occurred in the interaction with the database required to perform the update you asked for,",
+    " ensure that the category still exists and that the names entered are valid, or contact this bot instance's owner",
+    " should the problem persist"
+  ],
+
+  "edit_category.canceled": [
+    "\uD83D\uDEAE Ongoing changes to category discarded"
+  ],
+
+  "edit_category.no_changes_made": "☑️ Values same as previous, no changes to be made",
+
+  "edit_category.successful_menu.first_line": "☑️ Successful update of category names:",
+  "edit_category.successful_menu.back_btn": "↘️ Go back to the modified category",
+
+  "add_category.error.too_long_input": "You entered a category name that is too long (as many [length] characters), try again with at most 100 characters!"
 }

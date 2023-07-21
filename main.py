@@ -28,6 +28,7 @@ from telegram.ext import Application, CallbackQueryHandler, Defaults, MessageHan
 
 from tgib.data.database import Database, SessionTable, AccountTable, ChatTable
 from tgib.global_vars import GlobalVariables
+from tgib.handlers.messages import Messages
 from tgib.handlers.statuschanges import StatusChanges
 from tgib.handlers.commands import Commands
 from tgib.handlers.queries import Queries
@@ -53,6 +54,8 @@ def add_application_handlers(application: Application):
                        callback=StatusChanges.migrate_handler),
 
         MessageHandler(filters=filters.COMMAND, callback=Commands.commands_handler),
+
+        MessageHandler(filters=filters.TEXT, callback=Messages.text_messages_handler),
 
         CallbackQueryHandler(callback=Queries.callback_queries_handler),
 

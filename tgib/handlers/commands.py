@@ -30,6 +30,7 @@ from tgib.i18n.locales import Locale
 from tgib.logs import Logger
 from tgib.ui.menus import Menus
 
+
 class Commands:
     command_cooldowns = {"dont": 15, "reload": 15, "netstatus": 60}
     user_last_command_use_dates = {"dont": {}, "reload": {}, "netstatus": {}}
@@ -42,17 +43,18 @@ class Commands:
     bot_admin_commands = ("hide", "unhide", "move", "unindex")
     bot_owner_commands = ("addadmin", "rmadmin", "listadmins")
     alias_commands = {"removeadmin": "rmadmin", "bangroup": "hide", "unbangroup": "unhide",
-                      "deindex": "unindex", "index": "move", "dontasktoask": "dont"}
+                      "deindex": "unindex", "index": "move", "dontasktoask": "dont",
+                      "setadmin": "addadmin", "unsetadmin": "rmadmin", "unadmin": "rmadmin"}
 
     @classmethod
     async def commands_handler(cls, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        bot           = context.bot
+        bot_instance           = context.bot
         chat_id       = update.effective_chat.id
         user_id       = update.effective_user.id
         query_message = update.message
 
         if query_message.chat.type != "channel":
-            bot_username_lower = bot.username.lower()
+            bot_username_lower = bot_instance.username.lower()
 
             command = query_message.text.split()[0][1:].lower()
 
@@ -82,20 +84,20 @@ class Commands:
                     reply_markup = InlineKeyboardMarkup(keyboard)
 
                     try:
-                        new_message = await bot.send_message(chat_id=user_id, text=text, reply_markup=reply_markup)
+                        new_message = await bot_instance.send_message(chat_id=user_id, text=text, reply_markup=reply_markup)
                     except Exception:
-                        new_message = await bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
+                        new_message = await bot_instance.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
 
                         async def delete_message(context: ContextTypes.DEFAULT_TYPE) -> None:
                             try:
-                                await bot.delete_message(chat_id=chat_id, message_id=new_message.message_id)
+                                await bot_instance.delete_message(chat_id=chat_id, message_id=new_message.message_id)
                             except Exception:
                                 pass
 
                         GlobalVariables.job_queue.run_once(callback=delete_message, when=10)
 
                     try:
-                        await bot.delete_message(chat_id=chat_id, message_id=query_message.message_id)
+                        await bot_instance.delete_message(chat_id=chat_id, message_id=query_message.message_id)
                     except Exception:
                         pass
 
@@ -123,7 +125,7 @@ class Commands:
             if not is_user_data and query_message.chat.type == "private":
                 text, reply_markup = Menus.get_error_menu(locale, source="database")
             else:
-                if (is_user_data and Queries.user_can_perform_action(user_id, user_data, "/" + command_name)) or (not is_user_data):
+                if (is_user_data and Queries.user_can_perform_action(user_data, "/" + command_name)) or (not is_user_data):
                     if command_name == "start":
                         text, reply_markup = Menus.get_main_menu(locale)
 
@@ -143,7 +145,7 @@ class Commands:
 
                             invalid_request = True
 
-                        elif command_name in cls.group_admin_commands and not user_is_bot_admin and not Queries.is_admin(bot, chat_id, user_id):
+                        elif command_name in cls.group_admin_commands and not user_is_bot_admin and not Queries.is_admin(bot_instance, chat_id, user_id):
                             text = locale.get_string("commands.groups.admin_specific_command") \
                                 .replace("[user]",
                                          f'<a href="tg://user?id={user_id}">' + update.effective_user.first_name + '</a>') \
@@ -178,10 +180,10 @@ class Commands:
                                     reply_to_message = query_message.reply_to_message
 
                             elif command_name == "reload":
-                                old_chat_data, new_chat_data, is_new_chat_data = await ChatTable.fetch_chat(bot, chat_id)
+                                old_chat_data, new_chat_data, is_new_chat_data = await ChatTable.fetch_chat(bot_instance, chat_id)
 
                                 if is_new_chat_data:
-                                    bot_member = await bot.get_chat_member(chat_id, bot.id)
+                                    bot_member = await bot_instance.get_chat_member(chat_id, bot_instance.id)
 
                                     text = locale.get_string("commands.reload.successful")
 
@@ -195,7 +197,7 @@ class Commands:
 
                                         if not bot_member.can_invite_users:
                                             try:
-                                                chat = await bot.get_chat(chat_id)
+                                                chat = await bot_instance.get_chat(chat_id)
 
                                                 chat_permissions = chat.permissions
 
@@ -278,7 +280,7 @@ class Commands:
 
                                                     text = locale.get_string("commands.visibility.hide.successful")
 
-                                                    await Logger.log_action("hide", update.effective_user, target_chat_data)
+                                                    await Logger.log_chat_action("hide", update.effective_user, target_chat_data)
 
                                             else:
                                                 text = locale.get_string("commands.visibility.already_hidden")
@@ -293,7 +295,7 @@ class Commands:
 
                                                     text = locale.get_string("commands.visibility.unhide.successful")
 
-                                                    await Logger.log_action("unhide", update.effective_user, target_chat_data)
+                                                    await Logger.log_chat_action("unhide", update.effective_user, target_chat_data)
 
                                             else:
                                                 text = locale.get_string("commands.visibility.already_not_hidden")
@@ -333,7 +335,7 @@ class Commands:
                                                                 else:
                                                                     text = locale.get_string("commands.move.indexed")
 
-                                                                await Logger.log_action(
+                                                                await Logger.log_chat_action(
                                                                     "move", update.effective_user, target_chat_data,
                                                                     new_directory_id=target_directory_id,
                                                                     full_old_category_name=full_old_category_name,
@@ -368,7 +370,7 @@ class Commands:
                                                     text = locale.get_string("commands.visibility.unindex.successful") \
                                                         .replace("[category]", str(full_target_category_name))
 
-                                                    await Logger.log_action(
+                                                    await Logger.log_chat_action(
                                                         "unindex", update.effective_user, target_chat_data,
                                                         full_old_category_name=full_target_category_name
                                                     )
@@ -458,7 +460,7 @@ class Commands:
                                             chat = None
 
                                             try:
-                                                chat = await bot.get_chat(bot_admin_chat_id)
+                                                chat = await bot_instance.get_chat(bot_admin_chat_id)
                                                 chat: telegram.Chat
 
                                                 bot_admin_name = chat.full_name
@@ -509,6 +511,8 @@ class Commands:
 
                         else:
                             cls.user_last_command_use_dates[command_name][user_id] = current_epoch
+                else:
+                    text, reply_markup = Menus.get_error_menu(locale, "unauthorized")
 
             if reply_markup:
                 reply_markup = Queries.encode_queries(reply_markup)
@@ -517,7 +521,7 @@ class Commands:
                 new_message, error_message = None, None
 
                 try:
-                    new_message = await bot.send_message(chat_id=user_id, text=text, reply_markup=reply_markup)
+                    new_message = await bot_instance.send_message(chat_id=user_id, text=text, reply_markup=reply_markup)
 
                     if not is_user_data and query_message.chat.type != "private":
                         user_data, is_user_data = AccountTable.get_account_record(user_id, create_if_not_existing=True)
@@ -550,14 +554,14 @@ class Commands:
                     ])
 
                     try:
-                        new_message = await bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
+                        new_message = await bot_instance.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
 
                         job_queue = GlobalVariables.job_queue
                         job_queue: telegram.ext.Application.job_queue
 
                         async def delete_message(context: ContextTypes.DEFAULT_TYPE) -> None:
                             try:
-                                await bot.delete_message(chat_id=chat_id, message_id=new_message.message_id)
+                                await bot_instance.delete_message(chat_id=chat_id, message_id=new_message.message_id)
                             except Exception:
                                 pass
 
@@ -569,8 +573,11 @@ class Commands:
                     old_latest_menu_message_id = SessionTable.get_active_session_menu_message_id(user_id)
 
                     if old_latest_menu_message_id != -1:
+                        if user_id in Queries.user_input_subdirectories_data:
+                            await Queries.cancel_categories_operation(locale, bot_instance, user_id)
+
                         try:
-                            await bot.delete_message(chat_id=user_id, message_id=old_latest_menu_message_id)
+                            await bot_instance.delete_message(chat_id=user_id, message_id=old_latest_menu_message_id)
                         except Exception:
                             pass
 
@@ -586,24 +593,24 @@ class Commands:
                 if cooldown or not reply_to_message:
                     if cooldown:
                         try:
-                            new_message = await bot.send_message(chat_id=user_id, text=text)
+                            new_message = await bot_instance.send_message(chat_id=user_id, text=text)
 
                             message_chat_id = user_id
                         except Exception:
                             try:
-                                new_message = await bot.send_message(chat_id=chat_id, text=text)
+                                new_message = await bot_instance.send_message(chat_id=chat_id, text=text)
                             except Exception:
                                 pass
                     else:
                         try:
-                            new_message = await bot.send_message(chat_id=chat_id, text=text)
+                            new_message = await bot_instance.send_message(chat_id=chat_id, text=text)
                         except telegram.error.BadRequest as ex:
                             if "Not enough rights to send text messages to the chat" in ex.message:
                                 try:
                                     error_message = locale.get_string("commands.groups.errors.forbidden.not_enough_rights") \
                                         .replace("[command]", f'<code>/' + command_name + "</code>")
 
-                                    await bot.send_message(
+                                    await bot_instance.send_message(
                                         chat_id=user_id,
                                         text=error_message
                                     )
@@ -622,7 +629,7 @@ class Commands:
                                 error_message = locale.get_string("commands.groups.errors.forbidden.not_enough_rights") \
                                     .replace("[command]", f'<code>/' + command_name + "</code>")
 
-                                await bot.send_message(
+                                await bot_instance.send_message(
                                     chat_id=user_id,
                                     text=error_message
                                 )
@@ -636,7 +643,7 @@ class Commands:
                          or invalid_request is True or update.effective_chat.type in ("group", "supergroup")):
                     async def delete_message(context: ContextTypes.DEFAULT_TYPE) -> None:
                         try:
-                            await bot.delete_message(chat_id=message_chat_id, message_id=new_message.message_id)
+                            await bot_instance.delete_message(chat_id=message_chat_id, message_id=new_message.message_id)
                         except Exception:
                             pass
 
@@ -647,6 +654,6 @@ class Commands:
                      and update.effective_chat.type in ("group", "supergroup")):
 
                 try:
-                    await bot.delete_message(chat_id=chat_id, message_id=query_message.message_id)
+                    await bot_instance.delete_message(chat_id=chat_id, message_id=query_message.message_id)
                 except Exception:
                     pass

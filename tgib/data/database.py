@@ -103,19 +103,6 @@ class Database:
             connection: psycopg2._psycopg.connection
 
             try:
-                # directory
-                cursor.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS directory (
-                        id SERIAL PRIMARY KEY,
-                        i18n_en_name VARCHAR(255),
-                        i18n_it_name VARCHAR(255),
-                        parent_id INT,
-                        FOREIGN KEY (parent_id) REFERENCES directory(id)
-                    );
-                    """
-                )
-
                 # account
                 cursor.execute(
                     """
@@ -127,6 +114,21 @@ class Database:
                         can_view_groups BOOLEAN DEFAULT true,
                         can_add_groups BOOLEAN DEFAULT true,
                         can_modify_groups BOOLEAN DEFAULT true
+                    );
+                    """
+                )
+
+                # directory
+                cursor.execute(
+                    """
+                    CREATE TABLE IF NOT EXISTS directory (
+                        id SERIAL PRIMARY KEY,
+                        i18n_en_name VARCHAR(255),
+                        i18n_it_name VARCHAR(255),
+                        parent_id INT,
+                        hidden_by BIGINT,
+                        FOREIGN KEY (parent_id) REFERENCES directory(id),
+                        FOREIGN KEY (hidden_by) REFERENCES account(chat_id)
                     );
                     """
                 )
@@ -203,6 +205,23 @@ class Database:
                         BEFORE UPDATE ON chat
                         FOR EACH ROW
                         EXECUTE FUNCTION update_timestamp();
+                    """)
+
+                # Check if the 'hidden_by' column in 'directory' table already exists
+                cursor.execute("""
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_name = 'directory' AND column_name = 'hidden_by'
+                    )
+                """)
+                column_exists = cursor.fetchone()[0]
+
+                # Add the 'hidden_by' column to 'directory' table if it doesn't exist
+                if not column_exists:
+                    cursor.execute("""
+                        ALTER TABLE directory
+                        ADD COLUMN hidden_by BIGINT REFERENCES account(chat_id)
                     """)
 
                 # session
@@ -438,28 +457,37 @@ class DirectoryTable:
             cursor: psycopg2._psycopg.cursor
 
             try:
-                cursor.execute(
-                    """
-                    INSERT INTO directory (i18n_en_name, i18n_it_name, id, parent_id)
-                    VALUES (%s, %s, %s, %s)
-                    RETURNING id;
-                    """,
-                    (i18n_en_name, i18n_it_name, directory_id, parent_directory_id)
-                )
+                if directory_id is not None:
+                    cursor.execute(
+                        """
+                        INSERT INTO directory (i18n_en_name, i18n_it_name, id, parent_id)
+                        VALUES (%s, %s, %s, %s)
+                        RETURNING id;
+                        """,
+                        (i18n_en_name, i18n_it_name, directory_id, parent_directory_id)
+                    )
+                else:
+                    cursor.execute(
+                        """
+                        INSERT INTO directory (id, i18n_en_name, i18n_it_name, parent_id)
+                        VALUES (DEFAULT, %s, %s, %s)
+                        RETURNING id;
+                        """,
+                        (i18n_en_name, i18n_it_name, parent_directory_id)
+                    )
 
                 inserted_id = cursor.fetchone()[0]
 
                 Database.connection.commit()
 
-                Logger.log(
-                    "debug",
-                    "DirectoryTable.create_directory",
-                    f"A new directory has been created"
-                        f"\n-           ID: {inserted_id}"
-                        f"\n-    Parent ID: {parent_directory_id}"
-                        f"\n- i18n_en_name: \"{i18n_en_name}\""
-                        f"\n- i18n_it_name: \"{i18n_it_name}\""
-                )
+                if parent_directory_id in cls.cached_sub_directories:
+                    cls.cached_sub_directories[parent_directory_id][inserted_id] = {
+                        "id": inserted_id,
+                        "i18n_en_name": i18n_en_name,
+                        "i18n_it_name": i18n_it_name,
+                        "parent_id": parent_directory_id,
+                        "hidden_by": None
+                    }
 
                 return inserted_id, True
 
@@ -474,6 +502,81 @@ class DirectoryTable:
                        f"Couldn't get cursor required to create a new directory")
 
             return None, False
+
+    @classmethod
+    def move_directory(cls, id: int, new_parent_directory_id: int):
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute(
+                    """
+                    UPDATE directory
+                    SET parent_id = %s
+                    WHERE id = %s;
+                    """,
+                    (new_parent_directory_id, id)
+                )
+
+                Database.connection.commit()
+
+                if id in cls.cached_directory_records:
+                    cls.cached_directory_records[id]["parent_id"] = new_parent_directory_id
+
+                return True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "DirectoryTable.update_directory_names",
+                           f"An exception occurred while trying to update parent directory ID"
+                           f" to '{new_parent_directory_id}' for directory having id '{id}", ex)
+
+                return False
+
+        else:
+            Logger.log("error", "DirectoryTable.update_directory_names",
+                       f"Couldn't get cursor required to update parent directory ID"
+                       f" to '{new_parent_directory_id}' for directory having id '{id}'")
+
+            return False
+
+    @classmethod
+    def update_directory_names(cls, id: int, new_i18n_en_name: str, new_i18n_it_name: str) -> (int | None, bool):
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            cursor: psycopg2._psycopg.cursor
+
+            try:
+                cursor.execute(
+                    """
+                    UPDATE directory
+                    SET i18n_en_name = %s, i18n_it_name = %s
+                    WHERE id = %s;
+                    """,
+                    (new_i18n_en_name, new_i18n_it_name, id)
+                )
+
+                Database.connection.commit()
+
+                if id in cls.cached_directory_records:
+                    cls.cached_directory_records[id]["i18n_en_name"] = new_i18n_en_name
+                    cls.cached_directory_records[id]["i18n_it_name"] = new_i18n_it_name
+
+                return True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "DirectoryTable.update_directory_names",
+                           f"An exception occurred while trying to update names for directory having id '{id}", ex)
+
+                return False
+
+        else:
+            Logger.log("error", "DirectoryTable.update_directory_names",
+                       f"Couldn't get cursor required to update names for directory having id '{id}'")
+
+            return False
 
     @classmethod
     def get_directory_data(cls, directory_id: int) -> (dict | None, bool):
