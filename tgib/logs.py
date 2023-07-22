@@ -46,12 +46,73 @@ class Logger:
         cls.admin_actions_log_chat_id = admin_actions_log_chat_id
 
     @classmethod
-    async def log_directory_action(cls, action: str, admin: User, directory_id: int,
-                                   i18n_it_name: str, i18n_en_name: str,
-                                   parent_directory_id: int, parent_directory_name: str,
-                                   new_i18n_it_name: str = None, new_i18n_en_name: str = None,
-                                   new_parent_directory_id: int = None, new_parent_directory_name: str = None):
+    async def log_to_telegram_channel(cls, channel_chat_id: int, log_message: str):
+        bot_instance: telegram.Bot = GlobalVariables.bot_instance
 
+        await bot_instance.send_message(
+            chat_id=channel_chat_id,
+            text=log_message
+        )
+
+    @classmethod
+    def log(cls, log_type, author, text, exception=None) -> bool:
+        message = f"{author} | {text}"
+
+        if exception is not None:
+            exception_type = str(type(exception)).replace("<class '", "").replace("'>", "")
+
+            message += f"\n\n{exception_type}: {exception}"
+
+        logger = cls.logger
+
+        if log_type == "exception":
+            logger.exception(message)
+
+            if cls.exception_log_chat_id:
+                async def alert_on_telegram(context: ContextTypes.DEFAULT_TYPE) -> None:
+                    try:
+                        message_text = f"<b>EXCEPTION</b>\n\n<code>{author}</code>\n\n{text}"
+
+                        if exception is not None:
+                            message_text += f"\n\n<i><b>{exception_type}:</b> {exception}</i>"
+
+                        await cls.log_to_telegram_channel(cls.exception_log_chat_id, text)
+
+                    except Exception as ex:
+                        ex_type = str(type(ex)).replace("<class '", "").replace("'>", "")
+
+                        logger.exception(f"Logger.log.alert_on_telegram | {ex_type}: {ex}")
+
+                GlobalVariables.job_queue.run_once(alert_on_telegram, when=0)
+
+        elif log_type == "info":
+            logger.info(message)
+        elif log_type == "debug":
+            logger.debug(message)
+        elif log_type == "warning":
+            logger.warning(message)
+        elif log_type == "error":
+            logger.error(message)
+        elif log_type == "critical":
+            logger.critical(message)
+        else:
+            return False
+
+        return True
+
+    @classmethod
+    def gen_user_info_string(cls, user: User):
+        user_info = f'\n\n✍️ <a href="tg://user?id={user.id}">{user.full_name}</a>'
+
+        if user.username:
+            user_info += f" (@{user.username})"
+
+        user_info += f" [<code>{user.id}</code>]"
+
+        return user_info
+
+    @classmethod
+    async def log_user_action(cls, action: str, admin: User, changes_summary: str):
         if cls.admin_actions_log_chat_id:
             text = "👮‍♂️ <b><u>" + action.upper() + f"</u></b> (#admin)"
 
@@ -61,6 +122,22 @@ class Logger:
                 text += f" (@{admin.username})"
 
             text += f" [<code>{admin.id}</code>]"
+
+            text += changes_summary
+
+            await cls.log_to_telegram_channel(cls.admin_actions_log_chat_id, text)
+
+    @classmethod
+    async def log_directory_action(cls, action: str, admin: User, directory_id: int,
+                                   i18n_it_name: str, i18n_en_name: str,
+                                   parent_directory_id: int, parent_directory_name: str,
+                                   new_i18n_it_name: str = None, new_i18n_en_name: str = None,
+                                   new_parent_directory_id: int = None, new_parent_directory_name: str = None):
+
+        if cls.admin_actions_log_chat_id:
+            text = "👮‍♂️ <b><u>" + action.upper() + f"</u></b> (#admin)"
+
+            text += cls.gen_user_info_string(admin)
 
             text += f"\n\n🆔 {directory_id}"
 
@@ -88,12 +165,7 @@ class Logger:
             if action == "move directory" and new_parent_directory_id and new_parent_directory_name:
                 text += f"\n\n🎯 {new_parent_directory_name} [<code>{new_parent_directory_id}</code>]"
 
-            bot_instance: telegram.Bot = GlobalVariables.bot_instance
-
-            await bot_instance.send_message(
-                chat_id=cls.admin_actions_log_chat_id,
-                text=text
-            )
+            await cls.log_to_telegram_channel(cls.admin_actions_log_chat_id, text)
 
     @classmethod
     async def log_chat_action(cls, action: str, user: User, target_chat_data: dict,
@@ -110,12 +182,7 @@ class Logger:
             else:
                 text = "👤 <b>" + action.upper() + f"</b> (#user)"
 
-            text += f'\n\n✍️ <a href="tg://user?id={user.id}">{user.full_name}</a>'
-
-            if user.username:
-                text += f" (@{user.username})"
-
-            text += f" [<code>{user.id}</code>]"
+            text += cls.gen_user_info_string(user)
 
             text += f"\n\n💬 \"" + target_chat_data["title"] + f"\" [<code>{target_chat_id}</code>]"
 
@@ -127,58 +194,4 @@ class Logger:
 
             bot_instance: telegram.Bot = GlobalVariables.bot_instance
 
-            await bot_instance.send_message(
-                chat_id=cls.admin_actions_log_chat_id,
-                text=text
-            )
-
-    @classmethod
-    def log(cls, log_type, author, text, exception=None) -> bool:
-        message = f"{author} | {text}"
-
-        if exception is not None:
-            exception_type = str(type(exception)).replace("<class '", "").replace("'>", "")
-
-            message += f"\n\n{exception_type}: {exception}"
-
-        logger = cls.logger
-
-        if log_type == "exception":
-            logger.exception(message)
-
-            bot_instance: telegram.Bot = GlobalVariables.bot_instance
-
-            if cls.exception_log_chat_id:
-                async def alert_on_telegram(context: ContextTypes.DEFAULT_TYPE) -> None:
-                    try:
-                        message_text = f"<b>EXCEPTION</b>\n\n<code>{author}</code>\n\n{text}"
-
-                        if exception is not None:
-                            message_text += f"\n\n<i><b>{exception_type}:</b> {exception}</i>"
-
-                        await bot_instance.send_message(
-                            chat_id=cls.exception_log_chat_id,
-                            text=message_text
-                        )
-
-                    except Exception as ex:
-                        ex_type = str(type(ex)).replace("<class '", "").replace("'>", "")
-
-                        logger.exception(f"Logger.log.alert_on_telegram | {ex_type}: {ex}")
-
-                GlobalVariables.job_queue.run_once(alert_on_telegram, when=0)
-
-        elif log_type == "info":
-            logger.info(message)
-        elif log_type == "debug":
-            logger.debug(message)
-        elif log_type == "warning":
-            logger.warning(message)
-        elif log_type == "error":
-            logger.error(message)
-        elif log_type == "critical":
-            logger.critical(message)
-        else:
-            return False
-
-        return True
+            await cls.log_to_telegram_channel(cls.admin_actions_log_chat_id, text)

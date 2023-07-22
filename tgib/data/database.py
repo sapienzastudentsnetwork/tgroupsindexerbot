@@ -337,6 +337,45 @@ class AccountTable:
             return False
 
     @classmethod
+    def update_account_restrictions(cls, chat_id: int, can_view_groups: bool, can_add_groups: bool, can_modify_groups: bool):
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            try:
+                connection = Database.connection
+                connection: psycopg2._psycopg.connection
+
+                cursor.execute(
+                    """
+                    UPDATE account
+                    SET can_view_groups = %s, can_add_groups = %s, can_modify_groups = %s
+                    WHERE chat_id = %s
+                    """,
+                    (can_view_groups, can_add_groups, can_modify_groups, chat_id)
+                )
+
+                connection.commit()
+
+                if chat_id in cls.cached_account_records:
+                    cls.cached_account_records[chat_id]["can_view_groups"] = can_view_groups
+                    cls.cached_account_records[chat_id]["can_add_groups"] = can_add_groups
+                    cls.cached_account_records[chat_id]["can_modify_groups"] = can_modify_groups
+
+                return True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "AccountTable.update_account_restrictions",
+                           f"Couldn't update restriction values for user having chat_id '{chat_id}'", ex)
+
+                return False
+
+        else:
+            Logger.log("error", "AccountTable.update_account_restrictions",
+                       f"Couldn't get cursor required to update restriction values for user having chat_id '{chat_id}'")
+
+            return False
+
+    @classmethod
     def update_admin_status(cls, chat_id: int, new_value: bool) -> bool:
         cursor, iscursor = Database.get_cursor()
 
@@ -362,14 +401,14 @@ class AccountTable:
                 return True
 
             except (Exception, psycopg2.DatabaseError) as ex:
-                Logger.log("exception", "ChatTable.change_admin_status",
+                Logger.log("exception", "AccountTable.change_admin_status",
                            f"Couldn't update admin status to '{new_value}' for user having chat_id '{chat_id}'", ex)
 
                 return False
 
         else:
-            Logger.log("error", "ChatTable.change_admin_status", f"Couldn't get cursor required to update admin status"
-                                                                 f" to '{new_value}' for user having id '{chat_id}'")
+            Logger.log("error", "AccountTable.change_admin_status", f"Couldn't get cursor required to update admin status"
+                                                                    f" to '{new_value}' for user having id '{chat_id}'")
 
             return False
 

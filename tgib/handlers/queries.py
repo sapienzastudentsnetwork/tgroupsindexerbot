@@ -133,13 +133,11 @@ class Queries:
             return False
 
         elif not can_add_groups and (action in ("add_group_menu",)
-                                     or action.startswith("index")
                                      or action.startswith("hidden_chat_menu")
                                      or action.startswith("missing_permissions_menu")):
             return False
 
-        elif not can_modify_groups and (action in ("/reload")
-                                        or action.startswith("unindex")):
+        elif not can_modify_groups and (action in ("/reload",)):
             return False
 
         # N.B.: checking for bot admin permissions for bot admin commands
@@ -417,7 +415,7 @@ class Queries:
         return text, InlineKeyboardMarkup(keyboard)
 
     @classmethod
-    async def index_group_menu(cls, locale: Locale, bot: Bot, user: User, chat_id: int, new_directory_id: int = None, offset: int = 0, requires_confirmation: bool = True, unindex_directory_id: int = None) -> (str, InlineKeyboardMarkup):
+    async def index_group_menu(cls, locale: Locale, bot: Bot, user: User, chat_id: int, new_directory_id: int = None, offset: int = 0, requires_confirmation: bool = True, unindex_directory_id: int = None, user_can_add_groups: bool = True, user_can_modify_groups: bool = True) -> (str, InlineKeyboardMarkup):
         user_id = user.id
 
         if new_directory_id is None and unindex_directory_id is None:
@@ -513,6 +511,20 @@ class Queries:
                                     undo_btn = True
 
                                 else:
+                                    unauthorized = False
+
+                                    if new_directory_id is not None:
+                                        if old_directory_id is not None:
+                                            if not user_can_modify_groups:
+                                                unauthorized = True
+                                        elif not user_can_add_groups:
+                                            unauthorized = True
+                                    elif not user_can_modify_groups:
+                                        unauthorized = True
+
+                                    if unauthorized:
+                                        return Menus.get_error_menu(locale, "unauthorized")
+
                                     updated = ChatTable.update_chat_directory(chat_id, new_directory_id)
 
                                     if updated:
@@ -643,6 +655,7 @@ class Queries:
             user_id = user_data["chat_id"]
             user_is_admin = user_data["is_admin"]
             user_can_add_groups = user_data["can_add_groups"]
+            user_can_modify_groups = user_data["can_modify_groups"]
 
             groups_dict, is_groups_dict = ChatTable.get_directory_indexed_chats(
                 user_id, directory_id,
@@ -688,7 +701,7 @@ class Queries:
                 else:
                     return Menus.get_error_menu(locale)
 
-                if user_can_add_groups:
+                if user_can_add_groups or user_can_modify_groups:
                     index_group_here_button_text = locale.get_string("explore_directories.index_group_here_btn")
 
                     index_group_here_callback_data = f"index_group_in{cls.fd}{directory_id}{cls.fd}0"
@@ -901,6 +914,9 @@ class Queries:
 
                             offset = int(args[2])
 
+                            user_can_add_groups = user_data["can_add_groups"]
+                            user_can_modify_groups = user_data["can_modify_groups"]
+
                             if query_data.startswith(f"missing_permissions_menu{cls.fd}"):
                                 text, reply_markup = await cls.missing_permissions_menu(locale, bot,
                                                                                         target_chat_id, target_directory_id, offset)
@@ -911,24 +927,32 @@ class Queries:
                             elif query_data.startswith(f"index_confirm_menu{cls.fd}"):
                                 text, reply_markup = await cls.index_group_menu(locale, bot,
                                                                                 user, target_chat_id, target_directory_id, offset,
-                                                                                requires_confirmation=True)
+                                                                                requires_confirmation=True,
+                                                                                user_can_add_groups=user_can_add_groups,
+                                                                                user_can_modify_groups=user_can_modify_groups)
 
                             elif query_data.startswith(f"index{cls.fd}"):
                                 text, reply_markup = await cls.index_group_menu(locale, bot,
                                                                                 user, target_chat_id, target_directory_id, offset,
-                                                                                requires_confirmation=False)
+                                                                                requires_confirmation=False,
+                                                                                user_can_add_groups=user_can_add_groups,
+                                                                                user_can_modify_groups=user_can_modify_groups)
 
                             elif query_data.startswith(f"unindex_confirm_menu{cls.fd}"):
                                 text, reply_markup = await cls.index_group_menu(locale, bot,
                                                                                 user, target_chat_id, None, offset,
                                                                                 requires_confirmation=True,
-                                                                                unindex_directory_id=target_directory_id)
+                                                                                unindex_directory_id=target_directory_id,
+                                                                                user_can_add_groups=user_can_add_groups,
+                                                                                user_can_modify_groups=user_can_modify_groups)
 
                             elif query_data.startswith(f"unindex{cls.fd}"):
                                 text, reply_markup = await cls.index_group_menu(locale, bot,
                                                                                 user, target_chat_id, None, offset,
                                                                                 requires_confirmation=False,
-                                                                                unindex_directory_id=target_directory_id)
+                                                                                unindex_directory_id=target_directory_id,
+                                                                                user_can_add_groups=user_can_add_groups,
+                                                                                user_can_modify_groups=user_can_modify_groups)
 
                         elif query_data == "wip_alert":
                             await query.answer(text=locale.get_string("wip_alert"), show_alert=True)

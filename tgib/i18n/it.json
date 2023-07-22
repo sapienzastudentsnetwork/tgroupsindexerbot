@@ -43,7 +43,8 @@
 
   "unauthorized_error_menu.text": [
     "\uD83D\uDE14 L'operazione che hai provato ad effettuare non risulta esserti consentita",
-    "\n\n<i>Ti preghiamo di contattarci qualora pensi possa trattarsi di un errore</i>"
+    "\n\nℹ️ Puoi provare a controllare il tuo /userstatus per maggiori informazioni",
+    "\n\n\uD83C\uDD98 <i>Ti preghiamo di contattarci qualora pensi possa trattarsi di un errore</i>"
   ],
   "unauthorized_error_menu.contact_us_btn": "\uD83D\uDCAC Contattaci",
   "unauthorized_error_menu.back_btn": "◀️ Torna al menù",
@@ -90,17 +91,34 @@
   "commands.reload.hidden": "\uD83D\uDEAB Attualmente nascosto dall'indicizzazione da un amministratore/trice del bot",
   "commands.reload.indexed": "\uD83D\uDD0D Attualmente indicizzato nella categoria '[category]'",
   "commands.reload.not_indexed": "\uD83E\uDD77 Attualmente non indicizzato in nessuna categoria",
-  "commands.userstatus.you_are": "Sei",
-  "commands.userstatus.he_is": "È",
-  "commands.userstatus.is_bot_owner": "\uD83D\uDC51 [conjugation] il/la proprietario/a di questa istanza del bot",
-  "commands.userstatus.is_a_bot_admin": "\uD83D\uDC6E\u200D♀️ [conjugation] un amministratore/trice del bot",
-  "commands.userstatus.is_admin_of_n_indexed_groups": "⚙️ [conjugation] tra gli/le amministratori/trici di <code>[n]</code> gruppi indicizzati sul bot",
-  "commands.userstatus.is_a_bot_user": "\uD83D\uDC64 [conjugation] un utente del bot",
+  "commands.userstatus.second_person_is": "Sei",
+  "commands.userstatus.third_person_is": "È",
+  "commands.userstatus.is_bot_owner": "\uD83D\uDC51 [is] il/la proprietario/a di questa istanza del bot",
+  "commands.userstatus.is_a_bot_admin": "\uD83D\uDC6E\u200D♀️ [is] un amministratore/trice del bot",
+  "commands.userstatus.is_admin_of_n_indexed_groups": "⚙️ [is] tra gli/le amministratori/trici di <code>[n]</code> gruppo/i indicizzati sul bot",
+  "commands.userstatus.is_a_bot_user": "\uD83D\uDC64 [is] un utente del bot",
   "commands.userstatus.no_target_data_available": "\uD83D\uDE45 Nessun informazione aggiuntiva disponibile",
+  "commands.userstatus.generation_date_line": "<i>Informazioni al [date] alle ore [time] (UTC+[offset]), controllare periodicamente per aggiornamenti</i>",
   "commands.userstatus.insufficient_perms": [
     "✋ Devi essere amministratore/trice di questa istanza del bot o un amministratore/trice del gruppo",
     " in questione per poter esibire il tuo /userstatus o quello di un altro utente al suo interno"
   ],
+  "commands.userstatus.restrictions_first_line": "\uD83D\uDD12 Restrizioni:",
+  "commands.restrictions.updated_first_line": "☑️ Modifica delle restrizioni avvenuta con successo:",
+  "commands.restrictions.no_changes_made": "☑️ Restrizioni già impostate in questo modo, nessun cambiamento da effettuare",
+  "commands.restrictions.wrong_restriction_name": [
+    "️✋ Devi specificare una delle restrizioni possibili ('può esplorare i gruppi', 'può aggiungere gruppi', 'può modificare i gruppi') o 'tutto' per tutte"
+  ],
+  "commands.restrictions.second_person_can": "Puoi",
+  "commands.restrictions.third_person_can": "Può",
+  "commands.restrictions.second_person_pronoun": "tuoi",
+  "commands.restrictions.third_person_pronoun": "suoi",
+  "commands.restrictions.cant_view_groups": "Non [can] esplorare i gruppi",
+  "commands.restrictions.cant_add_groups": "Non [can] indicizzare nuovi gruppi",
+  "commands.restrictions.cant_modify_groups": "Non [can] modificare i [pronoun] gruppi indicizzati",
+  "commands.restrictions.can_view_groups": "\uD83D\uDC41 [can] esplorare i gruppi",
+  "commands.restrictions.can_add_groups": "\uD83D\uDCA0 [can] indicizzare nuovi gruppi",
+  "commands.restrictions.can_modify_groups": "✏️ [can] modificare i [pronoun] gruppi indicizzati",
   "commands.visibility.hide.successful": "\uD83E\uDEE3 Chat '<u>[title]</u>' {<code>[chat_id]</code>} nascosta (bandita dall'indicizzazione) con successo",
   "commands.visibility.unhide.successful": "\uD83D\uDC41 Chat '<u>[title]</u>' {<code>[chat_id]</code>} riammessa nell'indicizzazione con successo",
   "commands.visibility.unindex.successful": "☑️ Gruppo '<u>[title]</u>' deindicizzato con successo dalla categoria '[category]'",

@@ -36,11 +36,12 @@ class Commands:
     user_last_command_use_dates = {"dont": {}, "reload": {}, "userstatus": {}}
     registered_commands = ["start", "groups", "dont", "userstatus", "reload", "id",
                            "hide", "unhide", "move", "unindex",
-                           "addadmin", "rmadmin", "listadmins"]
-    private_specific_commands = ("addadmin", "rmadmin")
+                           "addadmin", "rmadmin", "listadmins",
+                           "restrict", "unrestrict"]
+    private_specific_commands = ("addadmin", "rmadmin", "restrict", "unrestrict")
     group_specific_commands = ("reload",)
     group_admin_commands = ("reload",)
-    bot_admin_commands = ("hide", "unhide", "move", "unindex")
+    bot_admin_commands = ("hide", "unhide", "move", "unindex", "restrict", "unrestrict")
     bot_owner_commands = ("addadmin", "rmadmin", "listadmins")
     alias_commands = {"removeadmin": "rmadmin", "bangroup": "hide", "unbangroup": "unhide",
                       "deindex": "unindex", "index": "move", "dontasktoask": "dont",
@@ -185,16 +186,18 @@ class Commands:
                                 if query_message.reply_to_message:
                                     reply_to_message = query_message.reply_to_message
 
-                            elif command == "userstatus":
+                            elif command_name == "userstatus":
                                 private_chat_priority = True
+
+                                delete_answer = False
 
                                 target_user = user
                                 target_user_id = user_id
 
-                                conjugation = locale.get_string("commands.userstatus.you_are")
+                                third_person = False
 
                                 if chat.type != "private":
-                                    conjugation = locale.get_string("commands.userstatus.he_is")
+                                    third_person = True
 
                                     if query_message.reply_to_message:
                                         reply_to_message = query_message.reply_to_message
@@ -203,7 +206,7 @@ class Commands:
                                         target_user_id = target_user.id
 
                                     if not user_is_bot_admin:
-                                        if not await Queries.is_chat_admin(bot_instance, user_id, target_user_id):
+                                        if not await Queries.is_chat_admin(bot_instance, chat_id, user_id):
                                             invalid_request = True
 
                                             text = locale.get_string("commands.userstatus.insufficient_perms")
@@ -218,7 +221,7 @@ class Commands:
                                         except:
                                             target_user = None
 
-                                        conjugation = locale.get_string("commands.userstatus.he_is")
+                                        third_person = True
 
                                     except:
                                         invalid_request = True
@@ -226,10 +229,17 @@ class Commands:
                                         text = locale.get_string("commands.wrong_user_id_format")
 
                                 if not invalid_request:
+                                    if third_person:
+                                        is_replacement = locale.get_string("commands.userstatus.third_person_is")
+                                    else:
+                                        is_replacement = locale.get_string("commands.userstatus.second_person_is")
+
                                     if target_user_id == user_id:
                                         target_user_data = user_data
 
                                         private_chat_priority = False
+
+                                        delete_answer = True
 
                                         delete_answer_delay = 20
 
@@ -240,24 +250,54 @@ class Commands:
 
                                     if target_user_data:
                                         if target_user_id == int(bot_owner_chat_id):
-                                            target_info = locale.get_string("commands.userstatus.is_bot_owner") + "\n\n"
+                                            target_info = locale.get_string("commands.userstatus.is_bot_owner")
 
                                         elif target_user_data["is_admin"]:
-                                            target_info = locale.get_string("commands.userstatus.is_a_bot_admin") + "\n\n"
+                                            target_info = locale.get_string("commands.userstatus.is_a_bot_admin")
 
                                         elif chat.type != "private" or target_user_id != user_id:
-                                            target_info = locale.get_string("commands.userstatus.is_a_bot_user") + "\n\n"
+                                            target_info = locale.get_string("commands.userstatus.is_a_bot_user")
+
+                                        if user_is_bot_admin or target_user_id == user_id:
+                                            target_can_view_groups   = target_user_data["can_view_groups"]
+                                            target_can_add_groups    = target_user_data["can_add_groups"]
+                                            target_can_modify_groups = target_user_data["can_modify_groups"]
+
+                                            if (not target_can_view_groups) or (not target_can_add_groups) or (not target_can_modify_groups):
+                                                if target_info:
+                                                    target_info += "\n\n"
+
+                                                target_info += locale.get_string("commands.userstatus.restrictions_first_line")
+
+                                                if third_person:
+                                                    can_replacement = locale.get_string("commands.restrictions.third_person_can")
+                                                    possessive_pronoun_replacement = locale.get_string("commands.restrictions.third_person_pronoun")
+
+                                                else:
+                                                    can_replacement = locale.get_string("commands.restrictions.second_person_can")
+                                                    possessive_pronoun_replacement = locale.get_string("commands.restrictions.second_person_pronoun")
+
+                                                for restriction_key_name in ("can_view_groups", "can_add_groups", "can_modify_groups"):
+                                                    if not target_user_data[f"{restriction_key_name}"]:
+                                                        target_info += f"\n\n• 🚫 " + locale.get_string(f"commands.restrictions.{restriction_key_name}".replace("can_", "cant_"))\
+                                                            .replace("[can]", can_replacement.lower()).replace("[pronoun]", possessive_pronoun_replacement).capitalize()
+                                                    else:
+                                                        target_info += f"\n\n• " + locale.get_string(f"commands.restrictions.{restriction_key_name}")\
+                                                            .replace("[can]", can_replacement).replace("[pronoun]", possessive_pronoun_replacement)
 
                                     number_of_indexed_chats_is_admin_of, _ = ChatTable.get_total_chats_user_is_admin_of(target_user_id, True)
 
                                     if number_of_indexed_chats_is_admin_of is not None and number_of_indexed_chats_is_admin_of > 0:
+                                        if target_info:
+                                            target_info += "\n\n"
+
                                         target_info += locale.get_string("commands.userstatus.is_admin_of_n_indexed_groups") \
                                             .replace("[n]", str(number_of_indexed_chats_is_admin_of))
 
                                     if not target_info:
                                         target_info = locale.get_string("commands.userstatus.no_target_data_available")
                                     else:
-                                        target_info = target_info.replace("[conjugation]", conjugation)
+                                        target_info = target_info.replace("[is]", is_replacement)
 
                                     target_user_info = f'[<code>{target_user_id}</code>]'
 
@@ -267,20 +307,27 @@ class Commands:
 
                                             if target_user.username == "Matypist":
                                                 if locale.lang_code == "it":
-                                                    target_info = "💠 [conjugation] il creatore di TGroupsIndexerBot " \
+                                                    target_info = "💠 [is] il creatore di TGroupsIndexerBot " \
                                                                   "<a href='https://github.com/sapienzastudentsnetwork/" \
                                                                   "tgroupsindexerbot'>[🌐]</a>" + "\n\n" + target_info
                                                 else:
-                                                    target_info = "💠 [conjugation] the creator of TGroupsIndexerBot " \
+                                                    target_info = "💠 [is] the creator of TGroupsIndexerBot " \
                                                                   "<a href='https://github.com/sapienzastudentsnetwork/" \
                                                                   "tgroupsindexerbot'>[🌐]</a>" + "\n\n" + target_info
 
-                                                target_info = target_info.replace("[conjugation]", conjugation)
+                                                target_info = target_info.replace("[is]", is_replacement)
 
                                         if target_user.full_name:
                                             target_user_info = f'<a href="tg://user?id={target_user_id}">{target_user.full_name}</a> {target_user_info}'
 
                                     text = target_user_info + "\n\n" + target_info
+
+                                    date_str, time_str, offset_str = Queries.get_current_italian_datetime()
+
+                                    text += "\n\n" + locale.get_string("commands.userstatus.generation_date_line") \
+                                        .replace("[date]", date_str) \
+                                        .replace("[time]", time_str) \
+                                        .replace("[offset]", offset_str[1:3])
 
                             elif command_name == "reload":
                                 old_chat_data, new_chat_data, is_new_chat_data = await ChatTable.fetch_chat(bot_instance, chat_id)
@@ -488,63 +535,163 @@ class Commands:
 
                                             delete_query_message = False
 
-                            elif command_name in ("addadmin", "rmadmin"):
+                            elif command_name in ("addadmin", "rmadmin", "restrict", "unrestrict"):
                                 if len(command_args) >= 1:
-                                    target_chat_id = None
+                                    if command_name not in ("restrict", "unrestrict") or len(command_args) >= 2:
+                                        target_user_id = None
 
-                                    try:
-                                        target_chat_id = int(command_args[0])
+                                        try:
+                                            target_user_id = int(command_args[0])
 
-                                    except Exception:
-                                        text = locale.get_string("commands.wrong_chat_id_format")
-
-                                        delete_query_message = False
-
-                                    if target_chat_id is not None:
-                                        target_chat_data, is_target_chat_data = AccountTable.get_account_record(target_chat_id, False)
-
-                                        if is_target_chat_data:
-                                            updated = False
-
-                                            if command_name == "addadmin":
-                                                if target_chat_data["is_admin"] is False:
-                                                    updated = AccountTable.update_admin_status(target_chat_id, True)
-
-                                                    if updated:
-                                                        text = locale.get_string("commands.admins.set")
-
-                                                else:
-                                                    text = locale.get_string("commands.admins.already_admin")
-
-                                            elif command_name == "rmadmin":
-                                                if target_chat_data["is_admin"] is True:
-                                                    updated = AccountTable.update_admin_status(target_chat_id, False)
-
-                                                    if updated:
-                                                        text = locale.get_string("commands.admins.unset")
-
-                                                else:
-                                                    text = locale.get_string("commands.admins.already_not_admin")
-
-                                            if text:
-                                                text = text.replace("[chat_id]", str(target_chat_id))
-
-                                            if updated:
-                                                delete_query_message = False
-
-                                            elif not text:
-                                                delete_query_message = False
-
-                                                text = locale.get_string("commands.admins.database_error")
-
-
-                                        else:
-                                            text = locale.get_string("commands.chat_database_error")
+                                        except Exception:
+                                            text = locale.get_string("commands.wrong_chat_id_format")
 
                                             delete_query_message = False
 
+                                        if target_user_id is not None:
+                                            target_user_data, is_target_user_data = AccountTable.get_account_record(target_user_id, False)
+
+                                            if is_target_user_data:
+                                                updated = False
+
+                                                if command_name == "addadmin":
+                                                    if target_user_data["is_admin"] is False:
+                                                        updated = AccountTable.update_admin_status(target_user_id, True)
+
+                                                        if updated:
+                                                            text = locale.get_string("commands.admins.set")
+
+                                                    else:
+                                                        text = locale.get_string("commands.admins.already_admin")
+
+                                                elif command_name == "rmadmin":
+                                                    if target_user_data["is_admin"] is True:
+                                                        updated = AccountTable.update_admin_status(target_user_id, False)
+
+                                                        if updated:
+                                                            text = locale.get_string("commands.admins.unset")
+
+                                                    else:
+                                                        text = locale.get_string("commands.admins.already_not_admin")
+
+                                                elif command_name in ("restrict", "unrestrict"):
+                                                    restriction_name = ' '.join(command_args[1:])
+
+                                                    can_view_groups_restriction_names = (
+                                                        "all", "view", "viewing", "view groups", "viewing groups", "can view groups", "can_view_groups",
+                                                        "tutto", "esplora", "esplorare", "esplora gruppi", "esplorare gruppi", "può esplorare gruppi", "può esplorare i gruppi",
+                                                        "vedi", "vedere", "vedi gruppi", "vedere gruppi", "può vedere gruppi", "può vedere i gruppi"
+                                                    )
+
+                                                    can_add_groups_restriction_names = (
+                                                        "all", "add", "adding", "add groups", "adding groups", "can add groups", "can_add_groups",
+                                                        "tutto", "aggiungi", "aggiungere", "aggiungi gruppi", "aggiungere gruppi",
+                                                        "può aggiungere gruppi", "può aggiungere i gruppi", "può aggiungere un gruppo", "può aggiungere nuovi gruppi"
+                                                    )
+
+                                                    can_modify_groups_restriction_names = (
+                                                        "all", "modify", "modifying", "modify groups", "modifying groups", "modify groups", "can modify groups", "can_modify_groups",
+                                                        "tutto", "modifica", "modificare", "modifica gruppi", "modificare gruppi", "può modificare gruppi", "può modificare i gruppi"
+                                                    )
+
+                                                    restriction_names = set(can_view_groups_restriction_names + can_add_groups_restriction_names + can_modify_groups_restriction_names)
+
+                                                    if restriction_name in restriction_names:
+                                                        restrictions = {
+                                                            "can_view_groups": (restriction_name in can_view_groups_restriction_names),
+                                                            "can_add_groups": (restriction_name in can_add_groups_restriction_names),
+                                                            "can_modify_groups": (restriction_name in can_modify_groups_restriction_names)
+                                                        }
+
+                                                        old_values, new_values = {}, {}
+
+                                                        changes_summary_text = ""
+
+                                                        for restriction_key_name in restrictions.keys():
+                                                            restriction_current_value = target_user_data[restriction_key_name]
+
+                                                            old_values[restriction_key_name] = restriction_current_value
+                                                            new_values[restriction_key_name] = restriction_current_value
+
+                                                            if restrictions[restriction_key_name]:
+                                                                restriction_new_value = not (command_name == "restrict")
+
+                                                                if restriction_current_value != restriction_new_value:
+                                                                    new_values[restriction_key_name] = restriction_new_value
+
+                                                                    restriction_descriptive_text = locale.get_string(f"commands.restrictions.{restriction_key_name}")\
+                                                                        .replace("[can]", locale.get_string("commands.restrictions.third_person_can"))\
+                                                                        .replace("[pronoun]", locale.get_string("commands.restrictions.third_person_pronoun"))
+
+                                                                    changes_summary_text += "\n\n• " \
+                                                                        + "<b>" + restriction_descriptive_text + "</b>" \
+                                                                        + f": {restriction_current_value} → <u>{restriction_new_value}</u>"
+
+                                                        if changes_summary_text:
+                                                            updated = AccountTable.update_account_restrictions(
+                                                                chat_id=target_user_id,
+                                                                can_view_groups=new_values["can_view_groups"],
+                                                                can_add_groups=new_values["can_add_groups"],
+                                                                can_modify_groups=new_values["can_modify_groups"],
+                                                            )
+
+                                                            if updated:
+                                                                try:
+                                                                    target_user = await bot_instance.get_chat(chat_id=target_user_id)
+
+                                                                except:
+                                                                    target_user = None
+
+                                                                target_user_info = f'[<code>{target_user_id}</code>]'
+
+                                                                if target_user:
+                                                                    if target_user.username:
+                                                                        target_user_info = f"(@{target_user.username}) {target_user_info}"
+
+                                                                    if target_user.full_name:
+                                                                        target_user_info = f'<a href="tg://user?id={target_user_id}">{target_user.full_name}</a> {target_user_info}'
+
+                                                                changes_summary_text += "\n\n🎯 " + target_user_info
+
+                                                                text = locale.get_string("commands.restrictions.updated_first_line") + changes_summary_text
+
+                                                                await Logger.log_user_action(command_name, user, changes_summary_text)
+                                                            else:
+                                                                text = locale.get_string("commands.database_error")
+
+                                                        else:
+                                                            text = locale.get_string("commands.restrictions.no_changes_made")
+
+                                                    else:
+                                                        text = locale.get_string("commands.restrictions.wrong_restriction_name")
+
+                                                if text:
+                                                    text = text.replace("[chat_id]", str(target_user_id))
+
+                                                if updated:
+                                                    delete_query_message = False
+
+                                                elif not text:
+                                                    delete_query_message = False
+
+                                                    text = locale.get_string("commands.admins.database_error")
+
+                                            else:
+                                                text = locale.get_string("commands.account_database_error")
+
+                                                delete_query_message = False
+                                    else:
+                                        text = locale.get_string("commands.min_n_args").replace("[n]", "2")
+
+                                        invalid_request = True
+
                                 else:
-                                    text = locale.get_string("commands.min_n_args").replace("[n]", "1")
+                                    text = locale.get_string("commands.min_n_args")
+
+                                    if command_name in ("restrict", "unrestrict"):
+                                        text = text.replace("[n]", "2")
+                                    else:
+                                        text = text.replace("[n]", "1")
 
                                     invalid_request = True
 
@@ -616,6 +763,8 @@ class Commands:
                             cls.user_last_command_use_dates[command_name][user_id] = current_epoch
                 else:
                     text, reply_markup = Menus.get_error_menu(locale, "unauthorized")
+
+                    private_chat_priority = True
 
             if reply_markup:
                 reply_markup = Queries.encode_queries(reply_markup)
@@ -693,7 +842,7 @@ class Commands:
 
                 new_message = None
 
-                prioritary_conditions_over_reply_to_message = (cooldown or invalid_request)
+                prioritary_conditions_over_reply_to_message = (private_chat_priority or cooldown or invalid_request)
 
                 if not private_chat_priority:
                     private_chat_priority = prioritary_conditions_over_reply_to_message or not reply_to_message
@@ -748,7 +897,7 @@ class Commands:
 
                 if delete_answer is None:
                     delete_answer = new_message and (cooldown or command_name not in ("dont",)) and \
-                        (command_name not in ("hide", "unhide", "move", "addadmin", "rmadmin", "listadmins", "userstatus")
+                        (command_name not in ("hide", "unhide", "move", "addadmin", "rmadmin", "listadmins", "restrict", "unrestrict", "userstatus")
                          or invalid_request is True or update.effective_chat.type in ("group", "supergroup"))
 
                 if delete_answer:
