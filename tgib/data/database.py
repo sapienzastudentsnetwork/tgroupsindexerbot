@@ -300,6 +300,8 @@ class AccountTable:
                 Logger.log("exception", "AccountTable.get_account_records_count",
                            f"An exception occurred while trying to get the number of account records", ex)
 
+                Database.connection.rollback()
+
                 return -1
 
         else:
@@ -327,6 +329,8 @@ class AccountTable:
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "AccountTable.create_account_record",
                            f"An exception occurred while trying to create account record for '{chat_id}'", ex)
+
+                Database.connection.rollback()
 
                 return False
 
@@ -367,6 +371,8 @@ class AccountTable:
                 Logger.log("exception", "AccountTable.update_account_restrictions",
                            f"Couldn't update restriction values for user having chat_id '{chat_id}'", ex)
 
+                Database.connection.rollback()
+
                 return False
 
         else:
@@ -404,6 +410,8 @@ class AccountTable:
                 Logger.log("exception", "AccountTable.change_admin_status",
                            f"Couldn't update admin status to '{new_value}' for user having chat_id '{chat_id}'", ex)
 
+                Database.connection.rollback()
+
                 return False
 
         else:
@@ -430,6 +438,8 @@ class AccountTable:
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "AccountTable.get_bot_admin_records",
                            f"An exception occurred while trying to get bot admin account records", ex)
+
+                Database.connection.rollback()
 
                 return None, False
 
@@ -468,6 +478,8 @@ class AccountTable:
                 except (Exception, psycopg2.DatabaseError) as ex:
                     Logger.log("exception", "AccountTable.get_account_record",
                                f"An exception occurred while trying to get account record with '{chat_id}' as chat_id", ex)
+
+                    Database.connection.rollback()
 
                     return None, False
 
@@ -534,6 +546,8 @@ class DirectoryTable:
                 Logger.log("exception", "DirectoryTable.create_directory",
                            f"An exception occurred while trying to create a new directory", ex)
 
+                Database.connection.rollback()
+
                 return None, False
 
         else:
@@ -573,6 +587,8 @@ class DirectoryTable:
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "DirectoryTable.delete_directory",
                            f"Couldn't remove directory having chat_id '{directory_id}' from database", ex)
+
+                Database.connection.rollback()
 
                 return False
 
@@ -685,6 +701,8 @@ class DirectoryTable:
                            f"An exception occurred while trying to update parent directory ID"
                            f" to '{new_parent_directory_id}' for directory having id '{directory_id}", ex)
 
+                Database.connection.rollback()
+
                 return False
 
         else:
@@ -723,6 +741,8 @@ class DirectoryTable:
                 Logger.log("exception", "DirectoryTable.update_directory_names",
                            f"An exception occurred while trying to update names for directory having id '{directory_id}", ex)
 
+                Database.connection.rollback()
+
                 return False
 
         else:
@@ -760,6 +780,8 @@ class DirectoryTable:
                 Logger.log("exception", "DirectoryTable.update_directory_visibility",
                            f"Couldn't update visibility to hidden by '{hidden_by}' for directory having id '{directory_id}'", ex)
 
+                Database.connection.rollback()
+
                 return False
 
         else:
@@ -796,6 +818,8 @@ class DirectoryTable:
                     Logger.log("exception", "DirectoryTable.get_directory_data",
                                f"An exception occurred while trying to get directory name for directory "
                                f"having id equal to '{directory_id}'", ex)
+
+                    Database.connection.rollback()
 
                     return None, False
 
@@ -835,6 +859,8 @@ class DirectoryTable:
                     Logger.log("exception", "DirectoryTable.get_sub_directories",
                                f"An exception occurred while trying to get sub-directories of "
                                f"directory with parent_id equal to '{parent_id}'", ex)
+
+                    Database.connection.rollback()
 
                     return None, False
 
@@ -891,6 +917,8 @@ class DirectoryTable:
                     Logger.log("exception", "DirectoryTable.get_chats_count",
                                f"An exception occurred while trying to get the number of chats "
                                f"with a parent directory having id '{directory_id}'", ex)
+
+                    Database.connection.rollback()
 
                     return -1, False
 
@@ -1025,6 +1053,8 @@ class ChatTable:
                            f"An exception occurred while trying to get the total number of chats "
                            f"user having chat_id '{chat_id}' is admin of", ex)
 
+                Database.connection.rollback()
+
                 return None, False
         else:
             Logger.log("error", "ChatTable.get_total_chats_user_is_admin_of",
@@ -1059,6 +1089,8 @@ class ChatTable:
                            f"An exception occurred while trying to get data of the chats"
                            f" user having chat_id '{chat_id}' is admin of", ex)
 
+                Database.connection.rollback()
+
                 return None, False
         else:
             Logger.log("error", "ChatTable.get_chat_user_is_admin_of",
@@ -1091,6 +1123,8 @@ class ChatTable:
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "ChatTable.update_chat_visibility",
                            f"Couldn't update visibility to hidden by '{hidden_by}' for chat having id '{chat_id}'", ex)
+
+                Database.connection.rollback()
 
                 return False
 
@@ -1125,6 +1159,8 @@ class ChatTable:
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "ChatTable.update_chat_directory",
                            f"Couldn't update directory_id to '{new_directory_id}' for chat having id '{chat_id}'", ex)
+
+                Database.connection.rollback()
 
                 return False
 
@@ -1170,6 +1206,8 @@ class ChatTable:
                     Logger.log("exception", "ChatTable.migrate_chat_id",
                                f"Couldn't update data of supergroup having '{new_chat_id}'"
                                f" by migrating them from data associated to its previous chat_id '{old_chat_id}", ex)
+
+                    Database.connection.rollback()
 
                     return False
 
@@ -1223,11 +1261,15 @@ class ChatTable:
                         Logger.log("exception", "ChatTable.set_missing_permissions",
                                    f"Couldn't remove having chat_id '{chat_id}' from database", ex)
 
+                        Database.connection.rollback()
+
                         return False
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "ChatTable.set_missing_permissions",
                            f"Couldn't get data of chat having chat_id '{chat_id}' from database", ex)
+
+                Database.connection.rollback()
 
                 return False
 
@@ -1260,6 +1302,8 @@ class ChatTable:
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "ChatTable.remove_chat",
                            f"Couldn't remove chat having chat_id '{chat_id}' from database", ex)
+
+                Database.connection.rollback()
 
                 return False
 
@@ -1310,6 +1354,8 @@ class ChatTable:
                 except (Exception, psycopg2.DatabaseError) as ex:
                     Logger.log("exception", "ChatTable.fetch_chat",
                                f"Couldn't get data from database about chat having chat_id '{chat_id}'", ex)
+
+                    Database.connection.rollback()
 
         try:
             try:
@@ -1489,6 +1535,8 @@ class ChatTable:
                 else:
                     Logger.log("exception", "ChatTable.fetch_chat", f"Couldn't add chat '{chat_id}'", ex)
 
+                Database.connection.rollback()
+
                 return chat_data, new_chat_data, False
 
         return chat_data, new_chat_data, True
@@ -1544,12 +1592,15 @@ class SessionTable:
 
                 cursor.execute("INSERT INTO session (chat_id, menu_message_id) VALUES (%s, %s)",
                                (chat_id, latest_menu_message_id))
+
                 connection.commit()
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("critical", "SessionTable.add_session",
                            f"An exception occurred while trying to insert '{latest_menu_message_id}' "
                            f"latest_menu_message_id in 'session' table for '{chat_id}'", ex)
+
+                Database.connection.rollback()
 
         else:
             Logger.log("error", "SessionTable.add_session", f"Couldn't get cursor required to insert session data")
@@ -1576,6 +1627,8 @@ class SessionTable:
                 Logger.log("critical", "SessionTable.update_session",
                            f"An exception occurred while trying to update latest_menu_message_id for "
                            f"'{chat_id}' to `{new_latest_menu_message_id}'", ex)
+
+                Database.connection.rollback()
 
         else:
             Logger.log("error", "SessionTable.update_session", f"Couldn't get cursor required to update session data")
