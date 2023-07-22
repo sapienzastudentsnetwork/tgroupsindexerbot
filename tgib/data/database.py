@@ -543,7 +543,121 @@ class DirectoryTable:
             return None, False
 
     @classmethod
-    def move_directory(cls, id: int, new_parent_directory_id: int):
+    def delete_directory(cls, directory_id: int, parent_directory_id: int = None) -> bool:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            query = """
+                DELETE FROM directory
+                WHERE id = %s
+            """
+
+            try:
+                connection = Database.connection
+                connection: psycopg2._psycopg.connection
+
+                cursor.execute(query, (directory_id,))
+
+                connection.commit()
+
+                if parent_directory_id is not None and parent_directory_id in cls.cached_sub_directories:
+                    cls.cached_sub_directories[parent_directory_id][directory_id] = {}
+                    cls.cached_sub_directories[parent_directory_id].pop(directory_id)
+
+                if directory_id in cls.cached_directory_records:
+                    cls.cached_directory_records[directory_id] = {}
+                    cls.cached_directory_records.pop(directory_id)
+
+                return True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "DirectoryTable.delete_directory",
+                           f"Couldn't remove directory having chat_id '{directory_id}' from database", ex)
+
+                return False
+
+        else:
+            Logger.log("error", "DirectoryTable.delete_directory",
+                       f"Couldn't get cursor required to remove chat having id '{directory_id}'")
+
+            return False
+
+    @classmethod
+    def directory_is_empty(cls, directory_id: int) -> bool:
+        sub_directories_data, is_subdirectories_data = DirectoryTable.get_sub_directories(directory_id)
+
+        if is_subdirectories_data:
+            chats, is_chats = ChatTable.get_directory_indexed_chats(directory_id, False, False)
+
+            if is_chats and not sub_directories_data and not chats:
+                return True
+
+        return False
+
+    @classmethod
+    async def get_directory_data_summary(cls, directory_data: dict, locale: Locale = None, full_parent_category_name: str = None):
+        directory_id = directory_data["id"]
+
+        parent_directory_id = directory_data["parent_id"]
+
+        summary_text = "🆔 " + str(directory_data["id"])
+
+        summary_text += "\n\n🇬🇧 " + directory_data["i18n_en_name"]
+
+        summary_text += "\n\n🇮🇹 " + directory_data["i18n_it_name"]
+
+        if directory_data["hidden_by"] is not None:
+            hidden_by_user_id = directory_data["hidden_by"]
+
+            hidden_by_info = f'[<code>{hidden_by_user_id}</code>]'
+
+            try:
+                hidden_by_user = await GlobalVariables.bot_instance.get_chat(hidden_by_user_id)
+                hidden_by_user: telegram.Chat
+
+                if hidden_by_user:
+                    if hidden_by_user.username:
+                        hidden_by_info = f"(@{hidden_by_user.username}) {hidden_by_info}"
+
+                    if hidden_by_user.full_name:
+                        hidden_by_info = f'<a href="tg://user?id={hidden_by_user_id}">{hidden_by_user.full_name}</a> {hidden_by_info}'
+
+            except Exception as ex:
+                pass
+
+            summary_text += f"\n\n🥷 " + hidden_by_info
+
+        if parent_directory_id is not None:
+            parent_directory_text = f"<code>{parent_directory_id}</code>"
+
+            if locale is None:
+                locale = Locale(Locale.def_lang_code)
+
+            if full_parent_category_name is None:
+                full_parent_category_name = cls.get_full_category_name(locale.lang_code, directory_id)
+
+            if full_parent_category_name:
+                parent_directory_text = f"{full_parent_category_name} [{parent_directory_text}]"
+
+            summary_text += "\n\n📂 " + parent_directory_text
+
+        return summary_text
+
+    @classmethod
+    def get_directory_localized_name(cls, lang_code: str, directory_data: dict) -> (str | None):
+        if directory_data:
+            if f"i18n_{lang_code}_name" in directory_data and bool(directory_data[f"i18n_{lang_code}_name"]):
+                return directory_data[f"i18n_{lang_code}_name"]
+            elif f"i18n_{Locale.def_lang_code}_name" in directory_data and bool(directory_data[f"i18n_{Locale.def_lang_code}_name"]):
+                return directory_data[f"i18n_{Locale.def_lang_code}_name"]
+            else:
+                return str(directory_data["id"])
+
+        else:
+            return None
+
+    @classmethod
+    def move_directory(cls, directory_id: int, new_parent_directory_id: int):
         cursor, iscursor = Database.get_cursor()
 
         if iscursor:
@@ -556,32 +670,32 @@ class DirectoryTable:
                     SET parent_id = %s
                     WHERE id = %s;
                     """,
-                    (new_parent_directory_id, id)
+                    (new_parent_directory_id, directory_id)
                 )
 
                 Database.connection.commit()
 
-                if id in cls.cached_directory_records:
-                    cls.cached_directory_records[id]["parent_id"] = new_parent_directory_id
+                if directory_id in cls.cached_directory_records:
+                    cls.cached_directory_records[directory_id]["parent_id"] = new_parent_directory_id
 
                 return True
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "DirectoryTable.update_directory_names",
                            f"An exception occurred while trying to update parent directory ID"
-                           f" to '{new_parent_directory_id}' for directory having id '{id}", ex)
+                           f" to '{new_parent_directory_id}' for directory having id '{directory_id}", ex)
 
                 return False
 
         else:
             Logger.log("error", "DirectoryTable.update_directory_names",
                        f"Couldn't get cursor required to update parent directory ID"
-                       f" to '{new_parent_directory_id}' for directory having id '{id}'")
+                       f" to '{new_parent_directory_id}' for directory having id '{directory_id}'")
 
             return False
 
     @classmethod
-    def update_directory_names(cls, id: int, new_i18n_en_name: str, new_i18n_it_name: str) -> (int | None, bool):
+    def update_directory_names(cls, directory_id: int, new_i18n_en_name: str, new_i18n_it_name: str) -> (int | None, bool):
         cursor, iscursor = Database.get_cursor()
 
         if iscursor:
@@ -594,26 +708,63 @@ class DirectoryTable:
                     SET i18n_en_name = %s, i18n_it_name = %s
                     WHERE id = %s;
                     """,
-                    (new_i18n_en_name, new_i18n_it_name, id)
+                    (new_i18n_en_name, new_i18n_it_name, directory_id)
                 )
 
                 Database.connection.commit()
 
-                if id in cls.cached_directory_records:
-                    cls.cached_directory_records[id]["i18n_en_name"] = new_i18n_en_name
-                    cls.cached_directory_records[id]["i18n_it_name"] = new_i18n_it_name
+                if directory_id in cls.cached_directory_records:
+                    cls.cached_directory_records[directory_id]["i18n_en_name"] = new_i18n_en_name
+                    cls.cached_directory_records[directory_id]["i18n_it_name"] = new_i18n_it_name
 
                 return True
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "DirectoryTable.update_directory_names",
-                           f"An exception occurred while trying to update names for directory having id '{id}", ex)
+                           f"An exception occurred while trying to update names for directory having id '{directory_id}", ex)
 
                 return False
 
         else:
             Logger.log("error", "DirectoryTable.update_directory_names",
-                       f"Couldn't get cursor required to update names for directory having id '{id}'")
+                       f"Couldn't get cursor required to update names for directory having id '{directory_id}'")
+
+            return False
+
+    @classmethod
+    def update_directory_visibility(cls, directory_id: int, hidden_by: int = None) -> bool:
+        cursor, iscursor = Database.get_cursor()
+
+        if iscursor:
+            try:
+                connection = Database.connection
+                connection: psycopg2._psycopg.connection
+
+                cursor.execute(
+                    """
+                    UPDATE directory
+                    SET hidden_by = %s
+                    WHERE id = %s;
+                    """,
+                    (hidden_by, directory_id)
+                )
+
+                connection.commit()
+
+                if directory_id in cls.cached_directory_records:
+                    cls.cached_directory_records[directory_id]["hidden_by"] = hidden_by
+
+                return True
+
+            except (Exception, psycopg2.DatabaseError) as ex:
+                Logger.log("exception", "DirectoryTable.update_directory_visibility",
+                           f"Couldn't update visibility to hidden by '{hidden_by}' for directory having id '{directory_id}'", ex)
+
+                return False
+
+        else:
+            Logger.log("error", "DirectoryTable.update_directory_visibility", f"Couldn't get cursor required to update visibility to"
+                                                                              f" hidden by '{hidden_by}' for directory having id '{directory_id}'")
 
             return False
 
@@ -696,21 +847,25 @@ class DirectoryTable:
             return cls.cached_sub_directories[parent_id], True
 
     @classmethod
-    def get_chats_count(cls, directory_id: int) -> (int, bool):
-        if directory_id not in cls.cached_chat_counts:
+    def get_chats_count(cls, directory_id: int, ignore_hidden_directories: bool = True, ignore_cached_values: bool = False) -> (int, bool):
+        if directory_id not in cls.cached_chat_counts or ignore_cached_values:
             cursor, iscursor = Database.get_cursor()
 
             if iscursor:
                 cursor: psycopg2._psycopg.cursor
 
                 try:
+                    directories_where = ""
+                    if ignore_hidden_directories:
+                        directories_where = "WHERE hidden_by IS NULL"
+
                     cursor.execute(
-                        """
+                        f"""
                         WITH RECURSIVE subdirectories AS (
                             SELECT id FROM directory WHERE id = %s
                             UNION
                             SELECT directory.id FROM directory
-                            JOIN subdirectories ON directory.parent_id = subdirectories.id
+                            JOIN subdirectories ON directory.parent_id = subdirectories.id {directories_where}
                         )
                         SELECT id, COUNT(chat.chat_id) as total_chats
                         FROM subdirectories
@@ -733,14 +888,14 @@ class DirectoryTable:
                     return chats_count, True
 
                 except (Exception, psycopg2.DatabaseError) as ex:
-                    Logger.log("exception", "DirectoryTable.get_chat_count",
+                    Logger.log("exception", "DirectoryTable.get_chats_count",
                                f"An exception occurred while trying to get the number of chats "
                                f"with a parent directory having id '{directory_id}'", ex)
 
                     return -1, False
 
             else:
-                Logger.log("error", "DirectoryTable.get_chat_count",
+                Logger.log("error", "DirectoryTable.get_chats_count",
                            f"Couldn't get cursor required to get the number of chats "
                            f"with a parent directory having id '{directory_id}'")
 
@@ -798,7 +953,7 @@ class DirectoryTable:
 
 class ChatTable:
     @classmethod
-    def get_directory_indexed_chats(cls, user_id: int, directory_id: int, skip_missing_permissions_chats: bool = True, skip_hidden_chats: bool = True) -> (dict | None, bool):
+    def get_directory_indexed_chats(cls, directory_id: int, skip_missing_permissions_chats: bool = True, skip_hidden_chats: bool = True, user_id: int = None) -> (dict | None, bool):
         cursor, iscursor = Database.get_cursor()
 
         if iscursor:
@@ -808,7 +963,7 @@ class ChatTable:
 
             query_vars = [directory_id]
 
-            if skip_missing_permissions_chats or skip_hidden_chats:
+            if (skip_missing_permissions_chats or skip_hidden_chats) and user_id is not None:
                 where_string += " AND (("
 
                 if skip_missing_permissions_chats:
@@ -1104,7 +1259,7 @@ class ChatTable:
 
             except (Exception, psycopg2.DatabaseError) as ex:
                 Logger.log("exception", "ChatTable.remove_chat",
-                           f"Couldn't remove having chat_id '{chat_id}' from database", ex)
+                           f"Couldn't remove chat having chat_id '{chat_id}' from database", ex)
 
                 return False
 

@@ -47,12 +47,21 @@ class Logger:
 
     @classmethod
     async def log_to_telegram_channel(cls, channel_chat_id: int, log_message: str):
-        bot_instance: telegram.Bot = GlobalVariables.bot_instance
+        if channel_chat_id is not None:
+            bot_instance: telegram.Bot = GlobalVariables.bot_instance
 
-        await bot_instance.send_message(
-            chat_id=channel_chat_id,
-            text=log_message
-        )
+            try:
+                await bot_instance.send_message(
+                    chat_id=channel_chat_id,
+                    text=log_message
+                )
+
+                return True
+
+            except Exception:
+                pass
+
+        return False
 
     @classmethod
     def log(cls, log_type, author, text, exception=None) -> bool:
@@ -101,7 +110,7 @@ class Logger:
         return True
 
     @classmethod
-    def gen_user_info_string(cls, user: User):
+    def gen_user_info_string(cls, user: User) -> str:
         user_info = f'\n\n✍️ <a href="tg://user?id={user.id}">{user.full_name}</a>'
 
         if user.username:
@@ -112,27 +121,33 @@ class Logger:
         return user_info
 
     @classmethod
-    async def log_user_action(cls, action: str, admin: User, changes_summary: str):
+    async def log_user_action(cls, action: str, admin: User, changes_summary: str) -> bool:
         if cls.admin_actions_log_chat_id:
             text = "👮‍♂️ <b><u>" + action.upper() + f"</u></b> (#admin)"
 
-            text += f'\n\n✍️ <a href="tg://user?id={admin.id}">{admin.full_name}</a>'
+            text += cls.gen_user_info_string(admin)
 
-            if admin.username:
-                text += f" (@{admin.username})"
+            text += "\n\n" + changes_summary
 
-            text += f" [<code>{admin.id}</code>]"
+            return await cls.log_to_telegram_channel(cls.admin_actions_log_chat_id, text)
 
-            text += changes_summary
+    @classmethod
+    async def log_directory_visibility_action(cls, action: str, admin: User, directory_data_summary: str) -> bool:
+        if cls.admin_actions_log_chat_id:
+            text = "👮‍♂️ <b><u>" + action.upper() + f"</u></b> (#admin)"
 
-            await cls.log_to_telegram_channel(cls.admin_actions_log_chat_id, text)
+            text += cls.gen_user_info_string(admin)
+
+            text += "\n\n" + directory_data_summary
+
+            return await cls.log_to_telegram_channel(cls.admin_actions_log_chat_id, text)
 
     @classmethod
     async def log_directory_action(cls, action: str, admin: User, directory_id: int,
                                    i18n_it_name: str, i18n_en_name: str,
                                    parent_directory_id: int, parent_directory_name: str,
                                    new_i18n_it_name: str = None, new_i18n_en_name: str = None,
-                                   new_parent_directory_id: int = None, new_parent_directory_name: str = None):
+                                   new_parent_directory_id: int = None, new_parent_directory_name: str = None) -> bool:
 
         if cls.admin_actions_log_chat_id:
             text = "👮‍♂️ <b><u>" + action.upper() + f"</u></b> (#admin)"
@@ -165,12 +180,12 @@ class Logger:
             if action == "move directory" and new_parent_directory_id and new_parent_directory_name:
                 text += f"\n\n🎯 {new_parent_directory_name} [<code>{new_parent_directory_id}</code>]"
 
-            await cls.log_to_telegram_channel(cls.admin_actions_log_chat_id, text)
+            return await cls.log_to_telegram_channel(cls.admin_actions_log_chat_id, text)
 
     @classmethod
     async def log_chat_action(cls, action: str, user: User, target_chat_data: dict,
                               new_directory_id: int = None, full_old_category_name: str = None,
-                              full_new_category_name: str = None):
+                              full_new_category_name: str = None) -> bool:
 
         if cls.admin_actions_log_chat_id:
             target_chat_id = target_chat_data["chat_id"]
@@ -194,4 +209,4 @@ class Logger:
 
             bot_instance: telegram.Bot = GlobalVariables.bot_instance
 
-            await cls.log_to_telegram_channel(cls.admin_actions_log_chat_id, text)
+            return await cls.log_to_telegram_channel(cls.admin_actions_log_chat_id, text)

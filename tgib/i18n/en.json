@@ -8,7 +8,7 @@
   "i18n.en_flag":          "\uD83C\uDDEC\uD83C\uDDE7",
   "i18n.string_not_found": "String '[key]' not found",
 
-  "main_menu.text":                 "What do you want to do next?",
+  "main_menu.text":                 "❔ What do you want to do next?",
   "main_menu.explore_groups_btn":   "\uD83D\uDC65 Explore the groups",
   "main_menu.add_bot_to_group_btn": "\uD83D\uDCA0 Add a group",
   "main_menu.about_message_btn":    "ℹ️ About the bot",
@@ -55,8 +55,8 @@
   "expired_session_menu.about_alert": "Sessions expire automatically each time the bot is updated (and consequently restarted) and in any case at least once within 24 hours",
 
   "explore_directories.index_group_here_btn":         "\uD83D\uDCA0 Index a new group here",
-  "explore_directories.create_subdirectory_here_btn": "\uD83D\uDCC2 Create a subcategory here",
-  "explore_directories.edit_directory_btn":           "✏️ Edit category",
+  "explore_directories.create_subdirectory_here_btn": "\uD83D\uDCC2 Create a subcategory",
+  "explore_directories.manage_directory_btn":         "⚙️️ Change category settings",
   "explore_directories.sub_directory.back_btn":       "◀️ Back",
   "explore_directories.back_to_menu_btn":             "◀️ Back to Menu",
 
@@ -65,6 +65,10 @@
   "explore_groups.category.no_category_groups_line": "\nGeneral groups (without sub-category):\n",
   "explore_groups.category.sub_categories_line":     "\nSub-categories (buttons):",
   "explore_groups.category.no_groups": "\uD83D\uDE14 No groups in this category currently \uD83D\uDE14\n\n\uD83D\uDD04 Recheck periodically or be the first to index one ⏬",
+  "explore_groups.cant_access_category": [
+    "\uD83D\uDE14 An error occurred while accessing the category, it is likely that the category no longer exists or is temporarily unavailable",
+    "\n\n<i>Please contact us should the problem persist or should you think it may be an error</i>"
+  ],
 
   "wip_alert": "Feature under development, provisionally made possible by contacting @Matypist on Telegram",
 
@@ -259,57 +263,96 @@
     " or a bot administrator to change the category in your place."
   ],
 
-  "add_category.ask_for_i18n_en_name": "\uD83C\uDDEC\uD83C\uDDE7 Send an English name for the category",
-  "add_category.ask_for_i18n_it_name": [
+  "manage_directory.database_error": [
+    "\uD83D\uDE14 An error occurred in the interaction with the database required to get the directory data",
+    " that you want to change, make sure the directory still exists or contact the this bot instance's owner",
+    " should the problem persist"
+  ],
+
+  "manage_directory.edit_directory_names_btn": "✏️ Edit names",
+  "manage_directory.hide_directory_btn": "\uD83E\uDEE3 Hide from users",
+  "manage_directory.unhide_directory_btn": "\uD83D\uDC41 Make visible to users",
+  "manage_directory.delete_directory_btn": "\uD83D\uDDD1 Delete this category",
+  "manage_directory.delete_root_directory_btn": "\uD83D\uDD12 Delete this category",
+  "manage_directory.delete_nonempty_directory_btn": "\uD83D\uDD12 Delete this category",
+  "manage_directory.back_btn": "◀️ Go back to the category",
+
+  "hide_directory.already_hidden": "ℹ️ The category is already no longer visible to users",
+  "unhide_directory.already_visible": "ℹ️ The category is already no longer hidden from users",
+
+  "delete_directory.cant_delete_root_directory": "✋ Unable to remove a root category (not contained within any other)",
+  "delete_directory.no_longer_root_directory": [
+    "✅ Now it would appear to no longer be a root category though, being now contained within another directory,",
+    " so you can go back and try again \uD83D\uDE42",
+    "\n\n⚠️ Should going back still not turn out to be resolved, please do not hesitate to contact us for assistance."
+  ],
+  "delete_directory.cant_delete_nonempty_directory": "✋ A category must be free of groups and/or subcategories in order to be eliminated",
+  "delete_directory.no_longer_nonempty_directory": [
+    "✅ Now it would appear to be effectively devoid of them though, so you can go back and try again \uD83D\uDE42",
+    "\n\n⚠️ Should going back still not turn out to be resolved, please do not hesitate to contact us for assistance."
+  ],
+  "delete_directory.database_error": [
+    "\uD83D\uDE14 An error in the interaction with the database made it impossible to delete the directory,",
+    " make sure the directory exists and is actually free of groups and/or subcategories or contact",
+    " this bot instance's owner should the problem persist."
+  ],
+  "delete_directory.confirm_menu.text": "❓ Are you sure you want to delete the category?\n\nReview the data and eventually give confirmation to proceed:",
+  "delete_directory.confirm_menu.confirm_btn": "Yes, proceed ▶️",
+  "delete_directory.confirm_menu.undo_btn": "◀️ No, go back",
+  "delete_directory.deleted_first_line": "☑️ Category successfully deleted",
+  "delete_directory.back_btn": "◀️ Back to upper directory",
+
+  "create_subdirectory.ask_for_i18n_en_name": "\uD83C\uDDEC\uD83C\uDDE7 Send an English name for the category",
+  "create_subdirectory.ask_for_i18n_it_name": [
     "\uD83C\uDDEE\uD83C\uDDF9 Send an Italian translation of the name for the category",
     "\n\n<i>(<b>English name:</b> \"[i18n_en_name]\")</i>"
   ],
 
-  "add_category.undo_btn": "\uD83D\uDDD1 Undo creation and go back",
+  "create_subdirectory.undo_btn": "\uD83D\uDDD1 Undo creation and go back",
 
-  "add_category.database_error": [
+  "create_subdirectory.database_error": [
     "\uD83D\uDE14 An error occurred in the interaction with the database required to add a category with the",
     " data entered, make sure that the category you intended to insert it into still exists and that the data",
     " entered are valid, or contact this bot instance's owner should the problem persists"
   ],
 
-  "add_category.canceled": [
+  "create_subdirectory.canceled": [
     "\uD83D\uDEAE Ongoing addition of a new category canceled"
   ],
 
-  "add_category.successful_menu.first_line": "☑️ Successful insertion of the new category:",
-  "add_category.successful_menu.back_btn": "↪️ Go back to the insertion category",
+  "create_subdirectory.successful_menu.first_line": "☑️ Successful insertion of the new category:",
+  "create_subdirectory.successful_menu.back_btn": "↪️ Go back to the insertion category",
 
-  "edit_category.cant_get_directory_info": [
+  "edit_directory_names.cant_get_directory_info": [
     "⛔️ La procedura di ottenimento informazioni sulla categoria non è andata a buon fine,",
     " assicurati che la categoria esista ancora o contatta il gestore del bot qualora il",
     " problema dovesse persistere"
   ],
 
-  "edit_category.ask_for_new_i18n_en_name": "\uD83C\uDDEC\uD83C\uDDE7 Send the new English name for the category",
-  "edit_category.ask_for_new_i18n_it_name": [
+  "edit_directory_names.ask_for_new_i18n_en_name": "\uD83C\uDDEC\uD83C\uDDE7 Send the new English name for the category",
+  "edit_directory_names.ask_for_new_i18n_it_name": [
     "\uD83C\uDDEE\uD83C\uDDF9 Send the new Italian translation of the name for the category",
     "\n\n<i>(<b>English name:</b> \"[i18n_en_name]\")</i>"
   ],
 
-  "edit_category.current_value": "<b>Current value:</b> <code>[current_value]</code>",
+  "edit_directory_names.current_value": "<b>Current value:</b> <code>[current_value]</code>",
 
-  "edit_category.undo_btn": "\uD83D\uDED1 Undo changes and go back",
+  "edit_directory_names.undo_btn": "\uD83D\uDED1 Undo changes and go back",
 
-  "edit_category.database_error": [
+  "edit_directory_names.database_error": [
     "\uD83D\uDE14 An error occurred in the interaction with the database required to perform the update you asked for,",
     " ensure that the category still exists and that the names entered are valid, or contact this bot instance's owner",
     " should the problem persist"
   ],
 
-  "edit_category.canceled": [
+  "edit_directory_names.canceled": [
     "\uD83D\uDEAE Ongoing changes to category discarded"
   ],
 
-  "edit_category.no_changes_made": "☑️ Values same as previous, no changes to be made",
+  "edit_directory_names.no_changes_made": "☑️ Values same as previous, no changes to be made",
 
-  "edit_category.successful_menu.first_line": "☑️ Successful update of category names:",
-  "edit_category.successful_menu.back_btn": "↘️ Go back to the modified category",
+  "edit_directory_names.successful_menu.first_line": "☑️ Successful update of category names:",
+  "edit_directory_names.successful_menu.back_btn": "◀️ Go back to settings",
 
-  "add_category.error.too_long_input": "You entered a category name that is too long (as many [length] characters), try again with at most 100 characters!"
+  "create_subdirectory.error.too_long_input": "You entered a category name that is too long (as many [length] characters), try again with at most 100 characters!"
 }

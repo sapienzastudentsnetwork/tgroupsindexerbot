@@ -143,9 +143,16 @@ class Queries:
         # N.B.: checking for bot admin permissions for bot admin commands
         #       is handled by Commands.commands_handler itself
 
-        elif not is_admin and (action.startswith("create_subdirectory_in")
-                               or action.startswith("edit_directory")):
-            return False
+        elif not is_admin:
+            admin_required_queries = (
+                "create_subdirectory_in", "edit_directory_names",
+                "manage_directory", "hide_directory", "unhide_directory",
+                "delete_directory", "delete_root_directory", "delete_nonempty_directory"
+            )
+
+            for admin_required_query in admin_required_queries:
+                if action.startswith(admin_required_query):
+                    return False
 
         return True
 
@@ -363,7 +370,7 @@ class Queries:
     def create_subdirectory_menu(cls, locale: Locale, chat_id: int, parent_directory_id: int):
         input_subdirectory_data = {"i18n_en_name": None, "i18n_it_name": None, "parent_id": parent_directory_id}
 
-        text = locale.get_string("add_category.ask_for_i18n_en_name")
+        text = locale.get_string("create_subdirectory.ask_for_i18n_en_name")
 
         back_callback_data = f"cd{cls.fd}" + str(input_subdirectory_data["parent_id"])
 
@@ -371,7 +378,7 @@ class Queries:
 
         keyboard = [[
             InlineKeyboardButton(
-                text=locale.get_string("add_category.undo_btn"),
+                text=locale.get_string("create_subdirectory.undo_btn"),
                 callback_data=back_callback_data
             )
         ]]
@@ -381,7 +388,7 @@ class Queries:
         return text, InlineKeyboardMarkup(keyboard)
 
     @classmethod
-    def edit_directory_menu(cls, locale: Locale, chat_id: int, directory_id: int):
+    def edit_directory_names_menu(cls, locale: Locale, chat_id: int, directory_id: int):
         input_subdirectory_data = {"id": directory_id, "i18n_en_name": None, "i18n_it_name": None}
 
         directory_data, is_directory_data = DirectoryTable.get_directory_data(directory_id)
@@ -395,11 +402,13 @@ class Queries:
             else:
                 input_subdirectory_data["parent_id"] = directory_id
 
-            text = locale.get_string("edit_category.ask_for_new_i18n_en_name")
+            text = locale.get_string("edit_directory_names.ask_for_new_i18n_en_name") + "\n\n" \
+                   + locale.get_string("edit_directory_names.current_value")\
+                       .replace(f"[current_value]", directory_data["i18n_en_name"])
 
             cls.user_input_subdirectories_data[chat_id] = input_subdirectory_data
         else:
-            text = locale.get_string("edit_category.cant_get_directory_info")
+            text = locale.get_string("edit_directory_names.cant_get_directory_info")
 
         back_callback_data = f"cd{cls.fd}" + str(input_subdirectory_data["parent_id"])
 
@@ -407,7 +416,7 @@ class Queries:
 
         keyboard = [[
             InlineKeyboardButton(
-                text=locale.get_string("edit_category.undo_btn"),
+                text=locale.get_string("edit_directory_names.undo_btn"),
                 callback_data=back_callback_data
             )
         ]]
@@ -630,178 +639,277 @@ class Queries:
                 directory_data, is_directory_data = DirectoryTable.get_directory_data(inserted_id)
 
         if is_directory_data:
-            lang_code = locale.lang_code
+            user_is_bot_admin = user_data["is_admin"]
 
-            if f"i18n_{lang_code}_name" in directory_data and bool(directory_data[f"i18n_{lang_code}_name"]):
-                directory_name = directory_data[f"i18n_{lang_code}_name"]
-            elif f"i18n_{Locale.def_lang_code}_name" in directory_data and bool(directory_data[f"i18n_{Locale.def_lang_code}_name"]):
-                directory_name = directory_data[f"i18n_{Locale.def_lang_code}_name"]
-            else:
-                directory_name = str(directory_id)
+            if directory_data["hidden_by"] is None or user_data["is_admin"]:
+                lang_code = locale.lang_code
 
-            parent_directory_id = -1
+                directory_name = DirectoryTable.get_directory_localized_name(lang_code, directory_data)
 
-            if "parent_id" in directory_data and bool(directory_data["parent_id"]):
-                parent_directory_id = directory_data["parent_id"]
-                parent_directory_data, _ = DirectoryTable.get_directory_data(parent_directory_id)
+                parent_directory_id = -1
 
-                if f"i18n_{lang_code}_name" in parent_directory_data and bool(parent_directory_data[f"i18n_{lang_code}_name"]):
-                    parent_directory_name = parent_directory_data[f"i18n_{lang_code}_name"]
-                elif f"i18n_{Locale.def_lang_code}_name" in parent_directory_data and bool(parent_directory_data[f"i18n_{Locale.def_lang_code}_name"]):
-                    parent_directory_name = parent_directory_data[f"i18n_{Locale.def_lang_code}_name"]
-                else:
-                    parent_directory_name = str(parent_directory_id)
+                if "parent_id" in directory_data and bool(directory_data["parent_id"]):
+                    parent_directory_id = directory_data["parent_id"]
 
-            user_id = user_data["chat_id"]
-            user_is_admin = user_data["is_admin"]
-            user_can_add_groups = user_data["can_add_groups"]
-            user_can_modify_groups = user_data["can_modify_groups"]
+                user_id = user_data["chat_id"]
+                user_can_add_groups = user_data["can_add_groups"]
+                user_can_modify_groups = user_data["can_modify_groups"]
 
-            groups_dict, is_groups_dict = ChatTable.get_directory_indexed_chats(
-                user_id, directory_id,
-                skip_missing_permissions_chats=not user_is_admin,
-                skip_hidden_chats=not user_is_admin
-            )
+                groups_dict, is_groups_dict = ChatTable.get_directory_indexed_chats(
+                    directory_id,
+                    skip_missing_permissions_chats=not user_is_bot_admin,
+                    skip_hidden_chats=not user_is_bot_admin,
+                    user_id=user_id
+                )
 
-            if is_groups_dict:
-                groups_dict: dict
+                if is_groups_dict:
+                    groups_dict: dict
 
-                keyboard = []
+                    keyboard = []
 
-                sub_directories_data, is_sub_directories_data = DirectoryTable.get_sub_directories(directory_id)
+                    sub_directories_data, is_sub_directories_data = DirectoryTable.get_sub_directories(directory_id)
 
-                if is_sub_directories_data:
-                    sort_key = f"i18n_{lang_code}_name"
-                    sorted_ids_and_values = [(curr_sub_directory_id, curr_sub_directory[sort_key]) for curr_sub_directory_id, curr_sub_directory in sub_directories_data.items()]
-                    sorted_ids_and_values.sort(key=lambda x: x[1])
-                    sorted_ids = [x[0] for x in sorted_ids_and_values]
+                    if is_sub_directories_data:
+                        sort_key = f"i18n_{lang_code}_name"
+                        sorted_ids_and_values = [(curr_sub_directory_id, curr_sub_directory[sort_key]) for curr_sub_directory_id, curr_sub_directory in sub_directories_data.items()]
+                        sorted_ids_and_values.sort(key=lambda x: x[1])
+                        sorted_ids = [x[0] for x in sorted_ids_and_values]
 
-                    for curr_sub_directory_id in sorted_ids:
-                        curr_sub_directory_data, is_curr_sub_directory_data = DirectoryTable.get_directory_data(curr_sub_directory_id)
+                        for curr_sub_directory_id in sorted_ids:
+                            curr_sub_directory_data, is_curr_sub_directory_data = DirectoryTable.get_directory_data(curr_sub_directory_id)
 
-                        if is_curr_sub_directory_data:
-                            if f"i18n_{lang_code}_name" in curr_sub_directory_data and bool(curr_sub_directory_data[f"i18n_{lang_code}_name"]):
-                                curr_sub_directory_name = curr_sub_directory_data[f"i18n_{lang_code}_name"]
-                            elif f"i18n_{Locale.def_lang_code}_name" in curr_sub_directory_data and bool(curr_sub_directory_data[f"i18n_{Locale.def_lang_code}_name"]):
-                                curr_sub_directory_name = curr_sub_directory_data[f"i18n_{Locale.def_lang_code}_name"]
-                            else:
-                                curr_sub_directory_name = curr_sub_directory_id
+                            if is_curr_sub_directory_data and (not curr_sub_directory_data["hidden_by"] or user_is_bot_admin):
+                                if f"i18n_{lang_code}_name" in curr_sub_directory_data and bool(curr_sub_directory_data[f"i18n_{lang_code}_name"]):
+                                    curr_sub_directory_name = curr_sub_directory_data[f"i18n_{lang_code}_name"]
+                                elif f"i18n_{Locale.def_lang_code}_name" in curr_sub_directory_data and bool(curr_sub_directory_data[f"i18n_{Locale.def_lang_code}_name"]):
+                                    curr_sub_directory_name = curr_sub_directory_data[f"i18n_{Locale.def_lang_code}_name"]
+                                else:
+                                    curr_sub_directory_name = curr_sub_directory_id
 
-                            curr_sub_directory_callback_data = f"cd{cls.fd}{curr_sub_directory_id}"
-                            Queries.register_query(curr_sub_directory_callback_data)
+                                curr_sub_directory_callback_data = f"cd{cls.fd}{curr_sub_directory_id}"
+                                Queries.register_query(curr_sub_directory_callback_data)
 
-                            curr_sub_directory_btn_text = curr_sub_directory_name
+                                curr_sub_directory_btn_text = curr_sub_directory_name
 
-                            number_of_groups, is_number_of_groups = DirectoryTable.get_chats_count(curr_sub_directory_id)
-                            if is_number_of_groups:
-                                curr_sub_directory_btn_text += f" [{number_of_groups}]"
+                                if not curr_sub_directory_data["hidden_by"]:
+                                    number_of_groups, is_number_of_groups = DirectoryTable.get_chats_count(curr_sub_directory_id)
+                                    if is_number_of_groups:
+                                        curr_sub_directory_btn_text += f" [{number_of_groups}]"
+                                else:
+                                    curr_sub_directory_btn_text = "🥷 " + curr_sub_directory_btn_text
 
-                            keyboard.append([InlineKeyboardButton(text=curr_sub_directory_btn_text,
-                                                                  callback_data=curr_sub_directory_callback_data)])
-                else:
-                    return Menus.get_error_menu(locale)
+                                keyboard.append([InlineKeyboardButton(text=curr_sub_directory_btn_text,
+                                                                      callback_data=curr_sub_directory_callback_data)])
+                    else:
+                        return Menus.get_error_menu(locale)
 
-                if user_can_add_groups or user_can_modify_groups:
-                    index_group_here_button_text = locale.get_string("explore_directories.index_group_here_btn")
+                    if user_can_add_groups or user_can_modify_groups:
+                        index_group_here_button_text = locale.get_string("explore_directories.index_group_here_btn")
 
-                    index_group_here_callback_data = f"index_group_in{cls.fd}{directory_id}{cls.fd}0"
-                    Queries.register_query(index_group_here_callback_data)
+                        index_group_here_callback_data = f"index_group_in{cls.fd}{directory_id}{cls.fd}0"
+                        Queries.register_query(index_group_here_callback_data)
 
-                    keyboard.append([InlineKeyboardButton(text=index_group_here_button_text,
-                                                          callback_data=index_group_here_callback_data)])
+                        keyboard.append([InlineKeyboardButton(text=index_group_here_button_text,
+                                                              callback_data=index_group_here_callback_data)])
 
-                if user_is_admin:
-                    create_subdirectory_button_text = locale.get_string("explore_directories.create_subdirectory_here_btn")
-                    create_subdirectory_button_callback_data = f"create_subdirectory_in{cls.fd}{directory_id}"
+                    if user_is_bot_admin:
+                        create_subdirectory_button_text = locale.get_string("explore_directories.create_subdirectory_here_btn")
+                        create_subdirectory_button_callback_data = f"create_subdirectory_in{cls.fd}{directory_id}"
 
-                    Queries.register_query(create_subdirectory_button_callback_data)
+                        Queries.register_query(create_subdirectory_button_callback_data)
 
-                    keyboard.append([InlineKeyboardButton(text=create_subdirectory_button_text,
-                                                          callback_data=create_subdirectory_button_callback_data)])
+                        keyboard.append([InlineKeyboardButton(text=create_subdirectory_button_text,
+                                                              callback_data=create_subdirectory_button_callback_data)])
 
-                    edit_directory_button_text = locale.get_string("explore_directories.edit_directory_btn")
-                    edit_directory_button_callback_data = f"edit_directory{cls.fd}{directory_id}"
+                        manage_directory_menu_button_text = locale.get_string("explore_directories.manage_directory_btn")
+                        manage_directory_menu_button_callback_data = f"manage_directory{cls.fd}{directory_id}"
 
-                    Queries.register_query(edit_directory_button_callback_data)
+                        Queries.register_query(manage_directory_menu_button_callback_data)
 
-                    keyboard.append([InlineKeyboardButton(text=edit_directory_button_text,
-                                                          callback_data=edit_directory_button_callback_data)])
+                        keyboard.append([InlineKeyboardButton(text=manage_directory_menu_button_text,
+                                                              callback_data=manage_directory_menu_button_callback_data)])
 
-                if parent_directory_id != -1:
-                    text = f"<b>" + parent_directory_name + " > " + directory_name + "</b>\n"
-
-                    back_button_text = locale.get_string("explore_directories.sub_directory.back_btn")
-                    back_button_callback_data = f"cd{cls.fd}{parent_directory_id}"
-
-                else:
-                    text = f"<b>" + directory_name + "</b>\n"
-
-                    back_button_text = locale.get_string("explore_directories.back_to_menu_btn")
-                    back_button_callback_data = f"main_menu"
-
-                Queries.register_query(back_button_callback_data)
-
-                keyboard.append([InlineKeyboardButton(text=back_button_text,
-                                                      callback_data=back_button_callback_data)])
-
-                if user_is_admin:
-                    text += f"\n🆔 <code>{directory_id}</code>"
+                    category_description = None
 
                     if parent_directory_id != -1:
-                        text += f" [<code>{parent_directory_id}</code>]"
+                        category_description = DirectoryTable.get_full_category_name(lang_code, directory_id)
 
-                    text += "\n"
+                    if category_description:
+                        text = f"📂 <b>" + category_description + "</b>\n"
 
-                if len(groups_dict) > 0:
-                    date_str, time_str, offset_str = cls.get_current_italian_datetime()
-
-                    text += "\n" + locale.get_string("explore_groups.category.generation_date_line")\
-                        .replace("[date]",   date_str)\
-                        .replace("[time]",   time_str)\
-                        .replace("[offset]", offset_str[1:3]) + "\n"
-                elif len(sub_directories_data) == 0:
-                    text += "\n" + locale.get_string("explore_groups.category.no_groups")
-
-                if len(sub_directories_data) > 0 and len(groups_dict) > 0:
-                    text += locale.get_string("explore_groups.category.no_category_groups_line")
-
-                listed_groups = 0
-
-                for group_chat_id, group_data_dict in groups_dict.items():
-                    group_title = group_data_dict["title"]
-
-                    group_join_url = ""
-
-                    if "custom_link" in group_data_dict and bool(group_data_dict["custom_link"]):
-                        group_join_url = group_data_dict["custom_link"]
-                    elif "invite_link" in group_data_dict and bool(group_data_dict["invite_link"]):
-                        group_join_url = group_data_dict["invite_link"]
-
-                    if "hidden_by" in group_data_dict and bool(group_data_dict["hidden_by"]):
-                        bullet_char = "🚫"
-                    elif "missing_permissions" in group_data_dict and bool(group_data_dict["missing_permissions"]):
-                        bullet_char = "⛔️"
                     else:
-                        bullet_char = "•"
+                        text = f"📁 <b>" + directory_name + "</b>\n"
 
-                    if group_join_url:
-                        text += f"\n{bullet_char} {group_title} <a href='{group_join_url}'>" \
-                                + locale.get_string("explore_groups.join_href_text") + "</a>"
 
-                        if user_is_admin:
-                            text += " {<code>" + str(group_chat_id) + "</code>}"
+                    if parent_directory_id != -1:
+                        back_button_text = locale.get_string("explore_directories.sub_directory.back_btn")
+                        back_button_callback_data = f"cd{cls.fd}{parent_directory_id}"
 
-                        listed_groups += 1
+                    else:
+                        back_button_text = locale.get_string("explore_directories.back_to_menu_btn")
+                        back_button_callback_data = f"main_menu"
 
-                if len(sub_directories_data) > 0:
-                    if listed_groups > 0:
+                    Queries.register_query(back_button_callback_data)
+
+                    keyboard.append([InlineKeyboardButton(text=back_button_text,
+                                                          callback_data=back_button_callback_data)])
+
+                    if user_is_bot_admin:
+                        text += f"\n🆔 <code>{directory_id}</code>"
+
+                        if parent_directory_id != -1:
+                            text += f" [<code>{parent_directory_id}</code>]"
+
                         text += "\n"
 
-                    text += locale.get_string("explore_groups.category.sub_categories_line")
+                    if len(groups_dict) > 0:
+                        date_str, time_str, offset_str = cls.get_current_italian_datetime()
 
-                return text, InlineKeyboardMarkup(keyboard)
+                        text += "\n" + locale.get_string("explore_groups.category.generation_date_line")\
+                            .replace("[date]",   date_str)\
+                            .replace("[time]",   time_str)\
+                            .replace("[offset]", offset_str[1:3]) + "\n"
+                    elif len(sub_directories_data) == 0:
+                        text += "\n" + locale.get_string("explore_groups.category.no_groups")
 
-        return Menus.get_error_menu(locale)
+                    if len(sub_directories_data) > 0 and len(groups_dict) > 0:
+                        text += locale.get_string("explore_groups.category.no_category_groups_line")
+
+                    listed_groups = 0
+
+                    for group_chat_id, group_data_dict in groups_dict.items():
+                        group_title = group_data_dict["title"]
+
+                        group_join_url = ""
+
+                        if "custom_link" in group_data_dict and bool(group_data_dict["custom_link"]):
+                            group_join_url = group_data_dict["custom_link"]
+                        elif "invite_link" in group_data_dict and bool(group_data_dict["invite_link"]):
+                            group_join_url = group_data_dict["invite_link"]
+
+                        if "hidden_by" in group_data_dict and bool(group_data_dict["hidden_by"]):
+                            bullet_char = "🚫"
+                        elif "missing_permissions" in group_data_dict and bool(group_data_dict["missing_permissions"]):
+                            bullet_char = "⛔️"
+                        else:
+                            bullet_char = "•"
+
+                        if group_join_url:
+                            text += f"\n{bullet_char} {group_title} <a href='{group_join_url}'>" \
+                                    + locale.get_string("explore_groups.join_href_text") + "</a>"
+
+                            if user_is_bot_admin:
+                                text += " {<code>" + str(group_chat_id) + "</code>}"
+
+                            listed_groups += 1
+
+                    if len(sub_directories_data) > 0:
+                        if listed_groups > 0:
+                            text += "\n"
+
+                        text += locale.get_string("explore_groups.category.sub_categories_line")
+
+                    return text, InlineKeyboardMarkup(keyboard)
+
+        text, reply_markup = Menus.get_error_menu(locale, "database")
+
+        text = locale.get_string("explore_groups.cant_access_category")
+
+        return text, reply_markup
+
+    @classmethod
+    async def manage_directory_menu(cls, locale: Locale, directory_data: dict) -> (str, InlineKeyboardMarkup):
+        directory_id = directory_data["id"]
+
+        text = await DirectoryTable.get_directory_data_summary(directory_data, locale)
+
+        edit_callback_data = f"edit_directory_names{cls.fd}{directory_id}"
+        Queries.register_query(edit_callback_data)
+
+        keyboard = [
+            [InlineKeyboardButton(
+                text=locale.get_string("manage_directory.edit_directory_names_btn"),
+                callback_data=edit_callback_data
+            )]
+        ]
+
+        if directory_data["hidden_by"]:
+            unhide_callback_data = f"unhide_directory{cls.fd}{directory_id}"
+            Queries.register_query(unhide_callback_data)
+
+            keyboard.append(
+                [
+                    InlineKeyboardButton(
+                        text=locale.get_string("manage_directory.unhide_directory_btn"),
+                        callback_data=unhide_callback_data
+                    )
+                ]
+            )
+
+        else:
+            hide_callback_data = f"hide_directory{cls.fd}{directory_id}"
+            Queries.register_query(hide_callback_data)
+
+            keyboard.append(
+                [
+                    InlineKeyboardButton(
+                        text=locale.get_string("manage_directory.hide_directory_btn"),
+                        callback_data=hide_callback_data
+                    )
+                ]
+            )
+
+        if directory_data["parent_id"] is None:
+            delete_btn_text = locale.get_string("manage_directory.delete_root_directory_btn")
+            delete_btn_callback_data = f"delete_root_directory{cls.fd}{directory_id}"
+            Queries.register_query(delete_btn_callback_data)
+
+        elif DirectoryTable.directory_is_empty(directory_id):
+            delete_btn_text = locale.get_string("manage_directory.delete_directory_btn")
+            delete_btn_callback_data = f"delete_directory_confirm_menu{cls.fd}{directory_id}"
+            Queries.register_query(delete_btn_callback_data)
+
+        else:
+            delete_btn_text = locale.get_string("manage_directory.delete_nonempty_directory_btn")
+            delete_btn_callback_data = f"delete_nonempty_directory{cls.fd}{directory_id}"
+            Queries.register_query(delete_btn_callback_data)
+
+        keyboard.append(
+            [
+                InlineKeyboardButton(
+                    text=delete_btn_text,
+                    callback_data=delete_btn_callback_data
+                )
+            ]
+        )
+
+        back_callback_data = f"cd{cls.fd}{directory_id}"
+        Queries.register_query(back_callback_data)
+
+        keyboard.append(
+            [
+                InlineKeyboardButton(
+                    text=locale.get_string("manage_directory.back_btn"),
+                    callback_data=back_callback_data
+                )
+            ]
+        )
+
+        return text, InlineKeyboardMarkup(keyboard)
+
+    @classmethod
+    def back_to_manage_directory_menu(cls, locale: Locale, directory_id: int, text: str) -> (str, InlineKeyboardMarkup):
+        back_callback_data = f"manage_directory{cls.fd}{directory_id}"
+        Queries.register_query(back_callback_data)
+
+        keyboard = [
+            [InlineKeyboardButton(
+                text=locale.get_string("manage_directory.back_btn"),
+                callback_data=back_callback_data
+            )]
+        ]
+
+        return text, InlineKeyboardMarkup(keyboard)
 
     @classmethod
     def cd_queries_handler(cls, directory_id: int, locale: Locale, user_data: dict) -> (str, InlineKeyboardMarkup):
@@ -811,9 +919,9 @@ class Queries:
     async def cancel_categories_operation(cls, locale: Locale, bot: Bot, user_id: int):
         if user_id in cls.user_input_subdirectories_data:
             if "id" in cls.user_input_subdirectories_data[user_id]:
-                operation_canceled_string = locale.get_string("edit_category.canceled")
+                operation_canceled_string = locale.get_string("edit_directory_names.canceled")
             else:
-                operation_canceled_string = locale.get_string("add_category.canceled")
+                operation_canceled_string = locale.get_string("create_subdirectory.canceled")
 
             cls.user_input_subdirectories_data[user_id] = {}
             cls.user_input_subdirectories_data.pop(user_id)
@@ -846,6 +954,8 @@ class Queries:
             hashed_query_data = query.data
             query_data = cls.decode_query_data(hashed_query_data)
 
+            query_args = query_data.split(cls.fd)[1:]
+
             text, reply_markup = "", None
 
             user_data, is_user_data = AccountTable.get_account_record(user_id)
@@ -863,9 +973,160 @@ class Queries:
                             text, reply_markup = cls.cd_queries_handler(DirectoryTable.CATEGORIES_ROOT_DIR_ID, locale, user_data)
 
                         elif query_data.startswith(f"cd{cls.fd}"):
-                            target_directory_id = int(query_data[len("cd" + cls.fd):])
+                            target_directory_id = int(query_args[0])
 
                             text, reply_markup = cls.cd_queries_handler(target_directory_id, locale, user_data)
+
+                        elif query_data.startswith(f"manage_directory{cls.fd}") \
+                                or query_data.startswith(f"hide_directory{cls.fd}") \
+                                or query_data.startswith(f"unhide_directory{cls.fd}") \
+                                or query_data.startswith(f"delete_directory{cls.fd}") \
+                                or query_data.startswith(f"delete_directory_confirm_menu{cls.fd}") \
+                                or query_data.startswith(f"delete_root_directory{cls.fd}") \
+                                or query_data.startswith(f"delete_nonempty_directory{cls.fd}"):
+
+                            target_directory_id = int(query_args[0])
+
+                            target_directory_data, is_target_directory_data = DirectoryTable.get_directory_data(target_directory_id)
+
+                            if is_target_directory_data:
+                                old_target_directory_data = dict(target_directory_data)
+
+                                parent_target_directory_id = target_directory_data["parent_id"]
+
+                                updated = None
+
+                                if query_data.startswith(f"manage_directory{cls.fd}"):
+                                    text, reply_markup = await cls.manage_directory_menu(locale, target_directory_data)
+
+                                elif query_data.startswith(f"hide_directory{cls.fd}") or query_data.startswith(f"unhide_directory{cls.fd}"):
+                                    if target_directory_data["hidden_by"]:
+                                        if query_data.startswith(f"unhide_directory{cls.fd}"):
+                                            updated = DirectoryTable.update_directory_visibility(target_directory_id, None)
+
+                                        else:
+                                            text = locale.get_string("hide_directory.already_hidden")
+
+                                    else:
+                                        if query_data.startswith(f"hide_directory{cls.fd}"):
+                                            updated = DirectoryTable.update_directory_visibility(target_directory_id, user_id)
+
+                                        else:
+                                            text = locale.get_string("unhide_directory.already_visible")
+
+                                    if updated:
+                                        chats_count, is_chats_count = DirectoryTable.get_chats_count(target_directory_id, False, True)
+
+                                        if is_chats_count and chats_count > 0:
+                                            if query_data.startswith(f"hide_directory{cls.fd}"):
+                                                DirectoryTable.increment_chats_count(target_directory_id, -chats_count)
+                                            elif parent_target_directory_id is not None:
+                                                DirectoryTable.increment_chats_count(parent_target_directory_id, chats_count)
+
+                                        text, reply_markup = await cls.manage_directory_menu(locale, target_directory_data)
+
+                                        await Logger.log_directory_visibility_action(
+                                            action=query_data[:query_data.rfind(cls.fd)].replace("_", " "),
+                                            admin=user,
+                                            directory_data_summary=await DirectoryTable.get_directory_data_summary(
+                                                old_target_directory_data, locale
+                                            )
+                                        )
+
+                                elif query_data.startswith(f"delete_directory{cls.fd}") \
+                                        or query_data.startswith(f"delete_directory_confirm_menu{cls.fd}") \
+                                        or query_data.startswith(f"delete_root_directory{cls.fd}") \
+                                        or query_data.startswith(f"delete_nonempty_directory{cls.fd}"):
+
+                                    if parent_target_directory_id:
+                                        if not query_data.startswith(f"delete_root_directory{cls.fd}"):
+                                            if DirectoryTable.directory_is_empty(target_directory_id):
+                                                if not query_data.startswith(f"delete_nonempty_directory{cls.fd}"):
+                                                    if not query_data.startswith(f"delete_directory_confirm_menu{cls.fd}"):
+                                                        updated = DirectoryTable.delete_directory(target_directory_id)
+
+                                                        if updated:
+                                                            old_directory_data_summary = await DirectoryTable.get_directory_data_summary(
+                                                                old_target_directory_data,
+                                                                locale
+                                                            )
+
+                                                            text = locale.get_string("delete_directory.deleted_first_line")
+
+                                                            text += "\n\n" + old_directory_data_summary
+
+                                                            back_callback_data = f"cd{cls.fd}{parent_target_directory_id}"
+                                                            Queries.register_query(back_callback_data)
+
+                                                            keyboard = [
+                                                                [InlineKeyboardButton(
+                                                                    text=locale.get_string("delete_directory.back_btn"),
+                                                                    callback_data=back_callback_data
+                                                                )]
+                                                            ]
+
+                                                            reply_markup = InlineKeyboardMarkup(keyboard)
+
+                                                            await Logger.log_directory_visibility_action(
+                                                                action="DELETE DIRECTORY",
+                                                                admin=user,
+                                                                directory_data_summary=old_directory_data_summary
+                                                            )
+                                                    else:
+                                                        old_directory_data_summary = await DirectoryTable.get_directory_data_summary(
+                                                            old_target_directory_data,
+                                                            locale
+                                                        )
+
+                                                        text = locale.get_string("delete_directory.confirm_menu.text")
+
+                                                        text += "\n\n" + old_directory_data_summary
+
+                                                        confirm_button_callback_data = f"delete_directory{cls.fd}{target_directory_id}"
+                                                        Queries.register_query(confirm_button_callback_data)
+
+                                                        back_button_callback_data = f"manage_directory{cls.fd}{target_directory_id}"
+                                                        Queries.register_query(back_button_callback_data)
+
+                                                        keyboard = [
+                                                            [
+                                                                InlineKeyboardButton(
+                                                                    text=locale.get_string("delete_directory.confirm_menu.confirm_btn"),
+                                                                    callback_data=confirm_button_callback_data
+                                                                )
+                                                            ],
+
+                                                            [
+                                                                InlineKeyboardButton(
+                                                                    text=locale.get_string("delete_directory.confirm_menu.undo_btn"),
+                                                                    callback_data=back_button_callback_data
+                                                                )
+                                                            ]
+                                                        ]
+
+                                                        reply_markup = InlineKeyboardMarkup(keyboard)
+                                                else:
+                                                    text = locale.get_string("delete_directory.cant_delete_nonempty_directory") \
+                                                           + "\n\n" + locale.get_string("delete_directory.no_longer_nonempty_directory")
+
+                                            else:
+                                                text = locale.get_string("delete_directory.cant_delete_nonempty_directory")
+                                        else:
+                                            text = locale.get_string("delete_directory.cant_delete_root_directory") \
+                                                   + "\n\n" + locale.get_string("delete_directory.no_longer_root_directory")
+                                    else:
+                                        text = locale.get_string("delete_directory.cant_delete_root_directory")
+
+                                if not text:
+                                    text, reply_markup = Menus.get_error_menu(locale, "database")
+
+                                elif not reply_markup:
+                                    text, reply_markup = cls.back_to_manage_directory_menu(locale, target_directory_id, text)
+
+                            else:
+                                text, reply_markup = Menus.get_error_menu(locale, "database")
+
+                                text = locale.get_string("manage_directory.database_error")
 
                         elif query_data == "main_menu":
                             text, reply_markup = Menus.get_main_menu(locale)
@@ -877,27 +1138,21 @@ class Queries:
                             text, reply_markup = Menus.get_about_menu(locale)
 
                         elif query_data.startswith(f"index_group_in{cls.fd}"):
-                            args = query_data.split(cls.fd)[1:]
+                            target_directory_id = int(query_args[0])
 
-                            target_directory_id = int(args[0])
-
-                            offset = int(args[1])
+                            offset = int(query_args[1])
 
                             text, reply_markup = cls.index_group_in_directory_menu(locale, target_directory_id, offset, user_data)
 
                         elif query_data.startswith(f"create_subdirectory_in{cls.fd}"):
-                            args = query_data.split(cls.fd)[1:]
-
-                            parent_directory_id = int(args[0])
+                            parent_directory_id = int(query_args[0])
 
                             text, reply_markup = cls.create_subdirectory_menu(locale, user_id, parent_directory_id)
 
-                        elif query_data.startswith(f"edit_directory{cls.fd}"):
-                            args = query_data.split(cls.fd)[1:]
+                        elif query_data.startswith(f"edit_directory_names{cls.fd}"):
+                            directory_id = int(query_args[0])
 
-                            directory_id = int(args[0])
-
-                            text, reply_markup = cls.edit_directory_menu(locale, user_id, directory_id)
+                            text, reply_markup = cls.edit_directory_names_menu(locale, user_id, directory_id)
 
                         elif query_data.startswith(f"missing_permissions_menu{cls.fd}") \
                                 or query_data.startswith(f"hidden_chat_menu{cls.fd}") \
@@ -906,13 +1161,11 @@ class Queries:
                                 or query_data.startswith(f"unindex_confirm_menu{cls.fd}") \
                                 or query_data.startswith(f"unindex{cls.fd}"):
 
-                            args = query_data.split(cls.fd)[1:]
+                            target_chat_id = int(query_args[0])
 
-                            target_chat_id = int(args[0])
+                            target_directory_id = int(query_args[1])
 
-                            target_directory_id = int(args[1])
-
-                            offset = int(args[2])
+                            offset = int(query_args[2])
 
                             user_can_add_groups = user_data["can_add_groups"]
                             user_can_modify_groups = user_data["can_modify_groups"]

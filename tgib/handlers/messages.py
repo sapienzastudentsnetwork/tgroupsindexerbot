@@ -55,7 +55,7 @@ class Messages:
             input_value = message.text
 
             if len(input_value) > 100:
-                await message.reply_text(locale.get_string("add_category.error.too_long_input"))
+                await message.reply_text(locale.get_string("create_subdirectory.error.too_long_input"))
 
                 return False
 
@@ -87,7 +87,7 @@ class Messages:
             if not editing:
                 back_callback_data = f"cd{Queries.fd}" + str(adding_categories_data["parent_id"])
             else:
-                back_callback_data = f"cd{Queries.fd}" + str(adding_categories_data["id"])
+                back_callback_data = f"manage_directory{Queries.fd}" + str(adding_categories_data["id"])
 
             Queries.register_query(back_callback_data)
 
@@ -95,20 +95,20 @@ class Messages:
 
             if key_name == "i18n_en_name":
                 if not editing:
-                    new_message_text = locale.get_string("add_category.ask_for_i18n_it_name")
+                    new_message_text = locale.get_string("create_subdirectory.ask_for_i18n_it_name")
                 else:
-                    new_message_text = locale.get_string("edit_category.ask_for_new_i18n_it_name")
+                    new_message_text = locale.get_string("edit_directory_names.ask_for_new_i18n_it_name")
 
                 new_message_text = new_message_text.replace("[i18n_en_name]", input_value)
 
                 if "parent_directory_id" in adding_categories_data:
-                    new_message_text += "\n\n" + locale.get_string("edit_category.current_value") \
+                    new_message_text += "\n\n" + locale.get_string("edit_directory_names.current_value") \
                         .replace(f"[current_value]", adding_categories_data[f"old_{key_name}"])
 
                 if not editing:
                     new_keyboard.append([
                         InlineKeyboardButton(
-                            text=locale.get_string("add_category.undo_btn"),
+                            text=locale.get_string("create_subdirectory.undo_btn"),
                             callback_data=back_callback_data
                         )
                     ])
@@ -116,7 +116,7 @@ class Messages:
                 else:
                     new_keyboard.append([
                         InlineKeyboardButton(
-                            text=locale.get_string("edit_category.undo_btn"),
+                            text=locale.get_string("edit_directory_names.undo_btn"),
                             callback_data=back_callback_data
                         )
                     ])
@@ -139,9 +139,9 @@ class Messages:
                     )
 
                     if updated:
-                        new_message_text = locale.get_string("add_category.successful_menu.first_line")
+                        new_message_text = locale.get_string("create_subdirectory.successful_menu.first_line")
                     else:
-                        new_message_text = locale.get_string("add_category.database_error")
+                        new_message_text = locale.get_string("create_subdirectory.database_error")
 
                 else:
                     directory_id = adding_categories_data["id"]
@@ -153,17 +153,17 @@ class Messages:
 
                     if new_i18n_en_name != i18n_en_name or new_i18n_it_name != i18n_it_name:
                         updated = DirectoryTable.update_directory_names(
-                            id=adding_categories_data["id"],
+                            directory_id=adding_categories_data["id"],
                             new_i18n_en_name=new_i18n_en_name,
                             new_i18n_it_name=new_i18n_it_name
                         )
 
                         if updated:
-                            new_message_text = locale.get_string("edit_category.successful_menu.first_line")
+                            new_message_text = locale.get_string("edit_directory_names.successful_menu.first_line")
                         else:
-                            new_message_text = locale.get_string("edit_category.database_error")
+                            new_message_text = locale.get_string("edit_directory_names.database_error")
                     else:
-                        new_message_text = locale.get_string("edit_category.no_changes_made")
+                        new_message_text = locale.get_string("edit_directory_names.no_changes_made")
 
                         updated = True
 
@@ -201,7 +201,7 @@ class Messages:
                     if not editing:
                         new_keyboard.append([
                             InlineKeyboardButton(
-                                text=locale.get_string("add_category.successful_menu.back_btn"),
+                                text=locale.get_string("create_subdirectory.successful_menu.back_btn"),
                                 callback_data=back_callback_data
                             )
                         ])
@@ -219,7 +219,7 @@ class Messages:
                     else:
                         new_keyboard.append([
                             InlineKeyboardButton(
-                                text=locale.get_string("edit_category.successful_menu.back_btn"),
+                                text=locale.get_string("edit_directory_names.successful_menu.back_btn"),
                                 callback_data=back_callback_data
                             )
                         ])

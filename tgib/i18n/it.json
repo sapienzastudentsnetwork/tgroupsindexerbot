@@ -8,7 +8,7 @@
   "i18n.en_flag":          "\uD83C\uDDEC\uD83C\uDDE7",
   "i18n.string_not_found": "Stringa '[key]' non trovata",
 
-  "main_menu.text":                 "Cosa vuoi fare adesso?",
+  "main_menu.text":                 "❔ Cosa vuoi fare adesso?",
   "main_menu.explore_groups_btn":   "\uD83D\uDC65 Esplora i gruppi",
   "main_menu.add_bot_to_group_btn": "\uD83D\uDCA0 Aggiungi un gruppo",
   "main_menu.about_message_btn":    "ℹ️ Riguardo il bot",
@@ -55,8 +55,8 @@
   "expired_session_menu.about_alert": "Le sessioni scadono automaticamente ad ogni aggiornamento (e conseguente riavvio) del bot e comunque almeno una volta entro 24 ore",
 
   "explore_directories.index_group_here_btn":         "\uD83D\uDCA0 Indicizza un gruppo qui",
-  "explore_directories.create_subdirectory_here_btn": "\uD83D\uDCC2 Crea sotto-categoria qui",
-  "explore_directories.edit_directory_btn":           "✏️ Modifica questa categoria",
+  "explore_directories.create_subdirectory_here_btn": "\uD83D\uDCC2 Crea una sotto-categoria",
+  "explore_directories.manage_directory_btn":         "⚙️️ Modifica impostazioni categoria",
   "explore_directories.sub_directory.back_btn":       "◀️ Indietro",
   "explore_directories.back_to_menu_btn":             "◀️ Torna al menù",
 
@@ -65,6 +65,10 @@
   "explore_groups.category.no_category_groups_line": "\nGruppi generali (senza sotto-categoria):\n",
   "explore_groups.category.sub_categories_line":     "\nSotto-categorie (pulsanti):",
   "explore_groups.category.no_groups": "\uD83D\uDE14 Nessun gruppo in questa categoria attualmente \uD83D\uDE14\n\n\uD83D\uDD04 Ricontrolla periodicamente o sii il/la primo/a ad indicizzarne uno ⏬",
+  "explore_groups.cant_access_category": [
+    "\uD83D\uDE14 Si è verificato un errore durante l'accesso alla categoria, è probabile che la categoria non esista più o che sia temporaneamente non disponibile",
+    "\n\n<i>Ti preghiamo di contattarci qualora il problema dovesse persistere o se pensi possa trattarsi di un errore</i>"
+  ],
 
   "wip_alert": "Funzionalità in fase di sviluppo, provvisoriamente resa possibile contattando @Matypist su Telegram",
 
@@ -229,8 +233,8 @@
   "missing_permissions_menu.contact_us_btn": "\uD83D\uDCAC Contattaci per assistenza",
   "missing_permissions_menu.back_btn": "◀️ Indietro",
 
-  "index_group_confirm_menu.text": "❔ Sei sicuro di voler inserire il gruppo '<u>[title]</u>' nella categoria '[category]'?",
-  "unindex_group_confirm_menu.text": "❔ Sei sicuro di voler deindicizzare il gruppo '<u>[title]</u>' dalla categoria '[category]'?",
+  "index_group_confirm_menu.text": "❔ Sei sicuro/a di voler inserire il gruppo '<u>[title]</u>' nella categoria '[category]'?",
+  "unindex_group_confirm_menu.text": "❔ Sei sicuro/a di voler deindicizzare il gruppo '<u>[title]</u>' dalla categoria '[category]'?",
   "index_group_confirm_menu.will_be_moved": "❗️ Se confermi il gruppo verrà spostato qui dalla sua precedente categoria '<i>[current_category]</i>'",
   "index_group_confirm_menu.owner_will_be_alerted": "\uD83E\uDD34Il proprietario del gruppo verrà automaticamente informato della tua modifica in caso di conferma.",
   "index_group_confirm_menu.confirm_btn": "Sì, procedi ▶️",
@@ -260,57 +264,96 @@
     " proprietario del gruppo o ad un amministratore/trice del bot di cambiare la categoria al tuo posto."
   ],
 
-  "add_category.ask_for_i18n_en_name": "\uD83C\uDDEC\uD83C\uDDE7 Inserisci il nome in inglese per la categoria",
-  "add_category.ask_for_i18n_it_name": [
+  "manage_directory.database_error": [
+    "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria ad ottenere i dati della directory",
+    " che si vuole modificare, assicurati che la directory esista ancora o contatta il gestore di questa istanza del bot",
+    " qualora il problema dovesse persistere"
+  ],
+
+  "manage_directory.edit_directory_names_btn": "✏️ Modifica i nomi",
+  "manage_directory.hide_directory_btn": "\uD83E\uDEE3 Nascondi dagli utenti",
+  "manage_directory.unhide_directory_btn": "\uD83D\uDC41 Rendi visibile agli utenti",
+  "manage_directory.delete_directory_btn": "\uD83D\uDDD1 Elimina questa categoria",
+  "manage_directory.delete_root_directory_btn": "\uD83D\uDD12 Elimina questa categoria",
+  "manage_directory.delete_nonempty_directory_btn": "\uD83D\uDD12 Elimina questa categoria",
+  "manage_directory.back_btn": "◀️ Torna alla categoria",
+
+  "hide_directory.already_hidden": "ℹ️ La categoria non è di già visibile più agli utenti",
+  "unhide_directory.already_visible": "ℹ️ La categoria non è di già più nascosta dagli utenti",
+
+  "delete_directory.cant_delete_root_directory": "✋ Non è possibile rimuovere una categoria radice (non contenuta dentro nessun'altra)",
+  "delete_directory.no_longer_root_directory": [
+    "✅ Adesso sembrerebbe non essere più una categoria radice, essendo adesso contenuta dentro un'altra directory,",
+    " quindi puoi tornare indietro e provare di nuovo \uD83D\uDE42",
+    "\n\n⚠️ Se tornando indietro non dovesse ancora risultare risolto non esitare a contattarci per assistenza."
+  ],
+  "delete_directory.cant_delete_nonempty_directory": "✋ Una categoria dev'essere priva di gruppi e/o sottocategorie per poter essere eliminata",
+  "delete_directory.no_longer_nonempty_directory": [
+    "✅ Adesso sembrerebbe esserne effettivamente priva però, quindi puoi tornare indietro e provare di nuovo \uD83D\uDE42",
+    "\n\n⚠️ Se tornando indietro non dovesse ancora risultare risolto non esitare a contattarci per assistenza."
+  ],
+  "delete_directory.database_error": [
+    "\uD83D\uDE14 Un errore nell'interazione con il database ha reso impossibile eliminare la directory,",
+    " assicurati che la directory esista e sia effettivamente priva di gruppi e/o sottocategorie o contatta",
+    " un gestore del bot qualora il problema dovesse persistere"
+  ],
+  "delete_directory.confirm_menu.text": "❓ Sei sicuro/a di voler eliminare la categoria?\n\nRivedi i dati e dai eventualmente conferma per procedere:",
+  "delete_directory.confirm_menu.confirm_btn": "Sì, procedi ▶️",
+  "delete_directory.confirm_menu.undo_btn": "◀️ No, torna indietro",
+  "delete_directory.deleted_first_line": "☑️ Categoria eliminata con successo",
+  "delete_directory.back_btn": "◀️ Torna alla directory superiore",
+
+  "create_subdirectory.ask_for_i18n_en_name": "\uD83C\uDDEC\uD83C\uDDE7 Inserisci il nome in inglese per la categoria",
+  "create_subdirectory.ask_for_i18n_it_name": [
     "\uD83C\uDDEE\uD83C\uDDF9 Inserisci la traduzione in italiano del nome per la categoria",
     "\n\n<i>(<b>Nome inglese:</b> \"[i18n_en_name]\")</i>"
   ],
 
-  "add_category.undo_btn": "\uD83D\uDDD1 Annulla creazione e torna indietro",
+  "create_subdirectory.undo_btn": "\uD83D\uDDD1 Annulla creazione e torna indietro",
 
-  "add_category.database_error": [
+  "create_subdirectory.database_error": [
     "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria ad aggiungere una categoria",
     " con i dati inseriti, assicurati che la directory dentro cui intendevi inserirla esista ancora e che i dati",
-    " inseriti siano validi, o contatta il gestore del bot qualora il problema dovesse persistere"
+    " inseriti siano validi, o contatta il gestore di questa istanza del bot qualora il problema dovesse persistere"
   ],
 
-  "add_category.canceled": [
+  "create_subdirectory.canceled": [
     "\uD83D\uDEAB Aggiunta in corso della categoria annullata"
   ],
 
-  "add_category.successful_menu.first_line": "☑️ Inserimento della nuova categoria avvenuto con successo:",
-  "add_category.successful_menu.back_btn": "↪️ Torna alla categoria di inserimento",
+  "create_subdirectory.successful_menu.first_line": "☑️ Inserimento della nuova categoria avvenuto con successo:",
+  "create_subdirectory.successful_menu.back_btn": "↪️ Torna alla categoria di inserimento",
 
-  "edit_category.cant_get_directory_info": [
+  "edit_directory_names.cant_get_directory_info": [
     "⛔️ La procedura di ottenimento informazioni sulla categoria non è andata a buon fine,",
-    " assicurati che la categoria esista ancora o contatta il gestore del bot qualora il",
+    " assicurati che la categoria esista ancora o contatta il gestore di questa istanza del bot qualora il",
     " problema dovesse persistere"
   ],
 
-  "edit_category.ask_for_new_i18n_en_name": "\uD83C\uDDEC\uD83C\uDDE7 Inserisci il nuovo nome in inglese per la categoria",
-  "edit_category.ask_for_new_i18n_it_name": [
+  "edit_directory_names.ask_for_new_i18n_en_name": "\uD83C\uDDEC\uD83C\uDDE7 Inserisci il nuovo nome in inglese per la categoria",
+  "edit_directory_names.ask_for_new_i18n_it_name": [
     "\uD83C\uDDEE\uD83C\uDDF9 Inserisci la nuova traduzione in italiano del nome per la categoria",
     "\n\n<i>(<b>Nome inglese:</b> \"[i18n_en_name]\")</i>"
   ],
 
-  "edit_category.current_value": "<b>Valore corrente:</b> <code>[current_value]</code>",
+  "edit_directory_names.current_value": "<b>Valore corrente:</b> <code>[current_value]</code>",
 
-  "edit_category.undo_btn": "\uD83D\uDED1 Annulla modifiche e torna indietro",
+  "edit_directory_names.undo_btn": "\uD83D\uDED1 Annulla modifiche e torna indietro",
 
-  "edit_category.database_error": [
+  "edit_directory_names.database_error": [
     "\uD83D\uDE14 Si è verificato un errore nell'interazione con il database necessaria ad effettuare l'aggiornamento",
     " richiesto, assicurati che la directory esista ancora e che i dati inseriti siano validi, o contatta il gestore",
     " del bot qualora il problema dovesse persistere"
   ],
 
-  "edit_category.canceled": [
+  "edit_directory_names.canceled": [
     "\uD83D\uDEAB Modifiche in corso alla categoria scartate"
   ],
 
-  "edit_category.no_changes_made": "☑️ Valori uguali ai precedenti, nessun cambiamento effettuato",
+  "edit_directory_names.no_changes_made": "☑️ Valori uguali ai precedenti, nessun cambiamento effettuato",
 
-  "edit_category.successful_menu.first_line": "☑️ Aggiornamento avvenuto con successo:",
-  "edit_category.successful_menu.back_btn": "↘️ Torna alla categoria modificata",
+  "edit_directory_names.successful_menu.first_line": "☑️ Aggiornamento avvenuto con successo:",
+  "edit_directory_names.successful_menu.back_btn": "◀️ Torna alle impostazioni",
 
-  "add_category.error.too_long_input": "Hai inserito un nome di categoria troppo lungo (ben [length] caratteri), riprova con al massimo 100 caratteri!"
+  "create_subdirectory.error.too_long_input": "Hai inserito un nome di categoria troppo lungo (ben [length] caratteri), riprova con al massimo 100 caratteri!"
 }
