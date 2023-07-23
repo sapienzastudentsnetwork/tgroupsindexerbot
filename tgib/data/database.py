@@ -24,7 +24,7 @@ from urllib.parse import urlparse as urllib_parse_urlparse
 
 import psycopg2
 import telegram
-from telegram import ChatMemberAdministrator
+from telegram import ChatMemberAdministrator, ChatMemberOwner
 from telegram.ext import ContextTypes
 
 from tgib.global_vars import GlobalVariables
@@ -142,11 +142,12 @@ class Database:
                         invite_link VARCHAR(38),
                         custom_link VARCHAR(60),
                         chat_admins BIGINT[],
+                        chat_owner_id BIGINT,
                         directory_id INT,
+                        missing_permissions BOOLEAN DEFAULT TRUE,
                         hidden_by BIGINT,
                         created_at TIMESTAMP DEFAULT now(),
                         updated_at TIMESTAMP DEFAULT now(),
-                        missing_permissions BOOLEAN DEFAULT TRUE,
                         FOREIGN KEY (directory_id) REFERENCES directory(id),
                         FOREIGN KEY (hidden_by) REFERENCES account(chat_id)
                     );
@@ -168,6 +169,23 @@ class Database:
                     cursor.execute("""
                         ALTER TABLE chat
                         ADD COLUMN missing_permissions BOOLEAN DEFAULT TRUE
+                    """)
+
+                # Check if the 'chat_owner_id' column in 'chat' table already exists
+                cursor.execute("""
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_name = 'chat' AND column_name = 'chat_owner_id'
+                    )
+                """)
+                column_exists = cursor.fetchone()[0]
+
+                # Add the 'chat_owner_id' column to 'chat' table if it doesn't exist
+                if not column_exists:
+                    cursor.execute("""
+                        ALTER TABLE chat
+                        ADD COLUMN chat_owner_id BIGINT
                     """)
 
                 # Check if the "update_timestamp" trigger function already exists
@@ -1460,11 +1478,16 @@ class ChatTable:
 
             chat_admins = await bot_instance.get_chat_administrators(chat_id)
 
+        current_chat_owner_id = None
+
         if chat_admins:
             for admin in chat_admins:
                 admin: telegram.ChatMember
 
                 current_chat_admins.append(admin.user.id)
+
+                if isinstance(admin, telegram.ChatMemberOwner):
+                    current_chat_owner_id = admin.user.id
 
         new_chat_data = {"chat_id": chat_id, "title": current_title, "invite_link": current_invite_link,
                          "chat_admins": current_chat_admins, "missing_permissions": current_missing_permissions}
@@ -1478,10 +1501,12 @@ class ChatTable:
 
             saved_chat_admins = chat_data["chat_admins"]
 
+            saved_chat_owner_id = chat_data["chat_owner_id"]
+
             saved_missing_permissions = chat_data["missing_permissions"]
 
-        if not chat_data or ([current_chat_admins] != saved_chat_admins or current_title != saved_title or current_invite_link != saved_invite_link or current_missing_permissions != saved_missing_permissions):
-            query_vars = (current_title, current_invite_link, current_chat_admins, current_missing_permissions, chat_id)
+        if not chat_data or ([current_chat_admins] != saved_chat_admins or current_chat_owner_id != saved_chat_owner_id or current_title != saved_title or current_invite_link != saved_invite_link or current_missing_permissions != saved_missing_permissions):
+            query_vars = (current_title, current_invite_link, current_chat_admins, current_chat_owner_id, current_missing_permissions, chat_id)
 
             if chat_data:
                 query = """
@@ -1490,18 +1515,19 @@ class ChatTable:
                         title = %s,
                         invite_link = %s,
                         chat_admins = %s,
+                        chat_owner_id = %s,
                         missing_permissions = %s
                     WHERE chat_id = %s;
                 """
 
-                saved_values = (saved_title, saved_invite_link, saved_chat_admins, saved_missing_permissions, chat_id)
+                saved_values = (saved_title, saved_invite_link, saved_chat_admins, saved_chat_owner_id, saved_missing_permissions, chat_id)
 
                 Logger.log("debug", "ChatTable.fetch_chat", f"Old (saved) values: {saved_values}")
                 Logger.log("debug", "ChatTable.fetch_chat", f"New (current) values: {query_vars}")
             else:
                 query = """
-                    INSERT INTO chat (title, invite_link, chat_admins, missing_permissions, chat_id)
-                    VALUES (%s, %s, %s, %s, %s)
+                    INSERT INTO chat (title, invite_link, chat_admins, chat_owner_id, missing_permissions, chat_id)
+                    VALUES (%s, %s, %s, %s, %s, %s)
                 """
 
             try:

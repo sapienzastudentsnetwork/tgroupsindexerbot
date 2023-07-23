@@ -241,8 +241,11 @@
   "index_group_confirm_menu.back_btn":"◀️ Back",
 
   "index_group.indexed": "☑️ Group '<u>[title]</u>' successfully indexed in the category '[category]'",
+  "index_group.indexed.owner_alert": "\uD83D\uDD14 The group '<u>[title]</u>' [<code>[chat_id]</code>], of which you appear to be the owner, has been <b>indexed</b> by [admin] in the '<u>[category]</u>' category",
   "index_group.moved": "☑️ Group '<u>[title]</u>' successfully moved from the category '[old_category]' to the category '[category]'",
+  "index_group.moved.owner_alert": "\uD83D\uDD14 [admin] <b>moved</b> the group '<u>[title]</u>' [<code>[chat_id]</code>], of which you appear to be the owner, from the '[old_category]' category to '<u>[category]</u>'",
   "unindex_group.successful": "☑️ Group '<u>[title]</u>' successfully unindexed from category '[category]'",
+  "unindex_group.successful.owner_alert": "\uD83D\uDD14 The group '<u>[title]</u>' [<code>[chat_id]</code>], of which you appear to be the owner, has been <b>deindexed</b> by [admin] from the '<u>[category]</u>' category",
 
   "index_group.error.cant_get_group_info": [
     "⛔️ The process of getting group information failed,",

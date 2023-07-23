@@ -537,9 +537,9 @@ class Queries:
                                     updated = ChatTable.update_chat_directory(chat_id, new_directory_id)
 
                                     if updated:
-                                        if new_directory_id is not None:
-                                            full_old_category_name = None
+                                        chat_owner_id = chat_data["chat_owner_id"]
 
+                                        if new_directory_id is not None:
                                             if old_directory_id is not None:
                                                 DirectoryTable.increment_chats_count(old_directory_id, -1)
 
@@ -557,6 +557,9 @@ class Queries:
                                                     full_new_category_name=full_category_name
                                                 )
 
+                                                chat_owner_alert_text = locale.get_string("index_group.moved.owner_alert")\
+                                                    .replace("[old_category]", full_old_category_name)
+
                                             else:
                                                 text = locale.get_string("index_group.indexed")
 
@@ -564,6 +567,8 @@ class Queries:
                                                     "index", user, chat_data, new_directory_id,
                                                     full_new_category_name=full_category_name
                                                 )
+
+                                                chat_owner_alert_text = locale.get_string("index_group.indexed.owner_alert")
 
                                         else:
                                             old_directory_id: int
@@ -575,9 +580,23 @@ class Queries:
                                             # await Logger.log_chat_action("unindex", user, chat_data,
                                             #                              full_old_category_name=full_category_name)
 
+                                            chat_owner_alert_text = locale.get_string("unindex_group.successful.owner_alert")
+
                                         text = text.replace("[title]", chat_data["title"]) \
                                             .replace("[category]", str(full_category_name))
 
+                                        if chat_owner_id is not None and chat_owner_id != user_id and chat_owner_alert_text:
+                                            chat_owner_alert_text = chat_owner_alert_text \
+                                                .replace("[admin]", Logger.gen_user_info_string(user)) \
+                                                .replace("[title]", chat_data["title"]) \
+                                                .replace("[chat_id]", str(chat_id)) \
+                                                .replace("[category]", str(full_category_name))
+
+                                            try:
+                                                await bot.send_message(chat_id=chat_owner_id, text=chat_owner_alert_text)
+
+                                            except:
+                                                pass
                                     else:
                                         return Menus.get_error_menu(locale, "database")
 

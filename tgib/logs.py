@@ -111,7 +111,7 @@ class Logger:
 
     @classmethod
     def gen_user_info_string(cls, user: User) -> str:
-        user_info = f'\n\n✍️ <a href="tg://user?id={user.id}">{user.full_name}</a>'
+        user_info = f'<a href="tg://user?id={user.id}">{user.full_name}</a>'
 
         if user.username:
             user_info += f" (@{user.username})"
@@ -125,7 +125,7 @@ class Logger:
         if cls.admin_actions_log_chat_id:
             text = "👮‍♂️ <b><u>" + action.upper() + f"</u></b> (#admin)"
 
-            text += cls.gen_user_info_string(admin)
+            text += "\n\n✍️ " + cls.gen_user_info_string(admin)
 
             text += "\n\n" + changes_summary
 
@@ -136,7 +136,7 @@ class Logger:
         if cls.admin_actions_log_chat_id:
             text = "👮‍♂️ <b><u>" + action.upper() + f"</u></b> (#admin)"
 
-            text += cls.gen_user_info_string(admin)
+            text += "\n\n✍️ " + cls.gen_user_info_string(admin)
 
             text += "\n\n" + directory_data_summary
 
@@ -152,7 +152,7 @@ class Logger:
         if cls.admin_actions_log_chat_id:
             text = "👮‍♂️ <b><u>" + action.upper() + f"</u></b> (#admin)"
 
-            text += cls.gen_user_info_string(admin)
+            text += "\n\n✍️ " + cls.gen_user_info_string(admin)
 
             text += f"\n\n🆔 {directory_id}"
 
@@ -197,7 +197,7 @@ class Logger:
             else:
                 text = "👤 <b>" + action.upper() + f"</b> (#user)"
 
-            text += cls.gen_user_info_string(user)
+            text += "\n\n✍️ " + cls.gen_user_info_string(user)
 
             text += f"\n\n💬 \"" + target_chat_data["title"] + f"\" [<code>{target_chat_id}</code>]"
 

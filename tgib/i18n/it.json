@@ -242,8 +242,11 @@
   "index_group_confirm_menu.back_btn": "◀️ Indietro",
 
   "index_group.indexed": "☑️ Gruppo '<u>[title]</u>' indicizzato con successo nella categoria '[category]'",
+  "index_group.indexed.owner_alert": "\uD83D\uDD14 Il gruppo '<u>[title]</u>' [<code>[chat_id]</code>], di cui risulti proprietario, è stato <b>indicizzato</b> da [admin] nella categoria '<u>[category]</u>'",
   "index_group.moved": "☑️ Gruppo '<u>[title]</u>' spostato con successo nella categoria '[old_category]' dalla categoria '[category]'",
+  "index_group.moved.owner_alert": "\uD83D\uDD14 [admin] ha <b>spostato</b> il gruppo '<u>[title]</u>' [<code>[chat_id]</code>], di cui risulti proprietario, dalla categoria '[old_category]' alla categoria '<u>[category]</u>'",
   "unindex_group.successful": "☑️ Gruppo '<u>[title]</u>' deindicizzato con successo dalla categoria '[category]'",
+  "unindex_group.successful.owner_alert": "\uD83D\uDD14 Il gruppo '<u>[title]</u>' [<code>[chat_id]</code>], di cui risulti proprietario, è stato <b>deindicizzato</b> da [admin] dalla categoria '<u>[category]</u>'",
 
   "index_group.error.cant_get_group_info": [
     "⛔️ La procedura di ottenimento informazioni sul gruppo non è andata a buon fine,",
