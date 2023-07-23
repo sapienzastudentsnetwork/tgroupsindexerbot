@@ -1237,7 +1237,10 @@ class Queries:
 
                 reply_markup = Queries.encode_queries(reply_markup)
 
-                await query.answer()
+                try:
+                    await query.answer()
+                except Exception:
+                    pass
 
                 edited = False
 
