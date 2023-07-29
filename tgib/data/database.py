@@ -1047,7 +1047,7 @@ class ChatTable:
 
             cursor.execute("SELECT * FROM chat "
                            f"{where_string} "
-                           "ORDER BY title ASC", query_vars)
+                           "ORDER BY CONCAT(custom_title, title) ASC", query_vars)
 
             column_names = [desc[0] for desc in cursor.description]
             records = cursor.fetchall()
