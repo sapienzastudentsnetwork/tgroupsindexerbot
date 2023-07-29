@@ -797,7 +797,10 @@ class Queries:
                     listed_groups = 0
 
                     for group_chat_id, group_data_dict in groups_dict.items():
-                        group_title = group_data_dict["title"]
+                        if "custom_title" in group_data_dict and bool(group_data_dict["custom_title"]):
+                            group_title = group_data_dict["custom_title"]
+                        else:
+                            group_title = group_data_dict["title"]
 
                         group_join_url = ""
 

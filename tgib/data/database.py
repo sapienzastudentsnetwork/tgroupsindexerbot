@@ -139,6 +139,7 @@ class Database:
                     CREATE TABLE IF NOT EXISTS chat (
                         chat_id BIGINT PRIMARY KEY,
                         title VARCHAR(128),
+                        custom_title VARCHAR(128),
                         invite_link VARCHAR(38),
                         custom_link VARCHAR(60),
                         chat_admins BIGINT[],
@@ -153,6 +154,23 @@ class Database:
                     );
                     """
                 )
+
+                # Check if the 'custom_title' column in 'chat' table already exists
+                cursor.execute("""
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM information_schema.columns
+                        WHERE table_name = 'chat' AND column_name = 'custom_title'
+                    )
+                """)
+                column_exists = cursor.fetchone()[0]
+
+                # Add the 'custom_title' column to 'chat' table if it doesn't exist
+                if not column_exists:
+                    cursor.execute("""
+                        ALTER TABLE chat
+                        ADD COLUMN custom_title VARCHAR(128)
+                    """)
 
                 # Check if the 'missing_permissions' column in 'chat' table already exists
                 cursor.execute("""
@@ -1203,12 +1221,13 @@ class ChatTable:
                     cursor.execute(
                         """
                         UPDATE chat
-                        SET custom_link = %s,
+                        SET custom_title = %s,
+                            custom_link = %s,
                             directory_id = %s,
                             hidden_by = %s
                         WHERE chat_id = %s;
                         """,
-                        (old_chat_data["custom_link"], old_chat_data["directory_id"], old_chat_data["hidden_by"], new_chat_id)
+                        (old_chat_data["custom_title"], old_chat_data["custom_link"], old_chat_data["directory_id"], old_chat_data["hidden_by"], new_chat_id)
                     )
 
                     connection.commit()
