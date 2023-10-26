@@ -397,9 +397,9 @@ class Commands:
                                     ):
                                         try:
                                             if command_name == "move":
-                                                target_chat_ids = [int(chat_id) for chat_id in query_msg_text.split(" ")[1:-1]]
+                                                target_chat_ids = [int(chat_id) for chat_id in command_args[:-1]]
                                             else:
-                                                target_chat_ids = [int(chat_id) for chat_id in query_msg_text.split(" ")]
+                                                target_chat_ids = [int(chat_id) for chat_id in command_args]
 
                                             # Remove any duplicate ids
 
