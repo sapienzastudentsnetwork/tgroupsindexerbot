@@ -380,17 +380,20 @@ class Commands:
                                     text = locale.get_string("commands.reload.unsuccessful")
 
                             elif command_name in ("hide", "unhide", "move", "unindex"):
-                                target_chat_id = None
+                                list_target_chat_id = None
 
                                 query_msg_text = query_message.text
 
                                 if update.effective_chat.type in ("group", "supergroup"):
-                                    target_chat_id = chat_id
+                                    list_target_chat_id = [chat_id]
 
                                 else:
                                     if len(command_args) >= 1:
                                         try:
-                                            target_chat_id = int(query_msg_text.split(" ")[1])
+                                            if command_name == "move":
+                                                list_target_chat_id = [int(chat_id) for chat_id in query_msg_text.split(" ")[1:-1]]
+                                            else:
+                                                list_target_chat_id = [int(query_msg_text.split(" ")[1])]
 
                                         except Exception:
                                             text = locale.get_string("commands.wrong_chat_id_format")
@@ -406,134 +409,135 @@ class Commands:
 
                                         invalid_request = True
 
-                                if invalid_request is False and target_chat_id is not None:
-                                    target_chat_data, is_target_chat_data = ChatTable.get_chat_data(target_chat_id)
+                                if invalid_request is False and list_target_chat_id is not None:
+                                    for target_chat_id in list_target_chat_id:
+                                        target_chat_data, is_target_chat_data = ChatTable.get_chat_data(target_chat_id)
 
-                                    if not is_target_chat_data:
-                                        text = locale.get_string("commands.chat_database_error")
-
-                                        delete_query_message = False
-
-                                    else:
-                                        chat_directory_id = None
-
-                                        if target_chat_data["directory_id"] is not None:
-                                            chat_directory_id = target_chat_data["directory_id"]
-
-                                        if command_name == "hide":
-                                            if target_chat_data["hidden_by"] is None:
-                                                updated = ChatTable.update_chat_visibility(target_chat_id, hidden_by=user_id)
-
-                                                if updated:
-                                                    if chat_directory_id is not None:
-                                                        DirectoryTable.increment_chats_count(chat_directory_id, -1)
-
-                                                    text = locale.get_string("commands.visibility.hide.successful")
-
-                                                    await Logger.log_chat_action("hide", update.effective_user, target_chat_data)
-
-                                            else:
-                                                text = locale.get_string("commands.visibility.already_hidden")
-
-                                        elif command_name == "unhide":
-                                            if target_chat_data["hidden_by"] is not None:
-                                                updated = ChatTable.update_chat_visibility(target_chat_id, hidden_by=None)
-
-                                                if updated:
-                                                    if chat_directory_id is not None:
-                                                        DirectoryTable.increment_chats_count(chat_directory_id, +1)
-
-                                                    text = locale.get_string("commands.visibility.unhide.successful")
-
-                                                    await Logger.log_chat_action("unhide", update.effective_user, target_chat_data)
-
-                                            else:
-                                                text = locale.get_string("commands.visibility.already_not_hidden")
-
-                                        elif command_name == "move":
-                                            try:
-                                                if update.effective_chat.type not in ("group", "supergroup"):
-                                                    if len(command_args) == 2:
-                                                        target_directory_id = int(query_msg_text.split(" ")[2])
-
-                                                    else:
-                                                        text = locale.get_string("commands.min_n_args").replace("[n]", "2")
-
-                                                        invalid_request = True
-
-                                                else:
-                                                    target_directory_id = int(query_msg_text.split(" ")[1])
-
-                                                if not invalid_request:
-                                                    full_target_category_name = DirectoryTable.get_full_category_name(locale.lang_code, target_directory_id)
-
-                                                    if full_target_category_name is not None:
-                                                        if chat_directory_id is None or target_directory_id != chat_directory_id:
-                                                            updated = ChatTable.update_chat_directory(target_chat_id, target_directory_id)
-
-                                                            if updated:
-                                                                DirectoryTable.increment_chats_count(target_directory_id, +1)
-
-                                                                if chat_directory_id is not None:
-                                                                    DirectoryTable.increment_chats_count(chat_directory_id, -1)
-
-                                                                    full_old_category_name = DirectoryTable.get_full_category_name(locale.lang_code, chat_directory_id)
-
-                                                                    text = locale.get_string("commands.move.moved") \
-                                                                        .replace("[old_category]", str(full_old_category_name))
-
-                                                                else:
-                                                                    text = locale.get_string("commands.move.indexed")
-
-                                                                await Logger.log_chat_action(
-                                                                    "move", update.effective_user, target_chat_data,
-                                                                    new_directory_id=target_directory_id,
-                                                                    full_old_category_name=full_old_category_name,
-                                                                    full_new_category_name=full_target_category_name
-                                                                )
-
-                                                            else:
-                                                                text = locale.get_string("commands.directory_database_error")
-
-                                                        else:
-                                                            text = locale.get_string("commands.move.already_current_category")
-
-                                                        text = text.replace("[category]", full_target_category_name)
-
-                                                    else:
-                                                        text = locale.get_string("commands.directory_database_error")
-
-                                            except Exception:
-                                                text = locale.get_string("commands.wrong_directory_id_format")
-
-                                                delete_query_message = False
-
-                                        elif command_name == "unindex":
-                                            if chat_directory_id is not None:
-                                                updated = ChatTable.update_chat_directory(target_chat_id, None)
-
-                                                if updated:
-                                                    DirectoryTable.increment_chats_count(chat_directory_id, -1)
-
-                                                    full_target_category_name = DirectoryTable.get_full_category_name(locale.lang_code, chat_directory_id)
-
-                                                    text = locale.get_string("commands.visibility.unindex.successful") \
-                                                        .replace("[category]", str(full_target_category_name))
-
-                                                    await Logger.log_chat_action(
-                                                        "unindex", update.effective_user, target_chat_data,
-                                                        full_old_category_name=full_target_category_name
-                                                    )
-
-                                            else:
-                                                text = locale.get_string("commands.visibility.already_not_indexed_at_all")
-
-                                        if text:
-                                            text = text.replace("[title]", target_chat_data["title"]).replace("[chat_id]", str(target_chat_id))
-                                        else:
-                                            text = locale.get_string("commands.database_error")
+                                        if not is_target_chat_data:
+                                            text = locale.get_string("commands.chat_database_error")
 
                                             delete_query_message = False
+
+                                        else:
+                                            chat_directory_id = None
+
+                                            if target_chat_data["directory_id"] is not None:
+                                                chat_directory_id = target_chat_data["directory_id"]
+
+                                            if command_name == "hide":
+                                                if target_chat_data["hidden_by"] is None:
+                                                    updated = ChatTable.update_chat_visibility(target_chat_id, hidden_by=user_id)
+
+                                                    if updated:
+                                                        if chat_directory_id is not None:
+                                                            DirectoryTable.increment_chats_count(chat_directory_id, -1)
+
+                                                        text = locale.get_string("commands.visibility.hide.successful")
+
+                                                        await Logger.log_chat_action("hide", update.effective_user, target_chat_data)
+
+                                                else:
+                                                    text = locale.get_string("commands.visibility.already_hidden")
+
+                                            elif command_name == "unhide":
+                                                if target_chat_data["hidden_by"] is not None:
+                                                    updated = ChatTable.update_chat_visibility(target_chat_id, hidden_by=None)
+
+                                                    if updated:
+                                                        if chat_directory_id is not None:
+                                                            DirectoryTable.increment_chats_count(chat_directory_id, +1)
+
+                                                        text = locale.get_string("commands.visibility.unhide.successful")
+
+                                                        await Logger.log_chat_action("unhide", update.effective_user, target_chat_data)
+
+                                                else:
+                                                    text = locale.get_string("commands.visibility.already_not_hidden")
+
+                                            elif command_name == "move":
+                                                try:
+                                                    if update.effective_chat.type not in ("group", "supergroup"):
+                                                        if len(command_args) == 2:
+                                                            target_directory_id = int(query_msg_text.split(" ")[-1])
+
+                                                        else:
+                                                            text = locale.get_string("commands.min_n_args").replace("[n]", "2")
+
+                                                            invalid_request = True
+
+                                                    else:
+                                                        target_directory_id = int(query_msg_text.split(" ")[1])
+
+                                                    if not invalid_request:
+                                                        full_target_category_name = DirectoryTable.get_full_category_name(locale.lang_code, target_directory_id)
+
+                                                        if full_target_category_name is not None:
+                                                            if chat_directory_id is None or target_directory_id != chat_directory_id:
+                                                                updated = ChatTable.update_chat_directory(target_chat_id, target_directory_id)
+
+                                                                if updated:
+                                                                    DirectoryTable.increment_chats_count(target_directory_id, +1)
+
+                                                                    if chat_directory_id is not None:
+                                                                        DirectoryTable.increment_chats_count(chat_directory_id, -1)
+
+                                                                        full_old_category_name = DirectoryTable.get_full_category_name(locale.lang_code, chat_directory_id)
+
+                                                                        text = locale.get_string("commands.move.moved") \
+                                                                            .replace("[old_category]", str(full_old_category_name))
+
+                                                                    else:
+                                                                        text = locale.get_string("commands.move.indexed")
+
+                                                                    await Logger.log_chat_action(
+                                                                        "move", update.effective_user, target_chat_data,
+                                                                        new_directory_id=target_directory_id,
+                                                                        full_old_category_name=full_old_category_name,
+                                                                        full_new_category_name=full_target_category_name
+                                                                    )
+
+                                                                else:
+                                                                    text = locale.get_string("commands.directory_database_error")
+
+                                                            else:
+                                                                text = locale.get_string("commands.move.already_current_category")
+
+                                                            text = text.replace("[category]", full_target_category_name)
+
+                                                        else:
+                                                            text = locale.get_string("commands.directory_database_error")
+
+                                                except Exception:
+                                                    text = locale.get_string("commands.wrong_directory_id_format")
+
+                                                    delete_query_message = False
+
+                                            elif command_name == "unindex":
+                                                if chat_directory_id is not None:
+                                                    updated = ChatTable.update_chat_directory(target_chat_id, None)
+
+                                                    if updated:
+                                                        DirectoryTable.increment_chats_count(chat_directory_id, -1)
+
+                                                        full_target_category_name = DirectoryTable.get_full_category_name(locale.lang_code, chat_directory_id)
+
+                                                        text = locale.get_string("commands.visibility.unindex.successful") \
+                                                            .replace("[category]", str(full_target_category_name))
+
+                                                        await Logger.log_chat_action(
+                                                            "unindex", update.effective_user, target_chat_data,
+                                                            full_old_category_name=full_target_category_name
+                                                        )
+
+                                                else:
+                                                    text = locale.get_string("commands.visibility.already_not_indexed_at_all")
+
+                                            if text:
+                                                text = text.replace("[title]", target_chat_data["title"]).replace("[chat_id]", str(target_chat_id))
+                                            else:
+                                                text = locale.get_string("commands.database_error")
+
+                                                delete_query_message = False
 
                             elif command_name in ("addadmin", "rmadmin", "restrict", "unrestrict"):
                                 if len(command_args) >= 1:
