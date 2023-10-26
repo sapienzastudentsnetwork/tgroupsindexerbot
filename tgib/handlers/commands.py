@@ -380,20 +380,22 @@ class Commands:
                                     text = locale.get_string("commands.reload.unsuccessful")
 
                             elif command_name in ("hide", "unhide", "move", "unindex"):
-                                list_target_chat_id = None
+                                target_chat_ids = None
 
                                 query_msg_text = query_message.text
 
                                 if update.effective_chat.type in ("group", "supergroup"):
-                                    list_target_chat_id = [chat_id]
+                                    target_chat_ids = [chat_id]
 
                                 else:
                                     if len(command_args) >= 1:
                                         try:
                                             if command_name == "move":
-                                                list_target_chat_id = [int(chat_id) for chat_id in query_msg_text.split(" ")[1:-1]]
+                                                target_chat_ids = [int(chat_id) for chat_id in query_msg_text.split(" ")[1:-1]]
                                             else:
-                                                list_target_chat_id = [int(query_msg_text.split(" ")[1])]
+                                                target_chat_ids = [int(chat_id) for chat_id in query_msg_text.split(" ")]
+
+                                            target_chat_ids = list(set(target_chat_ids))
 
                                         except Exception:
                                             text = locale.get_string("commands.wrong_chat_id_format")
@@ -409,8 +411,8 @@ class Commands:
 
                                         invalid_request = True
 
-                                if invalid_request is False and list_target_chat_id is not None:
-                                    for target_chat_id in list_target_chat_id:
+                                if invalid_request is False and target_chat_ids is not None:
+                                    for target_chat_id in target_chat_ids:
                                         target_chat_data, is_target_chat_data = ChatTable.get_chat_data(target_chat_id)
 
                                         if not is_target_chat_data:
