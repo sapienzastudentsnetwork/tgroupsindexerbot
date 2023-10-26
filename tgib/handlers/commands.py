@@ -494,6 +494,8 @@ class Commands:
                                                             if updated:
                                                                 DirectoryTable.increment_chats_count(target_directory_id, +1)
 
+                                                                full_old_category_name = None
+
                                                                 if chat_directory_id is not None:
                                                                     DirectoryTable.increment_chats_count(chat_directory_id, -1)
 
